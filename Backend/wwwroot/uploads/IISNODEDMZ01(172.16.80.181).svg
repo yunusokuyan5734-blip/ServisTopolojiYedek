@@ -1,0 +1,894 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Microsoft Visio, SVG Export ile oluşturuldu IISNODEDMZ01(172.16.80.181).svg Sayfa-186 IISNODEDMZ02(172.16.80.81) -->
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:ev="http://www.w3.org/2001/xml-events"
+		xmlns:v="http://schemas.microsoft.com/visio/2003/SVGExtensions/" width="11.6929in" height="8.26772in"
+		viewBox="0 0 841.89 595.276" xml:space="preserve" color-interpolation-filters="sRGB" class="st23">
+	<v:documentProperties v:langID="1055" v:metric="true" v:viewMarkup="false">
+		<v:userDefs>
+			<v:ud v:nameU="msvNoAutoConnect" v:prompt="" v:val="VT0(1):26"/>
+		</v:userDefs>
+	</v:documentProperties>
+
+	<style type="text/css">
+	<![CDATA[
+		.st1 {fill:#a5a5a5;stroke:#ffffff;stroke-linecap:round;stroke-linejoin:round;stroke-width:0.5}
+		.st2 {fill:#ffffff;font-family:Calibri;font-size:1.00001em}
+		.st3 {font-size:1em}
+		.st4 {fill:#dee6f3;stroke:#ffffff;stroke-linecap:round;stroke-linejoin:round;stroke-width:0.5}
+		.st5 {fill:#5899d4;font-family:Calibri;font-size:1.00001em}
+		.st6 {fill:#5b9bd5;stroke:#ffffff;stroke-linecap:round;stroke-linejoin:round;stroke-width:0.5}
+		.st7 {fill:#aad288;stroke:#ffffff;stroke-linecap:round;stroke-linejoin:round;stroke-width:0.5}
+		.st8 {fill:#ffffff}
+		.st9 {stroke:#ffffff;stroke-dasharray:3.5,2.5;stroke-linecap:round;stroke-linejoin:round;stroke-width:0.5}
+		.st10 {fill:#1e4a73;font-family:Calibri;font-size:0.833336em}
+		.st11 {stroke:#ffffff;stroke-linecap:butt;stroke-width:0.5}
+		.st12 {fill:none;stroke:none;stroke-linecap:round;stroke-linejoin:round;stroke-width:0.5}
+		.st13 {fill:#5b9bd5;font-family:Calibri;font-size:1.16666em}
+		.st14 {fill:#dedde3;stroke:#ffffff;stroke-linecap:round;stroke-linejoin:round;stroke-width:0.5}
+		.st15 {fill:#615884;font-family:Calibri;font-size:0.833336em;font-weight:bold}
+		.st16 {font-size:1em;font-weight:normal}
+		.st17 {marker-end:url(#mrkr4-98);stroke:#5592c9;stroke-linecap:round;stroke-linejoin:round;stroke-width:0.5}
+		.st18 {fill:#5592c9;fill-opacity:1;stroke:#5592c9;stroke-opacity:1;stroke-width:0.16556291390728}
+		.st19 {fill:#7effff;stroke:#ffffff;stroke-linecap:round;stroke-linejoin:round;stroke-width:0.5}
+		.st20 {fill:#000000;font-family:Calibri;font-size:0.75em}
+		.st21 {fill:#73ae42;stroke:#ffffff;stroke-linecap:round;stroke-linejoin:round;stroke-width:0.5}
+		.st22 {fill:#ffffff;font-family:Calibri;font-size:0.666664em}
+		.st23 {fill:none;fill-rule:evenodd;font-size:12px;overflow:visible;stroke-linecap:square;stroke-miterlimit:3}
+	]]>
+	</style>
+
+	<defs id="Markers">
+		<g id="lend4">
+			<path d="M 2 1 L 0 0 L 2 -1 L 2 1 " style="stroke:none"/>
+		</g>
+		<marker id="mrkr4-98" class="st18" v:arrowType="4" v:arrowSize="2" v:setback="12.08" refX="-12.08" orient="auto"
+				markerUnits="strokeWidth" overflow="visible">
+			<use xlink:href="#lend4" transform="scale(-6.04,-6.04) "/>
+		</marker>
+	</defs>
+	<g v:mID="239" v:index="186" v:groupContext="foregroundPage">
+		<v:userDefs>
+			<v:ud v:nameU="msvThemeOrder" v:val="VT0(0):26"/>
+		</v:userDefs>
+		<title>Sayfa-186 IISNODEDMZ01(172.16.80.181)</title>
+		<v:pageProperties v:drawingScale="0.0393701" v:pageScale="0.0393701" v:drawingUnits="24" v:shadowOffsetX="8.50394"
+				v:shadowOffsetY="-8.50394"/>
+		<v:layer v:name="Bağlayıcı" v:index="0"/>
+		<g id="shape1-1" v:mID="1" v:groupContext="shape" transform="translate(560.976,-104.315)">
+			<title>Sayfa.1</title>
+			<desc>Panorama üzerinde trafiği gözlemlenen portlar ve haberleştiği...</desc>
+			<v:textBlock v:margins="rect(4,4,4,4)" v:tabSpace="42.5197"/>
+			<v:textRect cx="119.475" cy="553.008" width="238.96" height="84.5352"/>
+			<rect x="0" y="510.74" width="238.951" height="84.5352" class="st1"/>
+			<text x="5.55" y="527.81" class="st2" v:langID="1055"><v:paragraph v:horizAlign="1"/><v:tabList/>Panorama üzerinde trafiği gözlemlenen portlar <tspan
+						x="10.03" dy="1.2em" class="st3">ve haberleştiği IP</tspan>’ler yukarıda görülmektedir. <tspan x="31.55"
+						dy="1.2em" class="st3">Firewall üzerinde sunucuya gelen ve </tspan><tspan x="48.36" dy="1.2em" class="st3">sunucudan giden başka trafik </tspan><tspan
+						x="74.41" dy="1.2em" class="st3">bulunmamaktadır.</tspan></text>		</g>
+		<g id="shape2-8" v:mID="2" v:groupContext="shape" transform="translate(18,-547.234)">
+			<title>Sayfa.2</title>
+			<desc>IISNODEDMZ01 (172.16.80.181)</desc>
+			<v:textBlock v:margins="rect(4,4,4,4)" v:tabSpace="42.5197"/>
+			<v:textRect cx="73.7008" cy="580.255" width="147.41" height="30.0416"/>
+			<rect x="0" y="565.234" width="147.402" height="30.0416" class="st4"/>
+			<text x="35.74" y="576.65" class="st5" v:langID="1055"><v:paragraph v:horizAlign="1"/><v:tabList/>IISNODEDMZ01<v:newlineChar/><tspan
+						x="35.11" dy="1.2em" class="st3">(172.16.80.181)</tspan></text>		</g>
+		<g id="shape3-12" v:mID="3" v:groupContext="shape" transform="translate(639.638,-545.392)">
+			<title>Sayfa.3</title>
+			<desc>20.01.2026</desc>
+			<v:textBlock v:margins="rect(4,4,4,4)" v:tabSpace="42.5197"/>
+			<v:textRect cx="92.126" cy="581.102" width="184.26" height="28.3465"/>
+			<rect x="0" y="566.929" width="184.252" height="28.3465" class="st4"/>
+			<text x="64.77" y="584.7" class="st5" v:langID="1055"><v:paragraph v:horizAlign="1"/><v:tabList/>20.01.2026</text>		</g>
+		<g id="group4-15" transform="translate(386.524,-478.63)" v:mID="4" v:groupContext="group">
+			<v:custProps>
+				<v:cp v:nameU="AssetNumber" v:lbl="Varlık Numarası" v:prompt="" v:type="0" v:format="" v:sortKey="Asset"
+						v:invis="false" v:ask="false" v:langID="1055" v:cal="0"/>
+				<v:cp v:nameU="SerialNumber" v:lbl="Seri Numarası" v:prompt="" v:type="0" v:format="" v:sortKey="Asset"
+						v:invis="false" v:ask="false" v:langID="1055" v:cal="0"/>
+				<v:cp v:nameU="Location" v:lbl="Konum" v:prompt="" v:type="0" v:format="" v:sortKey="Asset" v:invis="false"
+						v:ask="false" v:langID="1055" v:cal="0"/>
+				<v:cp v:nameU="Building" v:lbl="Bina" v:prompt="" v:type="0" v:format="" v:sortKey="Asset" v:invis="false"
+						v:ask="false" v:langID="1055" v:cal="0"/>
+				<v:cp v:nameU="Room" v:lbl="Oda" v:prompt="" v:type="0" v:format="" v:sortKey="Asset" v:invis="false" v:ask="false"
+						v:langID="1055" v:cal="0"/>
+				<v:cp v:nameU="Manufacturer" v:lbl="Üretici" v:prompt="" v:type="0" v:format="" v:sortKey="Equipment"
+						v:invis="false" v:ask="false" v:langID="1055" v:cal="0"/>
+				<v:cp v:nameU="ProductNumber" v:lbl="Ürün Numarası" v:prompt="" v:type="0" v:format="" v:sortKey="Equipment"
+						v:invis="false" v:ask="false" v:langID="1055" v:cal="0"/>
+				<v:cp v:nameU="PartNumber" v:lbl="Parça Numarası" v:prompt="" v:type="0" v:format="" v:sortKey="Equipment"
+						v:invis="false" v:ask="false" v:langID="1055" v:cal="0"/>
+				<v:cp v:nameU="ProductDescription" v:lbl="Ürün Açıklaması" v:prompt="" v:type="0" v:format="" v:sortKey="Equipment"
+						v:invis="false" v:ask="false" v:langID="1055" v:cal="0"/>
+				<v:cp v:nameU="NetworkName" v:lbl="Ağ Adı" v:prompt="" v:type="0" v:format="" v:sortKey="Network" v:invis="false"
+						v:ask="false" v:langID="1055" v:cal="0"/>
+				<v:cp v:nameU="IPAddress" v:lbl="IP Adresi" v:prompt="" v:type="0" v:format="" v:sortKey="Network" v:invis="false"
+						v:ask="false" v:langID="1055" v:cal="0"/>
+				<v:cp v:nameU="SubnetMask" v:lbl="Alt Ağ Maskesi" v:prompt="" v:type="0" v:format="" v:sortKey="Network"
+						v:invis="false" v:ask="false" v:langID="1055" v:cal="0"/>
+				<v:cp v:nameU="AdminInterface" v:lbl="Yönetim Arabirimi" v:prompt="" v:type="0" v:format="" v:sortKey="Network"
+						v:invis="false" v:ask="false" v:langID="1055" v:cal="0"/>
+				<v:cp v:nameU="NumberofPorts" v:lbl="Bağlantı Noktası Sayısı" v:prompt="" v:type="0" v:format=""
+						v:sortKey="Network" v:invis="false" v:ask="false" v:langID="1055" v:cal="0"/>
+				<v:cp v:nameU="CommunityString" v:lbl="Topluluk Dizesi" v:prompt="" v:type="0" v:format="" v:sortKey="Network"
+						v:invis="false" v:ask="false" v:langID="1055" v:cal="0"/>
+				<v:cp v:nameU="NetworkDescription" v:lbl="Ağ Açıklaması" v:prompt="" v:type="0" v:format="" v:sortKey="Network"
+						v:invis="false" v:ask="false" v:langID="1055" v:cal="0"/>
+				<v:cp v:nameU="MACAddress" v:lbl="MAC Adresi" v:prompt="" v:type="0" v:format="" v:sortKey="Network"
+						v:invis="false" v:ask="false" v:langID="1055" v:cal="0"/>
+				<v:cp v:nameU="CPU" v:lbl="CPU" v:prompt="" v:type="0" v:format="" v:sortKey="Workstation" v:invis="false"
+						v:ask="false" v:langID="1055" v:cal="0"/>
+				<v:cp v:nameU="Memory" v:lbl="Bellek" v:prompt="" v:type="0" v:format="" v:sortKey="Workstation" v:invis="false"
+						v:ask="false" v:langID="1055" v:cal="0"/>
+				<v:cp v:nameU="OperatingSystem" v:lbl="İşletim Sistemi" v:prompt="" v:type="0" v:format="" v:sortKey="Workstation"
+						v:invis="false" v:ask="false" v:langID="1055" v:cal="0"/>
+				<v:cp v:nameU="HardDriveSize" v:lbl="Sabit Sürücü Kapasitesi" v:prompt="" v:type="0" v:format=""
+						v:sortKey="Workstation" v:invis="false" v:ask="false" v:langID="1055" v:cal="0"/>
+				<v:cp v:nameU="Department" v:lbl="Bölüm" v:prompt="" v:type="0" v:format="" v:sortKey="" v:invis="false"
+						v:ask="false" v:langID="1055" v:cal="0"/>
+				<v:cp v:nameU="ShapeClass" v:lbl="ShapeClass" v:prompt="" v:type="0" v:format="" v:sortKey="" v:invis="true"
+						v:ask="false" v:langID="1055" v:cal="0" v:val="VT4(Ekipman)"/>
+				<v:cp v:nameU="BelongsTo" v:lbl="Sahibi" v:prompt="" v:type="0" v:format="" v:sortKey="" v:invis="true"
+						v:ask="false" v:langID="1055" v:cal="0"/>
+			</v:custProps>
+			<v:userDefs>
+				<v:ud v:nameU="visVersion" v:prompt="" v:val="VT0(15):26"/>
+				<v:ud v:nameU="ShapeClass" v:prompt="" v:val="VT0(5):26"/>
+				<v:ud v:nameU="SolSH" v:prompt="" v:val="VT15({BF0433D9-CD73-4EB5-8390-8653BE590246}):41"/>
+				<v:ud v:nameU="visLegendShape" v:prompt="" v:val="VT0(2):26"/>
+				<v:ud v:nameU="visIsConnected" v:prompt="" v:val="VT0(0):26"/>
+			</v:userDefs>
+			<title>Sanal sunucu.24</title>
+			<desc>IISNODEDMZ01 (172.16.80.181)</desc>
+			<g id="shape5-16" v:mID="5" v:groupContext="shape" transform="translate(13.3794,-2.5261)">
+				<title>Sayfa.5</title>
+				<rect x="0" y="532.123" width="38.681" height="63.1526" class="st6"/>
+			</g>
+			<g id="shape6-18" v:mID="6" v:groupContext="shape" transform="translate(42.2893,-29.4847)">
+				<title>Sayfa.6</title>
+				<ellipse cx="2.33826" cy="592.839" rx="2.33826" ry="2.43706" class="st7"/>
+			</g>
+			<g id="shape7-20" v:mID="7" v:groupContext="shape" transform="translate(28.0998,-12.8781)">
+				<title>Sayfa.7</title>
+				<v:userDefs>
+					<v:ud v:nameU="SurroundingRegionColor" v:prompt="" v:val="VT0(1):26"/>
+					<v:ud v:nameU="SurroundingRegionColor" v:prompt="" v:val="VT5(#5b9bd5)"/>
+				</v:userDefs>
+				<path d="M-0 595.28 L18.87 595.28 L18.87 593.7 L-0 593.7 L-0 595.28 ZM-0 590.49 L18.87 590.49 L18.87 588.91 L-0 588.91
+							 L-0 590.49 ZM-0 585.7 L18.87 585.7 L18.87 584.12 L-0 584.12 L-0 585.7 Z" class="st8"/>
+			</g>
+			<g id="shape8-23" v:mID="8" v:groupContext="shape" transform="translate(10.9557,1.27041E-06)">
+				<title>Sayfa.8</title>
+				<path d="M0 595.28 L43.53 595.28 L43.53 527.07 L0 527.07 L0 595.28" class="st9"/>
+			</g>
+			<g id="shape4-26" v:mID="4" v:groupContext="groupContent">
+				<v:textBlock v:margins="rect(4,4,4,4)" v:tabSpace="42.5197"/>
+				<v:textRect cx="32.7199" cy="611.277" width="74.59" height="32.0037"/>
+				<text x="1.09" y="608.28" class="st10" v:langID="1055"><v:paragraph v:horizAlign="1"/><v:tabList/>IISNODEDMZ01<v:newlineChar/><tspan
+							x="0.56" dy="1.2em" class="st3">(172.16.80.181)</tspan></text>			</g>
+		</g>
+		<g id="group9-29" transform="translate(467.19,-488.861)" v:mID="9" v:groupContext="group">
+			<title>Sayfa.9</title>
+			<g id="group10-30" v:mID="10" v:groupContext="group">
+				<v:custProps>
+					<v:cp v:nameU="AssetNumber" v:lbl="Varlık Numarası" v:prompt="" v:type="0" v:format="" v:sortKey="Asset"
+							v:invis="false" v:ask="false" v:langID="1055" v:cal="0"/>
+					<v:cp v:nameU="SerialNumber" v:lbl="Seri Numarası" v:prompt="" v:type="0" v:format="" v:sortKey="Asset"
+							v:invis="false" v:ask="false" v:langID="1055" v:cal="0"/>
+					<v:cp v:nameU="Location" v:lbl="Konum" v:prompt="" v:type="0" v:format="" v:sortKey="Asset" v:invis="false"
+							v:ask="false" v:langID="1055" v:cal="0"/>
+					<v:cp v:nameU="Building" v:lbl="Bina" v:prompt="" v:type="0" v:format="" v:sortKey="Asset" v:invis="false"
+							v:ask="false" v:langID="1055" v:cal="0"/>
+					<v:cp v:nameU="Room" v:lbl="Oda" v:prompt="" v:type="0" v:format="" v:sortKey="Asset" v:invis="false"
+							v:ask="false" v:langID="1055" v:cal="0"/>
+					<v:cp v:nameU="Manufacturer" v:lbl="Üretici" v:prompt="" v:type="0" v:format="" v:sortKey="Equipment"
+							v:invis="false" v:ask="false" v:langID="1055" v:cal="0"/>
+					<v:cp v:nameU="ProductNumber" v:lbl="Ürün Numarası" v:prompt="" v:type="0" v:format="" v:sortKey="Equipment"
+							v:invis="false" v:ask="false" v:langID="1055" v:cal="0"/>
+					<v:cp v:nameU="PartNumber" v:lbl="Parça Numarası" v:prompt="" v:type="0" v:format="" v:sortKey="Equipment"
+							v:invis="false" v:ask="false" v:langID="1055" v:cal="0"/>
+					<v:cp v:nameU="ProductDescription" v:lbl="Ürün Açıklaması" v:prompt="" v:type="0" v:format=""
+							v:sortKey="Equipment" v:invis="false" v:ask="false" v:langID="1055" v:cal="0"/>
+					<v:cp v:nameU="ShapeClass" v:lbl="ShapeClass" v:prompt="" v:type="0" v:format="" v:sortKey="" v:invis="true"
+							v:ask="false" v:langID="1055" v:cal="0" v:val="VT4(Ekipman)"/>
+					<v:cp v:nameU="ShapeType" v:lbl="ShapeType" v:prompt="" v:type="0" v:format="" v:sortKey="" v:invis="true"
+							v:ask="false" v:langID="1055" v:cal="0" v:val="VT4(Cihaz)"/>
+					<v:cp v:nameU="SubShapeType" v:lbl="SubShapeType" v:prompt="" v:type="0" v:format="" v:sortKey=""
+							v:invis="true" v:ask="false" v:langID="1055" v:cal="0" v:val="VT4(Güvenlik Duvarı)"/>
+				</v:custProps>
+				<v:userDefs>
+					<v:ud v:nameU="visVersion" v:prompt="" v:val="VT0(15):26"/>
+					<v:ud v:nameU="ShapeClass" v:prompt="" v:val="VT0(5):26"/>
+					<v:ud v:nameU="SolSH" v:prompt="" v:val="VT15({BF0433D9-CD73-4EB5-8390-8653BE590246}):41"/>
+					<v:ud v:nameU="visLegendShape" v:prompt="" v:val="VT0(2):26"/>
+				</v:userDefs>
+				<title>Güvenlik Duvarı</title>
+				<g id="shape11-31" v:mID="11" v:groupContext="shape" transform="translate(0.503383,-4.28809)">
+					<title>Sayfa.11</title>
+					<rect x="0" y="564.066" width="64.4331" height="31.21" class="st6"/>
+				</g>
+				<g id="shape12-33" v:mID="12" v:groupContext="shape" transform="translate(0.753383,-4.53809)">
+					<title>Sayfa.12</title>
+					<v:userDefs>
+						<v:ud v:nameU="SurroundingRegionColor" v:prompt="" v:val="VT0(1):26"/>
+						<v:ud v:nameU="SurroundingRegionColor" v:prompt="" v:val="VT5(#5b9bd5)"/>
+					</v:userDefs>
+					<path d="M0 590.89 L63.93 590.89" class="st11"/>
+					<path d="M0 586.5 L63.93 586.5" class="st11"/>
+					<path d="M0 582.11 L63.93 582.11" class="st11"/>
+					<path d="M0 577.73 L63.93 577.73" class="st11"/>
+					<path d="M0 573.34 L63.93 573.34" class="st11"/>
+					<path d="M0 568.95 L63.93 568.95" class="st11"/>
+					<path d="M15.98 595.28 L15.98 590.89" class="st11"/>
+					<path d="M31.97 595.28 L31.97 590.89" class="st11"/>
+					<path d="M47.95 595.28 L47.95 590.89" class="st11"/>
+					<path d="M7.99 590.89 L7.99 586.5" class="st11"/>
+					<path d="M23.97 590.89 L23.97 586.5" class="st11"/>
+					<path d="M39.96 590.89 L39.96 586.5" class="st11"/>
+					<path d="M55.94 590.89 L55.94 586.5" class="st11"/>
+					<path d="M15.98 586.5 L15.98 582.11" class="st11"/>
+					<path d="M31.97 586.5 L31.97 582.11" class="st11"/>
+					<path d="M47.95 586.5 L47.95 582.11" class="st11"/>
+					<path d="M7.99 582.11 L7.99 577.73" class="st11"/>
+					<path d="M23.97 582.11 L23.97 577.73" class="st11"/>
+					<path d="M39.96 582.11 L39.96 577.73" class="st11"/>
+					<path d="M55.94 582.11 L55.94 577.73" class="st11"/>
+					<path d="M15.98 577.73 L15.98 573.34" class="st11"/>
+					<path d="M31.97 577.73 L31.97 573.34" class="st11"/>
+					<path d="M47.95 577.73 L47.95 573.34" class="st11"/>
+					<path d="M7.99 573.34 L7.99 568.95" class="st11"/>
+					<path d="M23.97 573.34 L23.97 568.95" class="st11"/>
+					<path d="M39.96 573.34 L39.96 568.95" class="st11"/>
+					<path d="M55.94 573.34 L55.94 568.95" class="st11"/>
+					<path d="M15.98 568.95 L15.98 564.57" class="st11"/>
+					<path d="M31.97 568.95 L31.97 564.57" class="st11"/>
+					<path d="M47.95 568.95 L47.95 564.57" class="st11"/>
+				</g>
+			</g>
+			<g id="shape13-65" v:mID="13" v:groupContext="shape" transform="translate(0,-36.9215)">
+				<title>Sayfa.13</title>
+				<desc>Firewall</desc>
+				<v:textBlock v:margins="rect(4,4,4,4)" v:tabSpace="42.5197"/>
+				<v:textRect cx="29.3171" cy="589.865" width="58.64" height="10.8218"/>
+				<rect x="0" y="584.454" width="58.6342" height="10.8218" class="st12"/>
+				<text x="7" y="594.06" class="st13" v:langID="1055"><v:paragraph v:horizAlign="1"/><v:tabList/>Firewall</text>			</g>
+		</g>
+		<g id="shape14-68" v:mID="14" v:groupContext="shape" transform="translate(254.33,-189.354)">
+			<title>Sayfa.14</title>
+			<desc>Sunucu analizi: 172.16.80.181 adresindeki sistem, IISNODEDMZ0...</desc>
+			<v:textBlock v:margins="rect(4,4,4,4)" v:tabSpace="42.5197"/>
+			<v:textRect cx="110.803" cy="469.695" width="221.61" height="251.162"/>
+			<rect x="0" y="344.114" width="221.607" height="251.162" class="st14"/>
+			<text x="79.81" y="358.69" class="st15" v:langID="1055"><v:paragraph v:horizAlign="1"/><v:tabList/>Sunucu analizi:<v:newlineChar/><tspan
+						x="8.67" dy="1.2em" class="st16">172.16.80.181 adresindeki sistem, IISNODEDMZ01 </tspan><tspan x="36.53"
+						dy="1.2em" class="st16">adlı, muhtemelen DMZ segmentinde </tspan><tspan x="7.66" dy="1.2em" class="st16">konumlandırılmış bir Windows Server (10.0.26100) </tspan><tspan
+						x="9.2" dy="1.2em" class="st16">sunucusudur. Sunucu üzerinde Microsoft HTTPAPI </tspan><tspan x="15.12"
+						dy="1.2em" class="st16">tabanlı web servisleri (80, 443, 5985, 47001) ve </tspan><tspan x="16.1" dy="1.2em"
+						class="st16">ayrıca IIS 10.0 (8080/tcp) çalışmakta olup 8080 </tspan><tspan x="16.43" dy="1.2em"
+						class="st16">portunda erişim kısıtlı (403 Forbidden) bir web </tspan><tspan x="4.48" dy="1.2em"
+						class="st16">uygulaması bulunmaktadır; HTTP TRACE metodunun </tspan><tspan x="12" dy="1.2em" class="st16">açık olması ek sertleştirme ihtiyacına işaret eder. </tspan><tspan
+						x="17.83" dy="1.2em" class="st16">SMB (445), RPC (135 ve dinamik RPC portları), </tspan><tspan x="12.18"
+						dy="1.2em" class="st16">MSMQ (1801 ve ilgili RPC portları) ve RDP (3389) </tspan><tspan x="5.94" dy="1.2em"
+						class="st16">servislerinin açık olması, bu </tspan><tspan class="st16">sistemin hem uygulama </tspan><tspan
+						x="19.37" dy="1.2em" class="st16">hem de uzaktan yönetim amaçlı kullanıldığını </tspan><tspan x="10.94"
+						dy="1.2em" class="st16">göstermektedir. McAfee Agent (8081) ve olası bir </tspan><tspan x="16.57"
+						dy="1.2em" class="st16">izleme ajanı (10050) da aktif durumdadır. SMB </tspan><tspan x="13.15" dy="1.2em"
+						class="st16">imzalamanın zorunlu olmaması ve DMZ</tspan><tspan class="st16">’</tspan><tspan class="st16">de RDP/</tspan><tspan
+						x="8.34" dy="1.2em" class="st16">SMB gibi servislerin açık olması, güvenlik açısından </tspan><tspan
+						x="22.66" dy="1.2em" class="st16">dikkat edilmesi gereken bir yapı sunduğunu </tspan><tspan x="78.25"
+						dy="1.2em" class="st16">göstermektedir.</tspan></text>		</g>
+		<g id="shape15-93" v:mID="15" v:groupContext="shape" v:layerMember="0" transform="translate(441.008,-505.646)">
+			<title>Dinamik bağlayıcı</title>
+			<path d="M0 588.19 L20.65 588.19" class="st17"/>
+		</g>
+		<g id="shape16-99" v:mID="16" v:groupContext="shape" transform="translate(595.898,-389.857)">
+			<title>Sayfa.16</title>
+			<desc>DC1(10.100.3.11,12)</desc>
+			<v:textBlock v:margins="rect(4,4,4,4)" v:tabSpace="42.5197"/>
+			<v:textRect cx="46.6303" cy="586.94" width="93.27" height="16.6709"/>
+			<rect x="0" y="578.605" width="93.2606" height="16.6709" class="st19"/>
+			<text x="9.11" y="589.64" class="st20" v:langID="1055"><v:paragraph v:horizAlign="1"/><v:tabList/>DC1(10.100.3.11,12)</text>		</g>
+		<g id="shape18-102" v:mID="18" v:groupContext="shape" transform="translate(582.77,-315.08)">
+			<title>Sayfa.18</title>
+			<desc>appsql_listener.iett.gov.tr (10.100.0.48)</desc>
+			<v:textBlock v:margins="rect(4,4,4,4)" v:tabSpace="42.5197"/>
+			<v:textRect cx="62.7878" cy="580.255" width="125.58" height="30.0416"/>
+			<rect x="0" y="565.234" width="125.576" height="30.0416" class="st19"/>
+			<text x="15.47" y="577.55" class="st20" v:langID="1055"><v:paragraph v:horizAlign="1"/><v:tabList/>appsql_listener.iett.gov.tr<v:newlineChar/><tspan
+						x="38.4" dy="1.2em" class="st3">(10.100.0.48)</tspan></text>		</g>
+		<g id="shape19-106" v:mID="19" v:groupContext="shape" transform="translate(735.769,-307.062)">
+			<title>Çember.19</title>
+			<desc>MSSQL (1433)</desc>
+			<v:userDefs>
+				<v:ud v:nameU="visVersion" v:val="VT0(15):26"/>
+			</v:userDefs>
+			<v:textBlock v:margins="rect(4,4,4,4)" v:tabSpace="42.5197"/>
+			<v:textRect cx="22.6308" cy="572.237" width="39.61" height="34.558"/>
+			<path d="M0 572.24 A22.6308 23.0387 0 1 1 45.26 572.24 A22.6308 23.0387 0 1 1 0 572.24 Z" class="st21"/>
+			<text x="11.16" y="569.84" class="st22" v:langID="1055"><v:paragraph v:horizAlign="1"/><v:tabList/>MSSQL<v:newlineChar/><tspan
+						x="12.1" dy="1.2em" class="st3">(1433)</tspan></text>		</g>
+		<g id="shape20-110" v:mID="20" v:groupContext="shape" v:layerMember="0" transform="translate(708.345,-337.187)">
+			<title>Dinamik bağlayıcı.22</title>
+			<path d="M0 602.36 L21.38 602.36" class="st17"/>
+		</g>
+		<g id="group22-115" transform="translate(289.559,-488.861)" v:mID="22" v:groupContext="group">
+			<title>Sayfa.22</title>
+			<g id="group23-116" v:mID="23" v:groupContext="group">
+				<v:custProps>
+					<v:cp v:nameU="AssetNumber" v:lbl="Varlık Numarası" v:prompt="" v:type="0" v:format="" v:sortKey="Asset"
+							v:invis="false" v:ask="false" v:langID="1055" v:cal="0"/>
+					<v:cp v:nameU="SerialNumber" v:lbl="Seri Numarası" v:prompt="" v:type="0" v:format="" v:sortKey="Asset"
+							v:invis="false" v:ask="false" v:langID="1055" v:cal="0"/>
+					<v:cp v:nameU="Location" v:lbl="Konum" v:prompt="" v:type="0" v:format="" v:sortKey="Asset" v:invis="false"
+							v:ask="false" v:langID="1055" v:cal="0"/>
+					<v:cp v:nameU="Building" v:lbl="Bina" v:prompt="" v:type="0" v:format="" v:sortKey="Asset" v:invis="false"
+							v:ask="false" v:langID="1055" v:cal="0"/>
+					<v:cp v:nameU="Room" v:lbl="Oda" v:prompt="" v:type="0" v:format="" v:sortKey="Asset" v:invis="false"
+							v:ask="false" v:langID="1055" v:cal="0"/>
+					<v:cp v:nameU="Manufacturer" v:lbl="Üretici" v:prompt="" v:type="0" v:format="" v:sortKey="Equipment"
+							v:invis="false" v:ask="false" v:langID="1055" v:cal="0"/>
+					<v:cp v:nameU="ProductNumber" v:lbl="Ürün Numarası" v:prompt="" v:type="0" v:format="" v:sortKey="Equipment"
+							v:invis="false" v:ask="false" v:langID="1055" v:cal="0"/>
+					<v:cp v:nameU="PartNumber" v:lbl="Parça Numarası" v:prompt="" v:type="0" v:format="" v:sortKey="Equipment"
+							v:invis="false" v:ask="false" v:langID="1055" v:cal="0"/>
+					<v:cp v:nameU="ProductDescription" v:lbl="Ürün Açıklaması" v:prompt="" v:type="0" v:format=""
+							v:sortKey="Equipment" v:invis="false" v:ask="false" v:langID="1055" v:cal="0"/>
+					<v:cp v:nameU="ShapeClass" v:lbl="ShapeClass" v:prompt="" v:type="0" v:format="" v:sortKey="" v:invis="true"
+							v:ask="false" v:langID="1055" v:cal="0" v:val="VT4(Ekipman)"/>
+					<v:cp v:nameU="ShapeType" v:lbl="ShapeType" v:prompt="" v:type="0" v:format="" v:sortKey="" v:invis="true"
+							v:ask="false" v:langID="1055" v:cal="0" v:val="VT4(Cihaz)"/>
+					<v:cp v:nameU="SubShapeType" v:lbl="SubShapeType" v:prompt="" v:type="0" v:format="" v:sortKey=""
+							v:invis="true" v:ask="false" v:langID="1055" v:cal="0" v:val="VT4(Güvenlik Duvarı)"/>
+				</v:custProps>
+				<v:userDefs>
+					<v:ud v:nameU="visVersion" v:prompt="" v:val="VT0(15):26"/>
+					<v:ud v:nameU="ShapeClass" v:prompt="" v:val="VT0(5):26"/>
+					<v:ud v:nameU="SolSH" v:prompt="" v:val="VT15({BF0433D9-CD73-4EB5-8390-8653BE590246}):41"/>
+					<v:ud v:nameU="visLegendShape" v:prompt="" v:val="VT0(2):26"/>
+				</v:userDefs>
+				<title>Güvenlik Duvarı</title>
+				<g id="shape24-117" v:mID="24" v:groupContext="shape" transform="translate(0.503383,-4.28809)">
+					<title>Sayfa.24</title>
+					<rect x="0" y="564.066" width="64.4331" height="31.21" class="st6"/>
+				</g>
+				<g id="shape25-119" v:mID="25" v:groupContext="shape" transform="translate(0.753383,-4.53809)">
+					<title>Sayfa.25</title>
+					<v:userDefs>
+						<v:ud v:nameU="SurroundingRegionColor" v:prompt="" v:val="VT0(1):26"/>
+						<v:ud v:nameU="SurroundingRegionColor" v:prompt="" v:val="VT5(#5b9bd5)"/>
+					</v:userDefs>
+					<path d="M0 590.89 L63.93 590.89" class="st11"/>
+					<path d="M0 586.5 L63.93 586.5" class="st11"/>
+					<path d="M0 582.11 L63.93 582.11" class="st11"/>
+					<path d="M0 577.73 L63.93 577.73" class="st11"/>
+					<path d="M0 573.34 L63.93 573.34" class="st11"/>
+					<path d="M0 568.95 L63.93 568.95" class="st11"/>
+					<path d="M15.98 595.28 L15.98 590.89" class="st11"/>
+					<path d="M31.97 595.28 L31.97 590.89" class="st11"/>
+					<path d="M47.95 595.28 L47.95 590.89" class="st11"/>
+					<path d="M7.99 590.89 L7.99 586.5" class="st11"/>
+					<path d="M23.97 590.89 L23.97 586.5" class="st11"/>
+					<path d="M39.96 590.89 L39.96 586.5" class="st11"/>
+					<path d="M55.94 590.89 L55.94 586.5" class="st11"/>
+					<path d="M15.98 586.5 L15.98 582.11" class="st11"/>
+					<path d="M31.97 586.5 L31.97 582.11" class="st11"/>
+					<path d="M47.95 586.5 L47.95 582.11" class="st11"/>
+					<path d="M7.99 582.11 L7.99 577.73" class="st11"/>
+					<path d="M23.97 582.11 L23.97 577.73" class="st11"/>
+					<path d="M39.96 582.11 L39.96 577.73" class="st11"/>
+					<path d="M55.94 582.11 L55.94 577.73" class="st11"/>
+					<path d="M15.98 577.73 L15.98 573.34" class="st11"/>
+					<path d="M31.97 577.73 L31.97 573.34" class="st11"/>
+					<path d="M47.95 577.73 L47.95 573.34" class="st11"/>
+					<path d="M7.99 573.34 L7.99 568.95" class="st11"/>
+					<path d="M23.97 573.34 L23.97 568.95" class="st11"/>
+					<path d="M39.96 573.34 L39.96 568.95" class="st11"/>
+					<path d="M55.94 573.34 L55.94 568.95" class="st11"/>
+					<path d="M15.98 568.95 L15.98 564.57" class="st11"/>
+					<path d="M31.97 568.95 L31.97 564.57" class="st11"/>
+					<path d="M47.95 568.95 L47.95 564.57" class="st11"/>
+				</g>
+			</g>
+			<g id="shape26-151" v:mID="26" v:groupContext="shape" transform="translate(0,-36.9215)">
+				<title>Sayfa.26</title>
+				<desc>Firewall</desc>
+				<v:textBlock v:margins="rect(4,4,4,4)" v:tabSpace="42.5197"/>
+				<v:textRect cx="29.3171" cy="589.865" width="58.64" height="10.8218"/>
+				<rect x="0" y="584.454" width="58.6342" height="10.8218" class="st12"/>
+				<text x="7" y="594.06" class="st13" v:langID="1055"><v:paragraph v:horizAlign="1"/><v:tabList/>Firewall</text>			</g>
+		</g>
+		<g id="shape27-154" v:mID="27" v:groupContext="shape" v:layerMember="0" transform="translate(397.48,-505.646)">
+			<title>Dinamik bağlayıcı.38</title>
+			<path d="M0 588.19 L-36.94 588.19" class="st17"/>
+		</g>
+		<g id="shape28-159" v:mID="28" v:groupContext="shape" transform="translate(64.9134,405.921) rotate(-90)">
+			<title>Şeritli Ok</title>
+			<v:userDefs>
+				<v:ud v:nameU="visVersion" v:prompt="" v:val="VT0(15):26"/>
+			</v:userDefs>
+			<path d="M6 586.77 L23.46 586.77 L23.46 578.27 L37.63 595.28 L23.46 612.28 L23.46 603.78 L6 603.78 L6 586.77 ZM2.4 586.77
+						 L4.8 586.77 L4.8 603.78 L2.4 603.78 L2.4 586.77 ZM0 586.77 L1.2 586.77 L1.2 603.78 L0 603.78 L0 586.77 Z"
+					class="st21"/>
+		</g>
+		<g id="shape30-161" v:mID="30" v:groupContext="shape" transform="translate(701.205,-378.705)">
+			<title>Çember.133</title>
+			<desc>LDAP (389-3268)</desc>
+			<v:userDefs>
+				<v:ud v:nameU="visVersion" v:val="VT0(15):26"/>
+			</v:userDefs>
+			<v:textBlock v:margins="rect(4,4,4,4)" v:tabSpace="42.5197"/>
+			<v:textRect cx="19.4882" cy="575.787" width="34.11" height="29.2323"/>
+			<path d="M0 575.79 A19.4882 19.4882 0 0 1 38.98 575.79 A19.4882 19.4882 0 1 1 0 575.79 Z" class="st21"/>
+			<text x="10.96" y="568.59" class="st22" v:langID="1055"><v:paragraph v:horizAlign="1"/><v:tabList/>LDAP<v:newlineChar/><tspan
+						x="10.97" dy="1.2em" class="st3">(389</tspan>-<tspan x="10.17" dy="1.2em" class="st3">3268)</tspan></text>		</g>
+		<g id="shape36-166" v:mID="36" v:groupContext="shape" transform="translate(582.77,-356.058)">
+			<title>Sayfa.36</title>
+			<desc>ORACLE(10.105.0.71,78, 81,83,84)</desc>
+			<v:textBlock v:margins="rect(4,4,4,4)" v:tabSpace="42.5197"/>
+			<v:textRect cx="62.7878" cy="583.845" width="125.58" height="22.8618"/>
+			<rect x="0" y="572.414" width="125.576" height="22.8618" class="st19"/>
+			<text x="18.45" y="581.14" class="st20" v:langID="1055"><v:paragraph v:horizAlign="1"/><v:tabList/>ORACLE(10.105.0.71,78,<v:newlineChar/><tspan
+						x="45.49" dy="1.2em" class="st3">81,83,84)</tspan></text>		</g>
+		<g id="shape38-170" v:mID="38" v:groupContext="shape" transform="translate(735.769,-344.451)">
+			<title>Çember.60</title>
+			<desc>ORACLE (1521)</desc>
+			<v:userDefs>
+				<v:ud v:nameU="visVersion" v:val="VT0(15):26"/>
+			</v:userDefs>
+			<v:textBlock v:margins="rect(4,4,4,4)" v:tabSpace="42.5197"/>
+			<v:textRect cx="22.6308" cy="572.237" width="39.61" height="34.558"/>
+			<path d="M0 572.24 A22.6308 23.0387 0 1 1 45.26 572.24 A22.6308 23.0387 0 1 1 0 572.24 Z" class="st21"/>
+			<text x="9.73" y="569.84" class="st22" v:langID="1055"><v:paragraph v:horizAlign="1"/><v:tabList/>ORACLE<v:newlineChar/><tspan
+						x="12.1" dy="1.2em" class="st3">(1521)</tspan></text>		</g>
+		<g id="shape39-174" v:mID="39" v:groupContext="shape" v:layerMember="0" transform="translate(708.345,-360.403)">
+			<title>Dinamik bağlayıcı.61</title>
+			<path d="M0 588.19 L21.38 588.19" class="st17"/>
+		</g>
+		<g id="shape40-179" v:mID="40" v:groupContext="shape" transform="translate(596.238,-451.087)">
+			<title>Sayfa.40</title>
+			<desc>F5(10.100.24.14)</desc>
+			<v:textBlock v:margins="rect(4,4,4,4)" v:tabSpace="42.5197"/>
+			<v:textRect cx="46.6303" cy="586.94" width="93.27" height="16.6709"/>
+			<rect x="0" y="578.605" width="93.2606" height="16.6709" class="st19"/>
+			<text x="15.62" y="589.64" class="st20" v:langID="1055"><v:paragraph v:horizAlign="1"/><v:tabList/>F5(10.100.24.14)</text>		</g>
+		<g id="shape41-182" v:mID="41" v:groupContext="shape" transform="translate(701.545,-444.473)">
+			<title>Çember.63</title>
+			<desc>SSL (443)</desc>
+			<v:userDefs>
+				<v:ud v:nameU="visVersion" v:val="VT0(15):26"/>
+			</v:userDefs>
+			<v:textBlock v:margins="rect(4,4,4,4)" v:tabSpace="42.5197"/>
+			<v:textRect cx="14.7549" cy="580.255" width="25.83" height="22.5312"/>
+			<path d="M0 580.25 A14.7549 15.0208 0 0 1 29.51 580.25 A14.7549 15.0208 0 1 1 0 580.25 Z" class="st21"/>
+			<text x="9.4" y="577.85" class="st22" v:langID="1055"><v:paragraph v:horizAlign="1"/><v:tabList/>SSL<v:newlineChar/><tspan
+						x="6.25" dy="1.2em" class="st3">(443)</tspan></text>		</g>
+		<g id="shape42-186" v:mID="42" v:groupContext="shape" v:layerMember="0" transform="translate(688.435,-452.371)">
+			<title>Dinamik bağlayıcı.64</title>
+			<path d="M1.06 588.22 L5.56 588.22 L5.56 588.15 L7.07 588.15" class="st17"/>
+		</g>
+		<g id="shape43-191" v:mID="43" v:groupContext="shape" v:layerMember="0" transform="translate(532.126,-508.754)">
+			<title>Dinamik bağlayıcı.65</title>
+			<path d="M0 595.28 L36.5 595.28 L36.5 644.61 L58.07 644.61" class="st17"/>
+		</g>
+		<g id="shape53-196" v:mID="53" v:groupContext="shape" transform="translate(596.238,-430.299)">
+			<title>Sayfa.53</title>
+			<desc>F5(10.100.24.12)</desc>
+			<v:textBlock v:margins="rect(4,4,4,4)" v:tabSpace="42.5197"/>
+			<v:textRect cx="46.6303" cy="586.94" width="93.27" height="16.6709"/>
+			<rect x="0" y="578.605" width="93.2606" height="16.6709" class="st19"/>
+			<text x="15.62" y="589.64" class="st20" v:langID="1055"><v:paragraph v:horizAlign="1"/><v:tabList/>F5(10.100.24.12)</text>		</g>
+		<g id="shape56-199" v:mID="56" v:groupContext="shape" transform="translate(28.7716,-18)">
+			<title>Sayfa.56</title>
+			<desc>Açık portlar: 80 (HTTP – Microsoft HTTPAPI), 135 (MS RPC), 13...</desc>
+			<v:textBlock v:margins="rect(4,4,4,4)" v:tabSpace="42.5197"/>
+			<v:textRect cx="372.402" cy="561.173" width="744.81" height="68.2048"/>
+			<rect x="0" y="527.071" width="744.803" height="68.2048" class="st6"/>
+			<text x="342.57" y="543.17" class="st2" v:langID="1055"><v:paragraph v:horizAlign="1"/><v:tabList/>Açık portlar:<v:newlineChar/><tspan
+						x="13.24" dy="1.2em" class="st3">80 (HTTP </tspan>– Microsoft HTTPAPI), 135 (MS RPC), 139 (NetBIOS), 443 (HTTPS – Microsoft HTTPAPI), 445 (SMB), 1801 (MSMQ), 2103–2105–2107 (RPC / <tspan
+						x="4.05" dy="1.2em" class="st3">MSMQ), 3389 (RDP), 5985 (WinRM HTTP), 8080 (HTTP </tspan>– IIS 10.0), 8081 (McAfee Agent), 10050 (TCP Wrapped / izleme ajanı), 47001 (Windows Yönetim <tspan
+						x="238.51" dy="1.2em" class="st3">HTTPAPI), </tspan>49664–49674–55640 (Dinamik RPC Portları).</text>		</g>
+		<g id="shape57-205" v:mID="57" v:groupContext="shape" transform="translate(18,-315.354)">
+			<title>Sayfa.57</title>
+			<rect v:rectContext="foreign" x="0" y="374.026" width="224.25" height="221.25" class="st12"/>
+			<image x="0" y="374.026" width="224.25" height="221.25" preserveAspectRatio="none" xlink:href="data:image/png;base64,
+						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
+						SZMXJD/s2KpdJuMsCNnTap5V2E8Oq/zem28qYzVlyhRV1u/NCbj9pakqMY6xmjBhAk7//Qps3GRvNnliKquptKaSW56Rt0HwqzOV163k
+						Cle57t2ZYwTLys1YeZUTQfKzGpub0w8AXVerXhAaT157VmyovppbhM9GjkLt/nXKGDG8aa7D5Wysxo4ZjWnjpuHQIbXF7Q17M649KsY0
+						Oppn4FLSTHWOwurHPstAfR5KjldfxpSrGQDf8Rkz7+BXzmSSH3ZsC9ODFYTGkNd7VoUl81C6ag3eeWMoqjeUY+zYsar82bcm4Ly+X+GU
+						3rNVnsvZWI2bPBUzSkow8gurnRfsDXgpUGopaCleQYHlGbi9g8x1lmhTeTmf8uKsPpYRU2UdClCg7ZvxHFW5Np+kLGUk7Pq0MYLyDn7l
+						Nr7yiTBju5a2jjEThMaT157VR5+PxOKpE7Hqzmtwb8fz8eafrL9ZWF9fp7wrx8N6e+hQrPpqJv7Ury/WV1Vj4F/eUuW5EaTMGRRdEIRm
+						I689q1Hjx+P9X56P5ef9HMuuPR8vX94R/R97BPc/1g9X3dcfV3R9AQO7/wH9LuyAjy88DUt+8wvMGPA83vj4M1tCLoixEoR8JK89q9ra
+						Wnzy1ht47YzTMOtXHbGy+z3Yu2k9ag4dwv79+7GvpgbrJ4/BkivPxZIOp2L6vxyL93v1wt69+2wJuSDGShDykbz2rJjDhw9jx/ZtGP/5
+						cLzYty8ef+JZ9HluIJ4aMAh9Br6MJ7oU4PUej2LmmDHYuX076vhlY0EQ2hx57VkJgiA45L1nJQiCwIhnJQhCJIissdpXvRgrx3dNSyvG
+						dsG+HQHvBQqCEEny3ljt3VWN2cPuTUurpz2K3ctTz1P1+hy47L0yVbZ4Uk+7VBCEtkLeG6sVM3qjZvUAslrjXGnS252xa8EznimjsfJ6
+						ylo9nS2PJQhCvpL3xmpd8fOWgap81Upb/ghUDVFlI//0O2W0Zg+735UCjZXrnTaC8oOTGQd5nkoQ8o28N1arC/sDe74gQzUY2EiJP9lY
+						cdo1wjOxAfPF80VmEzFWgpBvNKuxGjJkCJ577jk0GH8RhvNczvWZWDnrWWD3SGD9yyo1rHsZ06cPQMFrj6HzC5/hvb8OQs3KF636tS9i
+						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
+						+P9DMUKBcTxtRQAAAABJRU5ErkJggg=="/>
+			<rect v:rectContext="foreign" x="0" y="374.026" width="224.25" height="221.25" class="st12"/>
+		</g>
+		<g id="shape58-209" v:mID="58" v:groupContext="shape" transform="translate(601.435,-517.849)">
+			<title>Sayfa.58</title>
+			<desc>WAN</desc>
+			<v:textBlock v:margins="rect(4,4,4,4)" v:tabSpace="42.5197"/>
+			<v:textRect cx="46.6303" cy="586.94" width="93.27" height="16.6709"/>
+			<rect x="0" y="578.605" width="93.2606" height="16.6709" class="st19"/>
+			<text x="37.12" y="589.64" class="st20" v:langID="1055"><v:paragraph v:horizAlign="1"/><v:tabList/>WAN</text>		</g>
+		<g id="shape59-212" v:mID="59" v:groupContext="shape" v:layerMember="0" transform="translate(532.126,-508.754)">
+			<title>Dinamik bağlayıcı.59</title>
+			<path d="M0 595.28 L36.5 595.28 L36.5 577.85 L63.27 577.85" class="st17"/>
+		</g>
+		<g id="shape60-217" v:mID="60" v:groupContext="shape" transform="translate(794.38,-501.165)">
+			<title>Çember.60</title>
+			<desc>SSL (443)</desc>
+			<v:userDefs>
+				<v:ud v:nameU="visVersion" v:val="VT0(15):26"/>
+			</v:userDefs>
+			<v:textBlock v:margins="rect(4,4,4,4)" v:tabSpace="42.5197"/>
+			<v:textRect cx="14.7549" cy="580.255" width="25.83" height="22.5312"/>
+			<path d="M0 580.25 A14.7549 15.0208 0 0 1 29.51 580.25 A14.7549 15.0208 0 1 1 0 580.25 Z" class="st21"/>
+			<text x="9.4" y="577.85" class="st22" v:langID="1055"><v:paragraph v:horizAlign="1"/><v:tabList/>SSL<v:newlineChar/><tspan
+						x="6.25" dy="1.2em" class="st3">(443)</tspan></text>		</g>
+		<g id="shape61-221" v:mID="61" v:groupContext="shape" v:layerMember="0" transform="translate(694.696,-521.609)">
+			<title>Dinamik bağlayıcı.61</title>
+			<path d="M0 590.7 L9 590.7 L9 576.68 L114.44 576.68 L114.44 579.64" class="st17"/>
+		</g>
+		<g id="shape62-226" v:mID="62" v:groupContext="shape" transform="translate(601.435,-478.63)">
+			<title>Sayfa.62</title>
+			<desc>KurWeb_MySQL_N1 (10.100.0.80)</desc>
+			<v:textBlock v:margins="rect(4,4,4,4)" v:tabSpace="42.5197"/>
+			<v:textRect cx="46.6303" cy="581.102" width="93.27" height="28.3465"/>
+			<rect x="0" y="566.929" width="93.2606" height="28.3465" class="st19"/>
+			<text x="9.21" y="578.4" class="st20" v:langID="1055"><v:paragraph v:horizAlign="1"/><v:tabList/>KurWeb_MySQL_N1<v:newlineChar/><tspan
+						x="22.25" dy="1.2em" class="st3">(10.100.0.80)</tspan></text>		</g>
+		<g id="shape63-230" v:mID="63" v:groupContext="shape" transform="translate(712.621,-473.315)">
+			<title>Circle.60</title>
+			<desc>Mysql (6500)</desc>
+			<v:userDefs>
+				<v:ud v:nameU="visVersion" v:val="VT0(15):26"/>
+			</v:userDefs>
+			<v:textBlock v:margins="rect(4,4,4,4)" v:tabSpace="42.5197"/>
+			<v:textRect cx="19.1431" cy="575.787" width="33.51" height="29.2323"/>
+			<path d="M0 575.79 A19.1431 19.4882 0 0 1 38.29 575.79 A19.1431 19.4882 0 1 1 0 575.79 Z" class="st21"/>
+			<text x="9.33" y="573.39" class="st22" v:langID="1055"><v:paragraph v:horizAlign="1"/><v:tabList/>Mysql<v:newlineChar/><tspan
+						x="8.61" dy="1.2em" class="st3">(6500)</tspan></text>		</g>
+		<g id="shape64-234" v:mID="64" v:groupContext="shape" v:layerMember="0" transform="translate(694.696,-485.717)">
+			<title>Dinamik bağlayıcı.64</title>
+			<path d="M0 588.19 L11.88 588.19" class="st17"/>
+		</g>
+		<g id="shape65-239" v:mID="65" v:groupContext="shape" v:layerMember="0" transform="translate(532.126,-512.733)">
+			<title>Dinamik bağlayıcı.65</title>
+			<path d="M0 595.28 L34.14 595.28 A2.3622 2.3622 0 0 1 38.87 595.28 L43.59 595.28 L43.59 615.2 L63.27 615.2"
+					class="st17"/>
+		</g>
+		<g id="shape66-244" v:mID="66" v:groupContext="shape" transform="translate(751.86,-501.165)">
+			<title>Çember.66</title>
+			<desc>Http (80)</desc>
+			<v:userDefs>
+				<v:ud v:nameU="visVersion" v:val="VT0(15):26"/>
+			</v:userDefs>
+			<v:textBlock v:margins="rect(4,4,4,4)" v:tabSpace="42.5197"/>
+			<v:textRect cx="14.7549" cy="580.255" width="25.83" height="22.5312"/>
+			<path d="M0 580.25 A14.7549 15.0208 0 0 1 29.51 580.25 A14.7549 15.0208 0 1 1 0 580.25 Z" class="st21"/>
+			<text x="7.48" y="577.85" class="st22" v:langID="1055"><v:paragraph v:horizAlign="1"/><v:tabList/>Http<v:newlineChar/><tspan
+						x="8.27" dy="1.2em" class="st3">(80)</tspan></text>		</g>
+		<g id="shape67-248" v:mID="67" v:groupContext="shape" v:layerMember="0" transform="translate(694.696,-519.525)">
+			<title>Dinamik bağlayıcı.67</title>
+			<path d="M0 592.78 L9 592.78 L9 574.59 L71.92 574.59 L71.92 577.55" class="st17"/>
+		</g>
+		<g id="shape68-253" v:mID="68" v:groupContext="shape" v:layerMember="0" transform="translate(532.126,-508.754)">
+			<title>Dinamik bağlayıcı.68</title>
+			<path d="M0 595.28 L36.5 595.28 L36.5 705.84 L57.73 705.84" class="st17"/>
+		</g>
+		<g id="shape69-258" v:mID="69" v:groupContext="shape" v:layerMember="0" transform="translate(688.095,-391.106)">
+			<title>Dinamik bağlayıcı.69</title>
+			<path d="M1.06 588.19 L7.07 588.19" class="st17"/>
+		</g>
+		<g id="shape70-263" v:mID="70" v:groupContext="shape" v:layerMember="0" transform="translate(532.126,-508.754)">
+			<title>Dinamik bağlayıcı.70</title>
+			<path d="M0 595.28 L36.5 595.28 L36.5 736.54 L44.6 736.54" class="st17"/>
+		</g>
+		<g id="shape71-268" v:mID="71" v:groupContext="shape" v:layerMember="0" transform="translate(532.126,-508.754)">
+			<title>Dinamik bağlayıcı.71</title>
+			<path d="M0 595.28 L36.5 595.28 L36.5 773.93 L44.6 773.93" class="st17"/>
+		</g>
+		<g id="shape72-273" v:mID="72" v:groupContext="shape" transform="translate(582.77,-274.101)">
+			<title>Sayfa.72</title>
+			<desc>PERSONELKUNYE(10.100.2.122)</desc>
+			<v:textBlock v:margins="rect(4,4,4,4)" v:tabSpace="42.5197"/>
+			<v:textRect cx="62.7878" cy="580.255" width="125.58" height="30.0416"/>
+			<rect x="0" y="565.234" width="125.576" height="30.0416" class="st19"/>
+			<text x="4.6" y="582.95" class="st20" v:langID="1055"><v:paragraph v:horizAlign="1"/><v:tabList/>PERSONELKUNYE(10.100.2.122)</text>		</g>
+		<g id="shape73-276" v:mID="73" v:groupContext="shape" transform="translate(735.769,-274.101)">
+			<title>Çember.73</title>
+			<desc>SSL (443)</desc>
+			<v:userDefs>
+				<v:ud v:nameU="visVersion" v:val="VT0(15):26"/>
+			</v:userDefs>
+			<v:textBlock v:margins="rect(4,4,4,4)" v:tabSpace="42.5197"/>
+			<v:textRect cx="14.7549" cy="580.255" width="25.83" height="22.5312"/>
+			<path d="M0 580.25 A14.7549 15.0208 0 0 1 29.51 580.25 A14.7549 15.0208 0 1 1 0 580.25 Z" class="st21"/>
+			<text x="9.4" y="577.85" class="st22" v:langID="1055"><v:paragraph v:horizAlign="1"/><v:tabList/>SSL<v:newlineChar/><tspan
+						x="6.25" dy="1.2em" class="st3">(443)</tspan></text>		</g>
+		<g id="shape74-280" v:mID="74" v:groupContext="shape" v:layerMember="0" transform="translate(708.345,-282.035)">
+			<title>Dinamik bağlayıcı.74</title>
+			<path d="M0 588.19 L21.38 588.19" class="st17"/>
+		</g>
+		<g id="shape75-285" v:mID="75" v:groupContext="shape" v:layerMember="0" transform="translate(499.91,-508.754)">
+			<title>Dinamik bağlayıcı.75</title>
+			<path d="M0 595.28 L68.72 595.28 L68.72 814.91 L76.82 814.91" class="st17"/>
+		</g>
+		<g id="shape76-290" v:mID="76" v:groupContext="shape" transform="translate(582.77,-234.928)">
+			<title>Sayfa.76</title>
+			<desc>SAPERPPROD(10.100.2.139)</desc>
+			<v:textBlock v:margins="rect(4,4,4,4)" v:tabSpace="42.5197"/>
+			<v:textRect cx="62.7878" cy="580.255" width="125.58" height="30.0416"/>
+			<rect x="0" y="565.234" width="125.576" height="30.0416" class="st19"/>
+			<text x="11.65" y="582.95" class="st20" v:langID="1055"><v:paragraph v:horizAlign="1"/><v:tabList/>SAPERPPROD(10.100.2.139)</text>		</g>
+		<g id="shape77-293" v:mID="77" v:groupContext="shape" transform="translate(720.017,-225.104)">
+			<title>Circle.73</title>
+			<desc>Sap (8000)</desc>
+			<v:userDefs>
+				<v:ud v:nameU="visVersion" v:val="VT0(15):26"/>
+			</v:userDefs>
+			<v:textBlock v:margins="rect(4,4,4,4)" v:tabSpace="42.5197"/>
+			<v:textRect cx="22.6308" cy="572.237" width="39.61" height="34.558"/>
+			<path d="M0 572.24 A22.6308 23.0387 0 0 1 45.26 572.24 A22.6308 23.0387 0 1 1 0 572.24 Z" class="st21"/>
+			<text x="16.78" y="569.84" class="st22" v:langID="1055"><v:paragraph v:horizAlign="1"/><v:tabList/>Sap<v:newlineChar/><tspan
+						x="12.1" dy="1.2em" class="st3">(8000)</tspan></text>		</g>
+		<g id="shape78-297" v:mID="78" v:groupContext="shape" v:layerMember="0" transform="translate(532.126,-508.754)">
+			<title>Dinamik bağlayıcı.78</title>
+			<path d="M0 595.28 L36.5 595.28 L36.5 854.08 L44.6 854.08" class="st17"/>
+		</g>
+		<g id="shape79-302" v:mID="79" v:groupContext="shape" v:layerMember="0" transform="translate(707.094,-256.132)">
+			<title>Dinamik bağlayıcı.79</title>
+			<path d="M1.25 601.46 L2.61 601.46 L2.61 603.26 L6.88 603.26" class="st17"/>
+		</g>
+		<g id="shape80-307" v:mID="80" v:groupContext="shape" v:layerMember="0" transform="translate(532.126,-508.754)">
+			<title>Dinamik bağlayıcı.80</title>
+			<path d="M0 595.28 L36.5 595.28 L36.5 665.39 L58.07 665.39" class="st17"/>
+		</g>
+		<g id="shape81-312" v:mID="81" v:groupContext="shape" v:layerMember="0" transform="translate(688.435,-438.635)">
+			<title>Dinamik bağlayıcı.81</title>
+			<path d="M1.06 595.28 L5.56 595.28 L5.56 574.42 L7.07 574.42" class="st17"/>
+		</g>
+		<g id="shape82-317" v:mID="82" v:groupContext="shape" transform="translate(735.769,-375.562)">
+			<title>Çember.77</title>
+			<desc>Kerberos (88)</desc>
+			<v:userDefs>
+				<v:ud v:nameU="visVersion" v:val="VT0(15):26"/>
+			</v:userDefs>
+			<v:textBlock v:margins="rect(4,4,4,4)" v:tabSpace="42.5197"/>
+			<v:textRect cx="22.6308" cy="572.645" width="39.61" height="33.9462"/>
+			<path d="M0 572.64 A22.6308 22.6308 0 0 1 45.26 572.64 A22.6308 22.6308 0 1 1 0 572.64 Z" class="st21"/>
+			<text x="8.01" y="570.24" class="st22" v:langID="1055"><v:paragraph v:horizAlign="1"/><v:tabList/>Kerberos<v:newlineChar/><tspan
+						x="16.15" dy="1.2em" class="st3">(88)</tspan></text>		</g>
+		<g id="shape83-321" v:mID="83" v:groupContext="shape" transform="translate(595.898,-411.131)">
+			<title>Sayfa.83</title>
+			<desc>F5(10.100.24.22)</desc>
+			<v:textBlock v:margins="rect(4,4,4,4)" v:tabSpace="42.5197"/>
+			<v:textRect cx="46.6303" cy="586.94" width="93.27" height="16.6709"/>
+			<rect x="0" y="578.605" width="93.2606" height="16.6709" class="st19"/>
+			<text x="15.62" y="589.64" class="st20" v:langID="1055"><v:paragraph v:horizAlign="1"/><v:tabList/>F5(10.100.24.22)</text>		</g>
+		<g id="shape84-324" v:mID="84" v:groupContext="shape" v:layerMember="0" transform="translate(532.126,-508.754)">
+			<title>Dinamik bağlayıcı.84</title>
+			<path d="M0 595.28 L36.5 595.28 L36.5 684.56 L57.73 684.56" class="st17"/>
+		</g>
+		<g id="shape85-329" v:mID="85" v:groupContext="shape" v:layerMember="0" transform="translate(688.265,-419.466)">
+			<title>Dinamik bağlayıcı.85</title>
+			<path d="M0.89 595.28 L5.39 595.28 L5.39 555.25 L7.24 555.25" class="st17"/>
+		</g>
+	</g>
+</svg>

@@ -1,0 +1,41 @@
+[
+  {
+    "Server": "IETTMSSQLDB01",
+    "Ip": "10.100.0.36",
+    "File": "IETTMSSQLDB01(10.100.0.36).svg",
+    "Dept": "VERİ YÖNETİM ŞEFLİĞİ",
+    "Version": "v1",
+    "Date": "2026-01-28",
+    "User": "admin",
+    "Platform": "Windows",
+    "Critical": "Yüksek",
+    "Note": "\r\n23.10.2025 tarihinde Mehmet Oğuzhan MAMALI tarafından kurulumu sağlanmıştır. Eski MS_SQL(10.100.0.35) sunucusunun HA yapıya geçişi amacıyla kurulumları sağlanmıştır.\r\n\r\nFailover CLUSTER IP Adresi: 10.100.0.38\r\nLISTENER IP Adresi : 10.100.0.35",
+    "Name": "IETTMSSQLDB01"
+  },
+  {
+    "Server": "IETTMSSQLDB02",
+    "Ip": "10.100.0.37",
+    "File": "IETTMSSQLDB02(10.100.0.37).svg",
+    "Dept": "VERİ YÖNETİM ŞEFLİĞİ",
+    "Version": "v1",
+    "Date": "2026-01-28",
+    "User": "admin",
+    "Platform": "Windows",
+    "Critical": "Yüksek",
+    "Note": "\r\n23.10.2025 tarihinde Mehmet Oğuzhan MAMALI tarafından kurulumu sağlanmıştır. Eski MS_SQL(10.100.0.35) sunucusunun HA yapıya geçişi amacıyla kurulumları sağlanmıştır.\r\n\r\nFailover CLUSTER IP Adresi: 10.100.0.38\r\nLISTENER IP Adresi : 10.100.0.35",
+    "Name": "IETTMSSQLDB02"
+  },
+  {
+    "Server": "IISNODEDMZ01",
+    "Ip": "172.16.80.181",
+    "File": "IISNODEDMZ01(172.16.80.181).svg",
+    "Dept": "YAZILIM ŞEFLİĞİ",
+    "Version": "v1",
+    "Date": "2026-01-28",
+    "User": "admin",
+    "Platform": "Windows",
+    "Critical": "Yüksek",
+    "Note": "IISNODEDMZ01 / 172.16.80.181\r\n\r\n10.09.2025 tarihinde Merkezi IIS Node DMZ yapısının oluşturulması amacıyla Çağrı KÖLÜK tarafından kurulumu yapılmıştır.",
+    "Name": "IISNODEDMZ01"
+  }
+]

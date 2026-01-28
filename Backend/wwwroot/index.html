@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Servis Topoloji - Güvenli Giriş</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Arial', sans-serif;
+        }
+        
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('/network.jpg') no-repeat center center fixed;
+            background-size: cover;
+            padding: 20px;
+            color: #333;
+        }
+        
+        .login-container {
+            width: 100%;
+            max-width: 420px;
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.3);
+            padding: 40px 35px;
+            text-align: center;
+            border-top: 5px solid #3498db;
+        }
+        
+        .logo {
+            margin-bottom: 25px;
+        }
+        
+        .logo h1 {
+            color: #2c3e50;
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+        
+        .logo p {
+            color: #7f8c8d;
+            font-size: 16px;
+            font-weight: 500;
+        }
+        
+        .login-form {
+            margin-top: 10px;
+        }
+        
+        .form-group {
+            margin-bottom: 22px;
+            text-align: left;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 15px;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 14px 15px;
+            border: 1.5px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background-color: #f9f9f9;
+        }
+        
+        .form-group input:focus {
+            border-color: #3498db;
+            outline: none;
+            background-color: white;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+        
+        .login-button {
+            width: 100%;
+            padding: 15px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+        
+        .login-button:hover {
+            background-color: #2980b9;
+        }
+        
+        .forgot-password {
+            margin-top: 22px;
+            margin-bottom: 30px;
+        }
+        
+        .forgot-password a {
+            color: #3498db;
+            text-decoration: none;
+            font-size: 15px;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+        
+        .forgot-password a:hover {
+            color: #2980b9;
+            text-decoration: underline;
+        }
+        
+        .footer {
+            margin-top: 35px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+        
+        .footer i {
+            color: #e74c3c;
+            margin: 0 4px;
+        }
+        
+        /* Responsive tasarım */
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 30px 25px;
+            }
+            
+            .logo h1 {
+                font-size: 24px;
+            }
+            
+            .logo p {
+                font-size: 15px;
+            }
+            
+            .form-group input {
+                padding: 12px 15px;
+            }
+            
+            .login-button {
+                padding: 14px;
+                font-size: 16px;
+            }
+        }
+        
+        /* Hata mesajları için */
+        .error-message {
+            color: #e74c3c;
+            font-size: 14px;
+            margin-top: 5px;
+            display: none;
+        }
+        
+        /* Şifre göster/gizle butonu */
+        .password-container {
+            position: relative;
+        }
+        
+        .password-toggle {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #7f8c8d;
+            cursor: pointer;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo">
+            <h1>SERVİS TOPOLOJİ</h1>
+            <p>Güvenli Giriş Yapın</p>
+        </div>
+        
+        <form class="login-form" id="loginForm">
+            <div class="form-group">
+                <label for="username">Kullanıcı Adı</label>
+                <input type="text" id="username" placeholder="Kullanıcı adınızı girin" required>
+                <div class="error-message" id="usernameError"></div>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Şifre</label>
+                <div class="password-container">
+                    <input type="password" id="password" placeholder="Şifrenizi girin" required>
+                    <button type="button" class="password-toggle" id="togglePassword">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+                <div class="error-message" id="passwordError"></div>
+            </div>
+            
+            <button type="submit" class="login-button">Giriş Yap</button>
+        </form>
+        
+        <div class="forgot-password">
+            <a href="#" id="forgotPasswordLink">Şifremi Unuttum</a>
+        </div>
+        
+        <div class="footer">
+            <p>Elektronik Sistemler Müdürlüğü tarafından <i class="fas fa-heart"></i> ile tasarlanmıştır.</p>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elementleri
+        const loginForm = document.getElementById('loginForm');
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+        const togglePasswordBtn = document.getElementById('togglePassword');
+        const forgotPasswordLink = document.getElementById('forgotPasswordLink');
+        
+        // Varsayılan kullanıcı bilgileri
+        const defaultCredentials = {
+            username: 'admin',
+            password: 'admin123'
+        };
+        
+        // Şifre göster/gizle
+        togglePasswordBtn.addEventListener('click', function() {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            
+            // İkon değiştirme
+            const icon = this.querySelector('i');
+            if (type === 'text') {
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        });
+        
+        // Giriş formu işleme
+        loginForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const username = usernameInput.value.trim();
+            const password = passwordInput.value.trim();
+            let isValid = true;
+            
+            // Kullanıcı adı kontrolü
+            if (!username) {
+                document.getElementById('usernameError').textContent = 'Kullanıcı adı gereklidir.';
+                document.getElementById('usernameError').style.display = 'block';
+                isValid = false;
+            } else {
+                document.getElementById('usernameError').style.display = 'none';
+            }
+            
+            // Şifre kontrolü
+            if (!password) {
+                document.getElementById('passwordError').textContent = 'Şifre gereklidir.';
+                document.getElementById('passwordError').style.display = 'block';
+                isValid = false;
+            } else {
+                document.getElementById('passwordError').style.display = 'none';
+            }
+            
+            if (!isValid) return;
+            
+            // Giriş bilgilerini kontrol et
+            if (username === defaultCredentials.username && password === defaultCredentials.password) {
+                // Başarılı giriş
+                const loginButton = document.querySelector('.login-button');
+                const originalText = loginButton.textContent;
+                
+                loginButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Giriş Yapılıyor...';
+                loginButton.disabled = true;
+                
+                // 1.5 saniye sonra başarılı mesajı göster
+                setTimeout(() => {
+                    loginButton.innerHTML = '<i class="fas fa-check"></i> Giriş Başarılı!';
+                    loginButton.style.backgroundColor = '#27ae60';
+                    
+                    // 1 saniye sonra yönlendirme simülasyonu
+                    setTimeout(() => {
+                        alert('Başarıyla giriş yapıldı! Ana sayfaya yönlendiriliyorsunuz...');
+                        // Gerçek uygulamada burada yönlendirme yapılacak
+                        // window.location.href = 'dashboard.html';
+                    }, 1000);
+                }, 1500);
+            } else {
+                // Hatalı giriş
+                document.getElementById('passwordError').textContent = 'Kullanıcı adı veya şifre hatalı.';
+                document.getElementById('passwordError').style.display = 'block';
+                
+                // Input alanlarını salla (hata efekti)
+                usernameInput.style.animation = 'shake 0.5s';
+                passwordInput.style.animation = 'shake 0.5s';
+                
+                setTimeout(() => {
+                    usernameInput.style.animation = '';
+                    passwordInput.style.animation = '';
+                }, 500);
+            }
+        });
+        
+        // Şifremi unuttum linki
+        forgotPasswordLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            alert('Şifre sıfırlama bağlantısı için lütfen sistem yöneticinizle iletişime geçin.');
+        });
+        
+        // Shake animasyonu için CSS ekle
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes shake {
+                0%, 100% {transform: translateX(0);}
+                10%, 30%, 50%, 70%, 90% {transform: translateX(-5px);}
+                20%, 40%, 60%, 80% {transform: translateX(5px);}
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // Sayfa yüklendiğinde kullanıcı adı alanına odaklan
+        window.addEventListener('load', function() {
+            usernameInput.focus();
+        });
+    </script>
+</body>
+</html>
