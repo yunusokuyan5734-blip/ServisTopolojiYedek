@@ -1,67 +1,15 @@
 [
   {
-    "Name": "IETTMSSQLDB01",
-    "Server": "IETTMSSQLDB01",
-    "Ip": "10.100.0.36",
-    "File": "IETTMSSQLDB01(10.100.0.36).svg",
-    "Dept": "VER\u0130 Y\u00D6NET\u0130M \u015EEFL\u0130\u011E\u0130",
-    "Version": "v1",
-    "Date": "2026-01-28",
-    "User": "admin",
-    "Platform": "Windows",
-    "Critical": "Y\u00FCksek",
-    "Note": "\r\n23.10.2025 tarihinde Mehmet O\u011Fuzhan MAMALI taraf\u0131ndan kurulumu sa\u011Flanm\u0131\u015Ft\u0131r. Eski MS_SQL(10.100.0.35) sunucusunun HA yap\u0131ya ge\u00E7i\u015Fi amac\u0131yla kurulumlar\u0131 sa\u011Flanm\u0131\u015Ft\u0131r.\r\n\r\nFailover CLUSTER IP Adresi: 10.100.0.38\r\nLISTENER IP Adresi : 10.100.0.35"
-  },
-  {
-    "Name": "IETTMSSQLDB02",
-    "Server": "IETTMSSQLDB02",
-    "Ip": "10.100.0.37",
-    "File": "IETTMSSQLDB02(10.100.0.37).svg",
-    "Dept": "VER\u0130 Y\u00D6NET\u0130M \u015EEFL\u0130\u011E\u0130",
-    "Version": "v1",
-    "Date": "2026-01-28",
-    "User": "admin",
-    "Platform": "Windows",
-    "Critical": "Y\u00FCksek",
-    "Note": "\r\n23.10.2025 tarihinde Mehmet O\u011Fuzhan MAMALI taraf\u0131ndan kurulumu sa\u011Flanm\u0131\u015Ft\u0131r. Eski MS_SQL(10.100.0.35) sunucusunun HA yap\u0131ya ge\u00E7i\u015Fi amac\u0131yla kurulumlar\u0131 sa\u011Flanm\u0131\u015Ft\u0131r.\r\n\r\nFailover CLUSTER IP Adresi: 10.100.0.38\r\nLISTENER IP Adresi : 10.100.0.35"
-  },
-  {
-    "Name": "IISNODEDMZ01",
-    "Server": "IISNODEDMZ01",
-    "Ip": "172.16.80.181",
-    "File": "IISNODEDMZ01(172.16.80.181).svg",
-    "Dept": "YAZILIM \u015EEFL\u0130\u011E\u0130",
-    "Version": "v1",
-    "Date": "2026-01-28",
-    "User": "admin",
-    "Platform": "Windows",
-    "Critical": "Y\u00FCksek",
-    "Note": "IISNODEDMZ01 / 172.16.80.181\r\n\r\n10.09.2025 tarihinde Merkezi IIS Node DMZ yap\u0131s\u0131n\u0131n olu\u015Fturulmas\u0131 amac\u0131yla \u00C7a\u011Fr\u0131 K\u00D6L\u00DCK taraf\u0131ndan kurulumu yap\u0131lm\u0131\u015Ft\u0131r."
-  },
-  {
     "Name": "ABONEWEB",
     "Server": "ABONEWEB",
     "Ip": "172.16.80.8",
     "File": "ABONEWEB(172.16.80.8).svg",
-    "Dept": "AKILLI TOPLU ULA\u015EIM \u015EEFL\u0130\u011E\u0130",
+    "Dept": "YAZILIM \u015EEFL\u0130\u011E\u0130",
     "Version": "v1",
     "Date": "2026-01-28",
     "User": "admin",
     "Platform": "Windows",
     "Critical": "D\u00FC\u015F\u00FCk",
-    "Note": "Abone i\u015Fleri taraf\u0131nda iett web sitesindeki kay\u0131p e\u015Fya mod\u00FCl\u00FC ve crm\u0027e aktar\u0131lan baz\u0131 kay\u0131tlar\u0131n aktarma modul\u00FC Z\u00FCbeyde Han\u0131m sunucu ile ilgileniyor. 25.04.2024 tarihinde i\u015Fletim sistemi upgrade\u0027i i\u00E7in Cihat S\u00D6ZEN taraf\u0131ndan olu\u015Fturulmu\u015Ftur. 172.16.80.8"
-  },
-  {
-    "Name": "ABONEWEB",
-    "Server": "ABONEWEB",
-    "Ip": "172.16.80.8",
-    "File": "ABONEWEB(172.16.80.8).svg",
-    "Dept": "YAZILIM \u015EEFL\u0130\u011E\u0130",
-    "Version": "v1",
-    "Date": "2026-01-28",
-    "User": "admin",
-    "Platform": "Windows",
-    "Critical": "Orta",
     "Note": null
   },
   {
@@ -74,7 +22,7 @@
     "Date": "2026-01-28",
     "User": "admin",
     "Platform": "Windows",
-    "Critical": "Orta",
+    "Critical": "D\u00FC\u015F\u00FCk",
     "Note": null
   },
   {
@@ -87,7 +35,7 @@
     "Date": "2026-01-28",
     "User": "admin",
     "Platform": "Windows",
-    "Critical": "Orta",
+    "Critical": "D\u00FC\u015F\u00FCk",
     "Note": null
   },
   {
@@ -100,7 +48,7 @@
     "Date": "2026-01-28",
     "User": "admin",
     "Platform": "Windows",
-    "Critical": "Orta",
+    "Critical": "D\u00FC\u015F\u00FCk",
     "Note": null
   },
   {
@@ -113,7 +61,7 @@
     "Date": "2026-01-28",
     "User": "admin",
     "Platform": "Windows",
-    "Critical": "Orta",
+    "Critical": "D\u00FC\u015F\u00FCk",
     "Note": null
   },
   {
@@ -126,7 +74,7 @@
     "Date": "2026-01-28",
     "User": "admin",
     "Platform": "Windows",
-    "Critical": "Orta",
+    "Critical": "D\u00FC\u015F\u00FCk",
     "Note": null
   },
   {
@@ -139,7 +87,98 @@
     "Date": "2026-01-28",
     "User": "admin",
     "Platform": "Windows",
-    "Critical": "Orta",
+    "Critical": "D\u00FC\u015F\u00FCk",
+    "Note": null
+  },
+  {
+    "Name": "ABONEWEB",
+    "Server": "ABONEWEB",
+    "Ip": "172.16.80.8",
+    "File": "ABONEWEB(172.16.80.8).svg",
+    "Dept": "YAZILIM \u015EEFL\u0130\u011E\u0130",
+    "Version": "v1",
+    "Date": "2026-01-28",
+    "User": "admin",
+    "Platform": "Windows",
+    "Critical": "D\u00FC\u015F\u00FCk",
+    "Note": null
+  },
+  {
+    "Name": "ADSelfService2",
+    "Server": "ADSelfService2",
+    "Ip": "10.100.2.93",
+    "File": "ADSelfService2(10.100.2.93).svg",
+    "Dept": "YAZILIM \u015EEFL\u0130\u011E\u0130",
+    "Version": "v1",
+    "Date": "2026-01-28",
+    "User": "admin",
+    "Platform": "Windows",
+    "Critical": "D\u00FC\u015F\u00FCk",
+    "Note": null
+  },
+  {
+    "Name": "ADSelfServiceProxy",
+    "Server": "ADSelfServiceProxy",
+    "Ip": "172.16.80.85",
+    "File": "ADSelfServiceProxy(172.16.80.85).svg",
+    "Dept": "YAZILIM \u015EEFL\u0130\u011E\u0130",
+    "Version": "v1",
+    "Date": "2026-01-28",
+    "User": "admin",
+    "Platform": "Windows",
+    "Critical": "D\u00FC\u015F\u00FCk",
+    "Note": null
+  },
+  {
+    "Name": "ASNYAPIZLE01",
+    "Server": "ASNYAPIZLE01",
+    "Ip": "10.100.2.126",
+    "File": "ASNYAPIZLE01(10.100.2.126).svg",
+    "Dept": "YAZILIM \u015EEFL\u0130\u011E\u0130",
+    "Version": "v1",
+    "Date": "2026-01-28",
+    "User": "admin",
+    "Platform": "Windows",
+    "Critical": "D\u00FC\u015F\u00FCk",
+    "Note": null
+  },
+  {
+    "Name": "IETTMSSQLDB01",
+    "Server": "IETTMSSQLDB01",
+    "Ip": "10.100.0.36",
+    "File": "IETTMSSQLDB01(10.100.0.36).svg",
+    "Dept": "YAZILIM \u015EEFL\u0130\u011E\u0130",
+    "Version": "v1",
+    "Date": "2026-01-28",
+    "User": "admin",
+    "Platform": "Windows",
+    "Critical": "D\u00FC\u015F\u00FCk",
+    "Note": null
+  },
+  {
+    "Name": "IETTMSSQLDB02",
+    "Server": "IETTMSSQLDB02",
+    "Ip": "10.100.0.37",
+    "File": "IETTMSSQLDB02(10.100.0.37).svg",
+    "Dept": "YAZILIM \u015EEFL\u0130\u011E\u0130",
+    "Version": "v1",
+    "Date": "2026-01-28",
+    "User": "admin",
+    "Platform": "Windows",
+    "Critical": "D\u00FC\u015F\u00FCk",
+    "Note": null
+  },
+  {
+    "Name": "IISNODEDMZ01",
+    "Server": "IISNODEDMZ01",
+    "Ip": "172.16.80.181",
+    "File": "IISNODEDMZ01(172.16.80.181).svg",
+    "Dept": "YAZILIM \u015EEFL\u0130\u011E\u0130",
+    "Version": "v1",
+    "Date": "2026-01-28",
+    "User": "admin",
+    "Platform": "Windows",
+    "Critical": "D\u00FC\u015F\u00FCk",
     "Note": null
   }
 ]

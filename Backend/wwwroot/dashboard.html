@@ -65,6 +65,7 @@
                     <div class="btn-group">
                         <button class="btn success" id="exportExcelBtn"><i class="fa fa-file-excel"></i> Excel'e Aktar</button>
                         <button class="btn warning" id="exportPdfBtn"><i class="fa fa-file-pdf"></i> PDF'ye Aktar</button>
+                        <button class="btn danger" id="deleteSelectedBtn"><i class="fa fa-trash"></i> Seçili Topolojileri Sil</button>
                     </div>
                     <div class="filters">
                         <label>Şeflik
@@ -88,6 +89,13 @@
                 </div>
 
                 <div class="table-wrap">
+                    <div id="versionModal" style="display:none;position:fixed;z-index:9999;left:0;top:0;width:100vw;height:100vh;background:rgba(0,0,0,0.4);align-items:center;justify-content:center;">
+                        <div style="background:#fff;padding:2rem 2.5rem;border-radius:1rem;max-width:90vw;max-height:80vh;overflow:auto;box-shadow:0 8px 32px #0002;position:relative;">
+                            <button onclick="closeVersionModal()" style="position:absolute;top:1rem;right:1rem;font-size:1.2rem;background:none;border:none;cursor:pointer;"><i class='fa fa-times'></i></button>
+                            <h2 style="margin-bottom:1rem;">Geçmiş Versiyonlar</h2>
+                            <div id="versionModalContent"></div>
+                        </div>
+                    </div>
                     <table class="table" id="topologyTable">
                         <thead>
                             <tr>

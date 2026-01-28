@@ -57,6 +57,32 @@ public class TopologyStoreService
     public void AddTopology(Topology topology)
     {
         var topologies = LoadTopologies();
+        // Aynı sunucu ve IP'ye sahip kayıtları bul (case-insensitive ve trim'li)
+        string newServer = (topology.Server ?? "").Trim().ToLowerInvariant();
+        string newIp = (topology.Ip ?? "").Trim();
+        var sameServer = topologies
+            .Where(t =>
+                !string.IsNullOrEmpty(t.Server) &&
+                !string.IsNullOrEmpty(t.Ip) &&
+                t.Server.Trim().ToLowerInvariant() == newServer &&
+                t.Ip.Trim() == newIp
+            )
+            .ToList();
+
+        // Versiyon belirle (tüm geçmişi koru, yeni kayıt bir üst versiyonla eklenir)
+        int maxVersion = 0;
+        foreach (var t in sameServer)
+        {
+            if (!string.IsNullOrEmpty(t.Version))
+            {
+                var vMatch = System.Text.RegularExpressions.Regex.Match(t.Version, @"v(\d+)");
+                if (vMatch.Success && int.TryParse(vMatch.Groups[1].Value, out int vNum))
+                {
+                    if (vNum > maxVersion) maxVersion = vNum;
+                }
+            }
+        }
+        topology.Version = $"v{(maxVersion + 1).ToString()}";
         topologies.Add(topology);
         SaveTopologies(topologies);
     }

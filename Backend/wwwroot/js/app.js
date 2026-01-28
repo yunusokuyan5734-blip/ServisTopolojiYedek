@@ -90,7 +90,29 @@ document.addEventListener('DOMContentLoaded', () => {
 function attachDeleteButtons() {
     const deleteBtn = document.getElementById('deleteSelectedBtn');
     if (deleteBtn) {
-        deleteBtn.addEventListener('click', deleteSelectedTopologies);
+        deleteBtn.addEventListener('click', async () => {
+            const selected = Array.from(document.querySelectorAll('.topology-checkbox:checked'));
+            if (selected.length === 0) {
+                alert('Lütfen silmek için en az bir topoloji seçin.');
+                return;
+            }
+            if (!confirm('Seçili topolojiler silinsin mi?')) return;
+            for (const cb of selected) {
+                const file = cb.getAttribute('data-file');
+                try {
+                    const response = await fetch(`${API_BASE}/topology/delete?file=${encodeURIComponent(file)}`, {
+                        method: 'DELETE',
+                        credentials: 'include'
+                    });
+                    if (!response.ok) {
+                        console.error('Silinemedi:', file);
+                    }
+                } catch (err) {
+                    console.error('Silme hatası:', file, err);
+                }
+            }
+            await loadAndDisplayTopologies();
+        });
     }
 }
 
@@ -312,15 +334,25 @@ function renderTable(rows) {
         const user = r.user || r.User || '-';
         const platform = r.platform || r.Platform || '-';
         const critical = r.critical || r.Critical || '-';
-        
+
+        // Sunucu sembolü ve görsel sunum
+        const serverCell = `
+            <div style="display:flex;align-items:center;gap:0.5rem;">
+                <span style="display:inline-flex;align-items:center;justify-content:center;width:2rem;height:2rem;background:#6366f1;color:#fff;border-radius:0.5rem;font-size:1.2rem;"><i class='fa fa-server'></i></span>
+                <div style="display:flex;flex-direction:column;">
+                    <span style="font-weight:600;">${server}</span>
+                    <span style="font-size:0.9em;color:#64748b;">${ip}</span>
+                </div>
+            </div>`;
+
         return `
         <tr style="cursor:default;">
             <td onclick="event.stopPropagation()"><input type="checkbox" class="topology-checkbox" data-file="${file}" style="cursor:pointer;" onchange="updateSelectedCount()"></td>
             <td onclick="viewTopology('${file}')" style="cursor:pointer;"><strong>${name}</strong></td>
-            <td onclick="viewTopology('${file}')" style="cursor:pointer;"><span class="badge muted">${server}</span><div class="muted" style="font-size:0.85rem;margin-top:0.2rem;">${ip}</div></td>
+            <td onclick="viewTopology('${file}')" style="cursor:pointer;">${serverCell}</td>
             <td onclick="viewTopology('${file}')" style="cursor:pointer;">${file}</td>
             <td onclick="viewTopology('${file}')" style="cursor:pointer;">${dept}</td>
-            <td onclick="viewTopology('${file}')" style="cursor:pointer;"><span class="badge muted">${version}</span></td>
+            <td style="cursor:pointer;" onclick="event.stopPropagation();showVersionHistory('${server}','${ip}')"><span class="badge muted" title="Geçmiş versiyonları gör">${version}</span></td>
             <td onclick="viewTopology('${file}')" style="cursor:pointer;">${date}</td>
             <td onclick="viewTopology('${file}')" style="cursor:pointer;"><span class="badge info">${user}</span></td>
             <td onclick="viewTopology('${file}')" style="cursor:pointer;"><span class="badge ${platform === 'Windows' ? 'primary' : 'success'}">${platform}</span></td>
@@ -332,6 +364,64 @@ function renderTable(rows) {
         </tr>
         `;
     }).join('');
+    // Versiyon geçmişi modalı fonksiyonları (global scope)
+    function showVersionHistory(server, ip) {
+        const modal = document.getElementById('versionModal');
+        const content = document.getElementById('versionModalContent');
+        if (!modal || !content) return;
+        // Tüm versiyonları bul
+        const versions = allTopologies.filter(t => {
+            const s = t.server || t.Server;
+            const i = t.ip || t.Ip;
+            return s && i && s.trim().toLowerCase() === server.trim().toLowerCase() && i.trim() === ip.trim();
+        }).sort((a, b) => {
+            // v1, v2, v3... sıralama
+            const va = parseInt((a.version || a.Version || 'v1').replace(/\D/g, '')) || 1;
+            const vb = parseInt((b.version || b.Version || 'v1').replace(/\D/g, '')) || 1;
+            return va - vb;
+        });
+        if (versions.length === 0) {
+            content.innerHTML = '<div style="color:#ef4444">Geçmiş versiyon bulunamadı.</div>';
+        } else {
+            content.innerHTML = `<table class="table" style="min-width:400px;">
+                <thead><tr><th>Versiyon</th><th>Dosya</th><th>Tarih</th><th>Ekleyen</th><th>İşlem</th></tr></thead>
+                <tbody>
+                ${versions.map(function(v) {
+                    return `<tr>
+                        <td><span class="badge muted">${v.version || v.Version || 'v1'}</span></td>
+                        <td>${v.file || v.File || '-'}</td>
+                        <td>${v.date || v.Date || '-'}</td>
+                        <td>${v.user || v.User || '-'}</td>
+                        <td><button class="tag" onclick="viewTopology('${v.file || v.File}')"><i class="fa fa-eye"></i> Görüntüle</button></td>
+                    </tr>`;
+                }).join('')}
+                </tbody></table>`;
+        }
+        modal.style.display = 'flex';
+    }
+
+    function closeVersionModal() {
+        const modal = document.getElementById('versionModal');
+        if (modal) modal.style.display = 'none';
+    }
+    // Sunucular tablosuna otomatik ekleme
+    if (Array.isArray(allServers)) {
+        rows.forEach(r => {
+            const server = r.server || r.Server;
+            const ip = r.ip || r.Ip;
+            const critical = r.critical || r.Critical || '-';
+            if (server && ip && !allServers.some(s => s.name === server && s.ip === ip)) {
+                allServers.push({
+                    id: Date.now() + Math.random(),
+                    name: server,
+                    ip: ip,
+                    critical: critical,
+                    date: r.date || r.Date || new Date().toLocaleDateString('tr-TR')
+                });
+            }
+        });
+        if (typeof renderServersTable === 'function') renderServersTable();
+    }
 }
 
 

@@ -296,13 +296,11 @@
         });
         
         // Giriş formu işleme
-        loginForm.addEventListener('submit', function(e) {
+        loginForm.addEventListener('submit', async function(e) {
             e.preventDefault();
-            
             const username = usernameInput.value.trim();
             const password = passwordInput.value.trim();
             let isValid = true;
-            
             // Kullanıcı adı kontrolü
             if (!username) {
                 document.getElementById('usernameError').textContent = 'Kullanıcı adı gereklidir.';
@@ -311,7 +309,6 @@
             } else {
                 document.getElementById('usernameError').style.display = 'none';
             }
-            
             // Şifre kontrolü
             if (!password) {
                 document.getElementById('passwordError').textContent = 'Şifre gereklidir.';
@@ -320,29 +317,37 @@
             } else {
                 document.getElementById('passwordError').style.display = 'none';
             }
-            
             if (!isValid) return;
-            
-            // Giriş bilgilerini kontrol et
-            if (username === defaultCredentials.username && password === defaultCredentials.password) {
-                // Başarılı giriş
-                const loginButton = document.querySelector('.login-button');
-                loginButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Giriş Yapılıyor...';
-                loginButton.disabled = true;
-                window.location.href = 'dashboard.html';
-            } else {
-                // Hatalı giriş
-                document.getElementById('passwordError').textContent = 'Kullanıcı adı veya şifre hatalı.';
+            const loginButton = document.querySelector('.login-button');
+            loginButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Giriş Yapılıyor...';
+            loginButton.disabled = true;
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ username, password })
+                });
+                if (response.ok) {
+                    window.location.href = 'dashboard.html';
+                } else {
+                    const data = await response.json().catch(() => ({}));
+                    document.getElementById('passwordError').textContent = data.message || 'Kullanıcı adı veya şifre hatalı.';
+                    document.getElementById('passwordError').style.display = 'block';
+                    loginButton.innerHTML = 'Giriş Yap';
+                    loginButton.disabled = false;
+                    usernameInput.style.animation = 'shake 0.5s';
+                    passwordInput.style.animation = 'shake 0.5s';
+                    setTimeout(() => {
+                        usernameInput.style.animation = '';
+                        passwordInput.style.animation = '';
+                    }, 500);
+                }
+            } catch (err) {
+                document.getElementById('passwordError').textContent = 'Sunucuya bağlanılamadı.';
                 document.getElementById('passwordError').style.display = 'block';
-                
-                // Input alanlarını salla (hata efekti)
-                usernameInput.style.animation = 'shake 0.5s';
-                passwordInput.style.animation = 'shake 0.5s';
-                
-                setTimeout(() => {
-                    usernameInput.style.animation = '';
-                    passwordInput.style.animation = '';
-                }, 500);
+                loginButton.innerHTML = 'Giriş Yap';
+                loginButton.disabled = false;
             }
         });
         

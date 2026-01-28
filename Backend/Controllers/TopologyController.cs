@@ -62,30 +62,46 @@ public class TopologyController : ControllerBase
                 {
                     var fileName = Path.GetFileName(file.FileName);
                     var filePath = Path.Combine(uploadsFolder, fileName);
-                    
                     using (var stream = new FileStream(filePath, FileMode.Create))
                     {
                         await file.CopyToAsync(stream);
                     }
-                    
                     uploadedFiles.Add(fileName);
-                    
-                    // Save topology metadata with versioned name
+
+                    // Dosya adından server ve ip çek
+                    string parsedServer = server;
+                    string parsedIp = ip;
+                    var nameWithoutExt = Path.GetFileNameWithoutExtension(fileName);
+                    var regex = new System.Text.RegularExpressions.Regex(@"^(.+?)\(([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})\)");
+                    var match = regex.Match(nameWithoutExt);
+                    if (string.IsNullOrWhiteSpace(parsedServer) || string.IsNullOrWhiteSpace(parsedIp))
+                    {
+                        if (match.Success)
+                        {
+                            if (string.IsNullOrWhiteSpace(parsedServer)) parsedServer = match.Groups[1].Value.Trim();
+                            if (string.IsNullOrWhiteSpace(parsedIp)) parsedIp = match.Groups[2].Value.Trim();
+                        }
+                        else
+                        {
+                            if (string.IsNullOrWhiteSpace(parsedServer)) parsedServer = nameWithoutExt;
+                            if (string.IsNullOrWhiteSpace(parsedIp)) parsedIp = "N/A";
+                        }
+                    }
+
                     var topology = new Topology
                     {
-                        Server = server ?? fileName.Split('.')[0],
-                        Ip = ip ?? "N/A",
+                        Server = parsedServer,
+                        Ip = parsedIp,
                         File = fileName,
                         Dept = dept,
-                        Version = "v1",
+                        Version = "v1", // AddTopology backend'de otomatik set edecek
                         Date = DateTime.Now.ToString("yyyy-MM-dd"),
                         User = username,
                         Platform = platform,
                         Critical = critical,
                         Note = note,
-                        Name = topologyName ?? server ?? fileName.Split('.')[0]
+                        Name = topologyName ?? parsedServer ?? nameWithoutExt
                     };
-                    
                     _topoStore.AddTopology(topology);
                     _logger.LogInformation($"Topology added: {topologyName ?? fileName} by {username}");
                 }
