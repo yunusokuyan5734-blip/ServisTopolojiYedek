@@ -1,3 +1,13 @@
+/* Lila (mor) buton */
+.btn.lilac {
+    background: linear-gradient(90deg,#a084ee,#7c5dff);
+    color: #fff;
+}
+.btn.lilac:hover, .btn.lilac:focus {
+    background: linear-gradient(90deg,#7c5dff,#a084ee);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(124,93,255,0.18);
+}
 :root {
     --bg: #f3f6fb;
     --bg-2: #ffffff;

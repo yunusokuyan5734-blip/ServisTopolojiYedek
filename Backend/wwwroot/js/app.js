@@ -96,22 +96,63 @@ function attachDeleteButtons() {
                 alert('Lütfen silmek için en az bir topoloji seçin.');
                 return;
             }
-            if (!confirm('Seçili topolojiler silinsin mi?')) return;
-            for (const cb of selected) {
-                const file = cb.getAttribute('data-file');
-                try {
-                    const response = await fetch(`${API_BASE}/topology/delete?file=${encodeURIComponent(file)}`, {
-                        method: 'DELETE',
-                        credentials: 'include'
+            // Seçili sunucu+ip'leri grupla
+            const selectedServers = selected.map(cb => ({
+                server: cb.getAttribute('data-server'),
+                ip: cb.getAttribute('data-ip')
+            }));
+            // Tekrarsız sunucu+ip listesi
+            const uniqueKeys = [];
+            const uniqueServers = selectedServers.filter(s => {
+                const key = s.server + '|' + s.ip;
+                if (uniqueKeys.includes(key)) return false;
+                uniqueKeys.push(key);
+                return true;
+            });
+            // Onay modalı oluştur
+            const confirmModal = document.createElement('div');
+            confirmModal.style = 'position:fixed;z-index:99999;left:0;top:0;width:100vw;height:100vh;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;';
+            confirmModal.innerHTML = `
+                <div style="background:#fff;padding:2rem 2.5rem;border-radius:1rem;max-width:90vw;max-height:80vh;overflow:auto;box-shadow:0 8px 32px #0002;position:relative;min-width:320px;">
+                    <button id="closeDeleteModal" style="position:absolute;top:1rem;right:1rem;font-size:1.2rem;background:none;border:none;cursor:pointer;"><i class='fa fa-times'></i></button>
+                    <h2 style="margin-bottom:1rem;">Seçili Sunucuları Sil</h2>
+                    <div style="margin-bottom:1rem;">Aşağıdaki sunucular ve tüm versiyonları silinecek. Emin misiniz?</div>
+                    <ul style="margin-bottom:1.5rem;">
+                        ${uniqueServers.map(s => `<li><b>${s.server}</b> <span style='color:#888'>(${s.ip})</span></li>`).join('')}
+                    </ul>
+                    <button id="confirmDeleteBtn" class="btn danger" style="margin-right:1rem;">Evet, Sil</button>
+                    <button id="cancelDeleteBtn" class="btn ghost">Vazgeç</button>
+                </div>
+            `;
+            document.body.appendChild(confirmModal);
+            document.getElementById('closeDeleteModal').onclick = () => document.body.removeChild(confirmModal);
+            document.getElementById('cancelDeleteBtn').onclick = () => document.body.removeChild(confirmModal);
+            document.getElementById('confirmDeleteBtn').onclick = async () => {
+                for (const s of uniqueServers) {
+                    // Tüm versiyonları bul ve sil
+                    const toDelete = allTopologies.filter(t => {
+                        const server = (t.server || t.Server || '').trim().toLowerCase();
+                        const ip = (t.ip || t.Ip || '').trim();
+                        return server === (s.server || '').trim().toLowerCase() && ip === (s.ip || '').trim();
                     });
-                    if (!response.ok) {
-                        console.error('Silinemedi:', file);
+                    for (const topo of toDelete) {
+                        const file = topo.file || topo.File;
+                        try {
+                            const response = await fetch(`${API_BASE}/topology/delete?file=${encodeURIComponent(file)}`, {
+                                method: 'DELETE',
+                                credentials: 'include'
+                            });
+                            if (!response.ok) {
+                                console.error('Silinemedi:', file);
+                            }
+                        } catch (err) {
+                            console.error('Silme hatası:', file, err);
+                        }
                     }
-                } catch (err) {
-                    console.error('Silme hatası:', file, err);
                 }
-            }
-            await loadAndDisplayTopologies();
+                document.body.removeChild(confirmModal);
+                await loadAndDisplayTopologies();
+            };
         });
     }
 }
@@ -223,13 +264,18 @@ function renderOverview() {
     const cards = document.getElementById('overviewCards');
     if (!cards) return;
     
-    const total = allTopologies.length;
+    // Benzersiz sunucu+ip kombinasyonlarını say (her sunucu için 1)
+    const uniqueKeys = new Set();
+    allTopologies.forEach(t => {
+        const server = (t.server || t.Server || '').trim().toLowerCase();
+        const ip = (t.ip || t.Ip || '').trim();
+        if (server && ip) uniqueKeys.add(server + '|' + ip);
+    });
+    const total = uniqueKeys.size;
     const highCritical = allServers.filter(s => s.critical === 'Yüksek').length;
     const mediumCritical = allServers.filter(s => s.critical === 'Orta').length;
     const lowCritical = allServers.filter(s => s.critical === 'Düşük').length;
-    
     const lastDate = allServers.length > 0 ? allServers[allServers.length - 1]?.date || '-' : '-';
-    
     cards.innerHTML = `
         <div class="info-card">
             <p class="label">En Son Görüntülenenler</p>
@@ -239,7 +285,7 @@ function renderOverview() {
         <div class="info-card">
             <p class="label">Topoloji Sayısı</p>
             <h3>${total}</h3>
-            <p class="muted">Kayıtlı toplam topoloji</p>
+            <p class="muted">Ekli sunucu sayısı (her sunucu için 1)</p>
         </div>
         <div class="info-card">
             <p class="label">Yüksek Kritik</p>
@@ -322,8 +368,22 @@ function renderTable(rows) {
         });
     }
     
-    tbody.innerHTML = rows.map(r => {
-        // Hem PascalCase hem camelCase destekle
+    // Sunucu bazında grupla, sadece en yüksek versiyonu göster (sadece tablo için)
+    const grouped = {};
+    rows.forEach(r => {
+        const server = (r.server || r.Server || '').trim().toLowerCase();
+        const ip = (r.ip || r.Ip || '').trim();
+        if (!server || !ip) return;
+        const key = server + '|' + ip;
+        const versionNum = parseInt((r.version || r.Version || 'v1').replace(/\D/g, '')) || 1;
+        if (!grouped[key] || versionNum > grouped[key].__versionNum) {
+            grouped[key] = { ...r, __versionNum: versionNum };
+        }
+    });
+    const latestRows = Object.values(grouped);
+
+    // Tablo sadece son versiyonu gösterir, ama allTopologies tüm versiyonları içerir
+    tbody.innerHTML = latestRows.map(r => {
         const name = r.name || r.Name || r.server || r.Server || 'İsimsiz';
         const server = r.server || r.Server || '-';
         const ip = r.ip || r.Ip || '-';
@@ -334,8 +394,7 @@ function renderTable(rows) {
         const user = r.user || r.User || '-';
         const platform = r.platform || r.Platform || '-';
         const critical = r.critical || r.Critical || '-';
-
-        // Sunucu sembolü ve görsel sunum
+        const versionBadge = `<span class="badge lilac" style="background:linear-gradient(90deg,#a084ee,#7c5dff);color:#fff;">${version}</span>`;
         const serverCell = `
             <div style="display:flex;align-items:center;gap:0.5rem;">
                 <span style="display:inline-flex;align-items:center;justify-content:center;width:2rem;height:2rem;background:#6366f1;color:#fff;border-radius:0.5rem;font-size:1.2rem;"><i class='fa fa-server'></i></span>
@@ -344,36 +403,38 @@ function renderTable(rows) {
                     <span style="font-size:0.9em;color:#64748b;">${ip}</span>
                 </div>
             </div>`;
-
         return `
         <tr style="cursor:default;">
-            <td onclick="event.stopPropagation()"><input type="checkbox" class="topology-checkbox" data-file="${file}" style="cursor:pointer;" onchange="updateSelectedCount()"></td>
-            <td onclick="viewTopology('${file}')" style="cursor:pointer;"><strong>${name}</strong></td>
-            <td onclick="viewTopology('${file}')" style="cursor:pointer;">${serverCell}</td>
-            <td onclick="viewTopology('${file}')" style="cursor:pointer;">${file}</td>
-            <td onclick="viewTopology('${file}')" style="cursor:pointer;">${dept}</td>
-            <td style="cursor:pointer;" onclick="event.stopPropagation();showVersionHistory('${server}','${ip}')"><span class="badge muted" title="Geçmiş versiyonları gör">${version}</span></td>
-            <td onclick="viewTopology('${file}')" style="cursor:pointer;">${date}</td>
-            <td onclick="viewTopology('${file}')" style="cursor:pointer;"><span class="badge info">${user}</span></td>
-            <td onclick="viewTopology('${file}')" style="cursor:pointer;"><span class="badge ${platform === 'Windows' ? 'primary' : 'success'}">${platform}</span></td>
-            <td onclick="viewTopology('${file}')" style="cursor:pointer;"><span class="badge ${critical === 'Yüksek' ? 'danger' : critical === 'Orta' ? 'warning' : 'success'}">${critical}</span></td>
+            <td onclick="event.stopPropagation()"><input type="checkbox" class="topology-checkbox" data-server="${server}" data-ip="${ip}" style="cursor:pointer;" onchange="updateSelectedCount()"></td>
+            <td><strong>${name}</strong></td>
+            <td>${serverCell}</td>
+            <td>${file}</td>
+            <td>${dept}</td>
+            <td>${versionBadge}</td>
+            <td>${date}</td>
+            <td><span class="badge info">${user}</span></td>
+            <td><span class="badge ${platform === 'Windows' ? 'primary' : 'success'}">${platform}</span></td>
+            <td><span class="badge ${critical === 'Yüksek' ? 'danger' : critical === 'Orta' ? 'warning' : 'success'}">${critical}</span></td>
             <td class="actions">
-                <button class="tag" onclick="viewTopology('${file}')"><i class="fa fa-eye"></i> Görüntüle</button>
-                <button class="tag" onclick="editTopology('${file}')"><i class="fa fa-pen"></i> Düzenle</button>
+                <button class="btn primary" onclick="downloadTopology('${file}')"><i class="fa fa-download"></i> İndir</button>
+                <button class="btn" style="color:#64748b;border:1.5px solid #64748b;background:#fff;" onclick="viewTopology('${file}')"><i class="fa fa-eye"></i> Görüntüle</button>
+                <button class="btn lilac" onclick="showVersionHistory('${server}','${ip}')"><i class="fa fa-history"></i> Geçmiş</button>
+                <button class="btn warning" onclick="editTopology('${server}','${ip}')"><i class="fa fa-pen"></i> İsim Değiştir</button>
+                <button class="btn danger" onclick="deleteTopology('${server}','${ip}')"><i class="fa fa-trash"></i> Sil</button>
             </td>
         </tr>
         `;
     }).join('');
     // Versiyon geçmişi modalı fonksiyonları (global scope)
-    function showVersionHistory(server, ip) {
+    window.showVersionHistory = function(server, ip) {
         const modal = document.getElementById('versionModal');
         const content = document.getElementById('versionModalContent');
         if (!modal || !content) return;
         // Tüm versiyonları bul
-        const versions = allTopologies.filter(t => {
-            const s = t.server || t.Server;
-            const i = t.ip || t.Ip;
-            return s && i && s.trim().toLowerCase() === server.trim().toLowerCase() && i.trim() === ip.trim();
+        const versions = (window.allTopologies || allTopologies).filter(t => {
+            const s = (t.server || t.Server || '').trim().toLowerCase();
+            const i = (t.ip || t.Ip || '').trim();
+            return s === server.trim().toLowerCase() && i === ip.trim();
         }).sort((a, b) => {
             // v1, v2, v3... sıralama
             const va = parseInt((a.version || a.Version || 'v1').replace(/\D/g, '')) || 1;
@@ -383,24 +444,37 @@ function renderTable(rows) {
         if (versions.length === 0) {
             content.innerHTML = '<div style="color:#ef4444">Geçmiş versiyon bulunamadı.</div>';
         } else {
-            content.innerHTML = `<table class="table" style="min-width:400px;">
-                <thead><tr><th>Versiyon</th><th>Dosya</th><th>Tarih</th><th>Ekleyen</th><th>İşlem</th></tr></thead>
+            content.innerHTML = `
+            <div style="margin-bottom:1.2rem;font-size:1.1rem;font-weight:600;color:#222;">Sunucu: <span style='color:#64748b'>${versions[0].server || versions[0].Server || '-'}</span></div>
+            <table class="table" style="min-width:420px;">
+                <thead style="background:#f3f4f6;">
+                    <tr>
+                        <th style="color:#7c5dff;">Versiyon</th>
+                        <th>Ekleyen</th>
+                        <th>Eklenen Tarih</th>
+                        <th></th>
+                    </tr>
+                </thead>
                 <tbody>
                 ${versions.map(function(v) {
+                    const file = v.file || v.File || '-';
+                    const version = v.version || v.Version || 'v1';
+                    const date = v.date || v.Date || '-';
+                    const user = v.user || v.User || '-';
                     return `<tr>
-                        <td><span class="badge muted">${v.version || v.Version || 'v1'}</span></td>
-                        <td>${v.file || v.File || '-'}</td>
-                        <td>${v.date || v.Date || '-'}</td>
-                        <td>${v.user || v.User || '-'}</td>
-                        <td><button class="tag" onclick="viewTopology('${v.file || v.File}')"><i class="fa fa-eye"></i> Görüntüle</button></td>
+                        <td><span class="badge lilac" style="background:linear-gradient(90deg,#a084ee,#7c5dff);color:#fff;font-size:1.05em;">${version}</span></td>
+                        <td style="font-weight:500;">${user}</td>
+                        <td>${date}</td>
+                        <td><a class="btn" style="color:#64748b;border:2px solid #64748b;background:#fff;padding:6px 18px;font-weight:600;font-size:1em;border-radius:6px;" href="/uploads/${file}" target="_blank"><i class="fa fa-eye"></i> Görüntüle</a></td>
                     </tr>`;
                 }).join('')}
-                </tbody></table>`;
+                </tbody>
+            </table>`;
         }
         modal.style.display = 'flex';
     }
 
-    function closeVersionModal() {
+    window.closeVersionModal = function() {
         const modal = document.getElementById('versionModal');
         if (modal) modal.style.display = 'none';
     }

@@ -82,7 +82,8 @@ public class TopologyStoreService
                 }
             }
         }
-        topology.Version = $"v{(maxVersion + 1).ToString()}";
+        // Eğer aynı sunucu ve IP'ye sahip ve aynı versiyonda (örn. v1) kayıt varsa, yeni versiyon ekle
+        topology.Version = $"v{(maxVersion + 1)}";
         topologies.Add(topology);
         SaveTopologies(topologies);
     }

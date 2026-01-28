@@ -21,9 +21,6 @@ C:\Users\dk_yokuyan\Desktop\VSCODE\ServisTopoloji\Backend\obj\Debug\net9.0\rjsmr
 C:\Users\dk_yokuyan\Desktop\VSCODE\ServisTopoloji\Backend\obj\Debug\net9.0\rjsmcshtml.dswa.cache.json
 C:\Users\dk_yokuyan\Desktop\VSCODE\ServisTopoloji\Backend\obj\Debug\net9.0\scopedcss\bundle\Backend.styles.css
 C:\Users\dk_yokuyan\Desktop\VSCODE\ServisTopoloji\Backend\obj\Debug\net9.0\compressed\blbez9qr1x-24ofbqvtej.gz
-C:\Users\dk_yokuyan\Desktop\VSCODE\ServisTopoloji\Backend\obj\Debug\net9.0\compressed\fw68pk6w3w-m4kjyhnmtf.gz
-C:\Users\dk_yokuyan\Desktop\VSCODE\ServisTopoloji\Backend\obj\Debug\net9.0\compressed\for7mogo9r-qp2bt5mc6z.gz
-C:\Users\dk_yokuyan\Desktop\VSCODE\ServisTopoloji\Backend\obj\Debug\net9.0\compressed\awcp7y9qi1-spr7p6fukb.gz
 C:\Users\dk_yokuyan\Desktop\VSCODE\ServisTopoloji\Backend\obj\Debug\net9.0\compressed\bj1i557dv8-jurhp645ei.gz
 C:\Users\dk_yokuyan\Desktop\VSCODE\ServisTopoloji\Backend\obj\Debug\net9.0\compressed\7sk5nddu94-tljye1gw8a.gz
 C:\Users\dk_yokuyan\Desktop\VSCODE\ServisTopoloji\Backend\obj\Debug\net9.0\compressed\6m198zy7hw-d79hwxaspu.gz
@@ -42,3 +39,6 @@ C:\Users\dk_yokuyan\Desktop\VSCODE\ServisTopoloji\Backend\obj\Debug\net9.0\refin
 C:\Users\dk_yokuyan\Desktop\VSCODE\ServisTopoloji\Backend\obj\Debug\net9.0\Backend.pdb
 C:\Users\dk_yokuyan\Desktop\VSCODE\ServisTopoloji\Backend\obj\Debug\net9.0\Backend.genruntimeconfig.cache
 C:\Users\dk_yokuyan\Desktop\VSCODE\ServisTopoloji\Backend\obj\Debug\net9.0\ref\Backend.dll
+C:\Users\dk_yokuyan\Desktop\VSCODE\ServisTopoloji\Backend\obj\Debug\net9.0\compressed\fw68pk6w3w-22wyfz0f7x.gz
+C:\Users\dk_yokuyan\Desktop\VSCODE\ServisTopoloji\Backend\obj\Debug\net9.0\compressed\for7mogo9r-6mbk96v9wg.gz
+C:\Users\dk_yokuyan\Desktop\VSCODE\ServisTopoloji\Backend\obj\Debug\net9.0\compressed\awcp7y9qi1-d83s6zbbe1.gz
