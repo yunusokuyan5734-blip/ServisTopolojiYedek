@@ -26,31 +26,63 @@
         
         .login-container {
             width: 100%;
-            max-width: 420px;
+            max-width: 500px;
             background-color: rgba(255, 255, 255, 0.95);
             border-radius: 12px;
             box-shadow: 0 5px 25px rgba(0, 0, 0, 0.3);
-            padding: 40px 35px;
+            padding: 50px 40px;
             text-align: center;
             border-top: 5px solid #3498db;
         }
         
+        .logo-container {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            margin-bottom: 35px;
+            padding-bottom: 25px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .logo-item {
+            width: 80px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .logo-item img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        
         .logo {
-            margin-bottom: 25px;
+            margin-bottom: 30px;
+            padding: 0 20px;
         }
         
         .logo h1 {
             color: #2c3e50;
-            font-size: 28px;
+            font-size: 32px;
             font-weight: 700;
             letter-spacing: 0.5px;
-            margin-bottom: 8px;
+            margin-bottom: 15px;
         }
         
         .logo p {
-            color: #7f8c8d;
-            font-size: 16px;
+            color: #3498db;
+            font-size: 15px;
             font-weight: 500;
+            margin-bottom: 10px;
+            letter-spacing: 0.3px;
+        }
+        
+        .logo .subtitle {
+            color: #7f8c8d;
+            font-size: 14px;
+            font-weight: 400;
         }
         
         .login-form {
@@ -188,9 +220,19 @@
 </head>
 <body>
     <div class="login-container">
+        <div class="logo-container">
+            <div class="logo-item">
+                <img src="/iett.png" alt="IETT Logo">
+            </div>
+            <div class="logo-item">
+                <img src="/ibb.png" alt="İBB Logo">
+            </div>
+        </div>
+        
         <div class="logo">
             <h1>SERVİS TOPOLOJİ</h1>
-            <p>Güvenli Giriş Yapın</p>
+            <p>Servis Topoloji Uygulamasına Hoşgeldiniz</p>
+            <p class="subtitle">Güvenli Giriş Yapın</p>
         </div>
         
         <form class="login-form" id="loginForm">
@@ -285,23 +327,9 @@
             if (username === defaultCredentials.username && password === defaultCredentials.password) {
                 // Başarılı giriş
                 const loginButton = document.querySelector('.login-button');
-                const originalText = loginButton.textContent;
-                
                 loginButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Giriş Yapılıyor...';
                 loginButton.disabled = true;
-                
-                // 1.5 saniye sonra başarılı mesajı göster
-                setTimeout(() => {
-                    loginButton.innerHTML = '<i class="fas fa-check"></i> Giriş Başarılı!';
-                    loginButton.style.backgroundColor = '#27ae60';
-                    
-                    // 1 saniye sonra yönlendirme simülasyonu
-                    setTimeout(() => {
-                        alert('Başarıyla giriş yapıldı! Ana sayfaya yönlendiriliyorsunuz...');
-                        // Gerçek uygulamada burada yönlendirme yapılacak
-                        // window.location.href = 'dashboard.html';
-                    }, 1000);
-                }, 1500);
+                window.location.href = 'dashboard.html';
             } else {
                 // Hatalı giriş
                 document.getElementById('passwordError').textContent = 'Kullanıcı adı veya şifre hatalı.';

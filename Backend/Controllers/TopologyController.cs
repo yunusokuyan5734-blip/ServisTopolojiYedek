@@ -129,8 +129,7 @@ public class TopologyController : ControllerBase
             
             // File property'si için case-insensitive karşılaştırma
             topologies.RemoveAll(t => 
-                string.Equals(t.File, file, StringComparison.OrdinalIgnoreCase) ||
-                string.Equals(t.file, file, StringComparison.OrdinalIgnoreCase)
+                string.Equals(t.File, file, StringComparison.OrdinalIgnoreCase)
             );
             
             _topoStore.SaveTopologies(topologies);
