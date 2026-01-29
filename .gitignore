@@ -1,0 +1,12 @@
+# Build outputs
+**/bin/
+**/obj/
+
+# User data / runtime data
+Backend/wwwroot/uploads/
+Backend/Data/topologies.json
+Data/*.json
+
+# OS
+.DS_Store
+Thumbs.db

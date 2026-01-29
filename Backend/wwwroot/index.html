@@ -25,14 +25,18 @@
         }
         
         .login-container {
-            width: 100%;
-            max-width: 500px;
+            width: 350px;
+            min-width: 240px;
+            max-width: 96vw;
             background-color: rgba(255, 255, 255, 0.95);
-            border-radius: 12px;
-            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.3);
-            padding: 50px 40px;
+            border-radius: 20px;
+            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.22);
+            padding: 14px 12px 14px 12px;
             text-align: center;
-            border-top: 5px solid #3498db;
+            border-top: 4px solid #3498db;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
         
         .logo-container {
@@ -45,17 +49,19 @@
         }
         
         .logo-item {
-            width: 80px;
-            height: 80px;
+            width: 100px;
+            height: 100px;
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: all 0.2s;
         }
         
         .logo-item img {
             max-width: 100%;
             max-height: 100%;
             object-fit: contain;
+            transition: all 0.2s;
         }
         
         .logo {
@@ -171,7 +177,10 @@
         /* Responsive tasarım */
         @media (max-width: 480px) {
             .login-container {
-                padding: 30px 25px;
+                width: 98vw;
+                height: auto;
+                min-width: 0;
+                padding: 10px 2vw;
             }
             
             .logo h1 {
@@ -220,48 +229,42 @@
 </head>
 <body>
     <div class="login-container">
-        <div class="logo-container">
-            <div class="logo-item">
-                <img src="/iett.png" alt="IETT Logo">
-            </div>
-            <div class="logo-item">
-                <img src="/ibb.png" alt="İBB Logo">
-            </div>
-        </div>
-        
-        <div class="logo">
-            <h1>SERVİS TOPOLOJİ</h1>
-            <p>Servis Topoloji Uygulamasına Hoşgeldiniz</p>
-            <p class="subtitle">Güvenli Giriş Yapın</p>
-        </div>
-        
-        <form class="login-form" id="loginForm">
-            <div class="form-group">
-                <label for="username">Kullanıcı Adı</label>
-                <input type="text" id="username" placeholder="Kullanıcı adınızı girin" required>
-                <div class="error-message" id="usernameError"></div>
-            </div>
-            
-            <div class="form-group">
-                <label for="password">Şifre</label>
-                <div class="password-container">
-                    <input type="password" id="password" placeholder="Şifrenizi girin" required>
-                    <button type="button" class="password-toggle" id="togglePassword">
-                        <i class="fas fa-eye"></i>
-                    </button>
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:flex-start;width:100%;height:100%;padding:0 8px;">
+            <div style="width:100%;display:flex;flex-direction:column;align-items:center;">
+                <div style="display:flex;justify-content:center;align-items:center;gap:2.5rem;margin-top:18px;margin-bottom:10px;width:100%;">
+                    <img src='/iett.png' alt='IETT Logo' style='height:70px;width:auto;max-width:110px;object-fit:contain;filter:drop-shadow(0 2px 6px #e0e0e0);' />
+                    <img src='/ibb.png' alt='İBB Logo' style='height:70px;width:auto;max-width:110px;object-fit:contain;filter:drop-shadow(0 2px 6px #e0e0e0);' />
                 </div>
-                <div class="error-message" id="passwordError"></div>
+                <h1 style="font-size:1.45rem;font-weight:800;letter-spacing:0.5px;color:#222;margin-bottom:0.3rem;">SERVİS TOPOLOJİ</h1>
+                <div style="width:100%;margin-bottom:0.7rem;">
+                    <div style="font-size:1.01rem;color:#4b6ef5;font-weight:600;background:#f3f6ff;padding:4px 0 4px 0;border-radius:8px;">Servis Topoloji Uygulamasına Hoşgeldiniz</div>
+                </div>
+                <div style="font-size:0.97rem;color:#7f8c8d;margin-bottom:10px;">Güvenli Giriş Yapın</div>
             </div>
-            
-            <button type="submit" class="login-button">Giriş Yap</button>
-        </form>
-        
-        <div class="forgot-password">
-            <a href="#" id="forgotPasswordLink">Şifremi Unuttum</a>
-        </div>
-        
-        <div class="footer">
-            <p>Elektronik Sistemler Müdürlüğü tarafından <i class="fas fa-heart"></i> ile tasarlanmıştır.</p>
+            <form class="login-form" id="loginForm" style="width:100%;display:flex;flex-direction:column;align-items:center;">
+                <div class="form-group" style="margin-bottom:10px;width:100%;text-align:left;">
+                    <label for="username" style="font-weight:600;color:#222;font-size:15px;">Kullanıcı Adı</label>
+                    <input type="text" id="username" placeholder="Kullanıcı adınızı girin" required style="width:100%;padding:12px 14px;font-size:15px;border-radius:8px;border:1.5px solid #ddd;background:#fafbfc;">
+                    <div class="error-message" id="usernameError"></div>
+                </div>
+                <div class="form-group" style="margin-bottom:10px;width:100%;text-align:left;">
+                    <label for="password" style="font-weight:600;color:#222;font-size:15px;">Şifre</label>
+                    <div class="password-container" style="position:relative;">
+                        <input type="password" id="password" placeholder="Şifrenizi girin" required style="width:100%;padding:12px 14px 12px 14px;font-size:15px;border-radius:8px;border:1.5px solid #ddd;background:#fafbfc;">
+                        <button type="button" class="password-toggle" id="togglePassword" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:#7f8c8d;cursor:pointer;font-size:18px;">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                    <div class="error-message" id="passwordError"></div>
+                </div>
+                <button type="submit" class="login-button" style="margin-top:8px;width:100%;background:linear-gradient(90deg,#6f86d6 0%,#a084ee 100%);color:#fff;font-weight:700;font-size:1.1rem;padding:0.7rem 0;border-radius:10px;box-shadow:0 2px 8px #a18cd133;">Giriş Yap</button>
+            </form>
+            <div class="forgot-password" style="margin-top:10px;margin-bottom:10px;">
+                <a href="#" id="forgotPasswordLink" style="color:#4b6ef5;font-size:15px;font-weight:500;text-decoration:none;">Şifremi Unuttum</a>
+            </div>
+            <div class="footer" style="margin-top:0;padding-top:8px;width:100%;text-align:center;">
+                <p style="font-size:0.93rem;color:#888;">© Elektronik Sistemler Müdürlüğü tarafından <i class="fas fa-heart" style="color:#e74c3c;"></i> ile tasarlanmıştır.</p>
+            </div>
         </div>
     </div>
 

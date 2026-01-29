@@ -54,7 +54,7 @@ body.dark-theme {
 
 .dashboard-shell {
     display: grid;
-    grid-template-columns: 300px 1fr;
+    grid-template-columns: 220px 1fr;
     min-height: 100vh;
 }
 
@@ -378,10 +378,11 @@ body.light-theme .nav-item.logout {
 }
 
 .table th, .table td {
-    padding: 12px 14px;
+    padding: 8px 12px;
     border-bottom: 1px solid var(--border);
     text-align: left;
     font-size: 14px;
+    vertical-align: middle;
 }
 
 .table thead th {

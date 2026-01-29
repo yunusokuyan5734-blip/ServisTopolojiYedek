@@ -1,3 +1,511 @@
+// ======== TOPOLOJİ İNDİRME ========
+function downloadTopology(file) {
+    if (!file) return;
+    const link = document.createElement('a');
+    link.href = `/uploads/${file}`;
+    link.download = file;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+function showDiagramModal(connections, filename) {
+    // Modal oluştur
+    const modal = document.createElement('div');
+    modal.id = 'diagramViewModal';
+    modal.style = 'display:flex;position:fixed;z-index:99999;left:0;top:0;width:100vw;height:100vh;background:rgba(0,0,0,0.4);align-items:center;justify-content:center;';
+    
+    const modalContent = document.createElement('div');
+    modalContent.style = 'background:#fff;padding:2rem;border-radius:1rem;max-width:95vw;max-height:90vh;overflow:auto;box-shadow:0 8px 32px #0002;position:relative;min-width:800px;';
+    
+    modalContent.innerHTML = `
+        <button onclick="document.getElementById('diagramViewModal').remove()" style="position:absolute;top:1rem;right:1rem;font-size:1.2rem;background:none;border:none;cursor:pointer;"><i class='fa fa-times'></i></button>
+        <h2 style="margin-bottom:1.5rem;display:flex;align-items:center;gap:0.5rem;"><i class="fa fa-sitemap" style="color:var(--accent);"></i> ${filename.replace('_diagram.json', '')}</h2>
+        
+        <div style="display:flex;gap:0.5rem;margin-bottom:1rem;border-bottom:1px solid var(--border);">
+            <button id="modalListViewTab" class="diagram-modal-tab active" style="padding:0.5rem 1rem;border:none;background:none;cursor:pointer;border-bottom:2px solid var(--accent);font-weight:600;color:var(--accent);">
+                <i class="fa fa-list"></i> Liste Görünümü
+            </button>
+            <button id="modalDiagramViewTab" class="diagram-modal-tab" style="padding:0.5rem 1rem;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;font-weight:600;color:var(--muted);">
+                <i class="fa fa-project-diagram"></i> Görsel Diyagram
+            </button>
+        </div>
+        
+        <div id="modalListViewContent" style="display:block;"></div>
+        <div id="modalDiagramViewContent" style="display:none;"></div>
+    `;
+    
+    modal.appendChild(modalContent);
+    document.body.appendChild(modal);
+    
+    // Liste görünümünü render et
+    renderModalListView(connections);
+    
+    // Diyagram görünümünü render et
+    renderModalDiagramView(connections);
+    
+    // Tab değiştirme
+    document.getElementById('modalListViewTab').addEventListener('click', () => {
+        document.getElementById('modalListViewContent').style.display = 'block';
+        document.getElementById('modalDiagramViewContent').style.display = 'none';
+        document.getElementById('modalListViewTab').style.borderBottom = '2px solid var(--accent)';
+        document.getElementById('modalListViewTab').style.color = 'var(--accent)';
+        document.getElementById('modalDiagramViewTab').style.borderBottom = '2px solid transparent';
+        document.getElementById('modalDiagramViewTab').style.color = 'var(--muted)';
+    });
+    
+    document.getElementById('modalDiagramViewTab').addEventListener('click', () => {
+        document.getElementById('modalListViewContent').style.display = 'none';
+        document.getElementById('modalDiagramViewContent').style.display = 'block';
+        document.getElementById('modalListViewTab').style.borderBottom = '2px solid transparent';
+        document.getElementById('modalListViewTab').style.color = 'var(--muted)';
+        document.getElementById('modalDiagramViewTab').style.borderBottom = '2px solid var(--accent)';
+        document.getElementById('modalDiagramViewTab').style.color = 'var(--accent)';
+    });
+}
+
+function renderModalListView(connections) {
+    const container = document.getElementById('modalListViewContent');
+    if (!container) return;
+    
+    if (!connections || connections.length === 0) {
+        container.innerHTML = '<p style="color:var(--muted);text-align:center;padding:2rem;">Bağlantı bulunamadı</p>';
+        return;
+    }
+    
+    container.innerHTML = connections.map((conn, idx) => {
+        const getSourceIcon = () => conn.source.type === 'server' ? '🖥️' : '🌐';
+        const getDestIcon = () => conn.destination.type === 'server' ? '🖥️' : '🌐';
+        
+        const portsHtml = conn.ports && conn.ports.length > 0 
+            ? conn.ports.map(p => `<span style="background:${p.color};color:white;padding:0.3rem 0.6rem;border-radius:0.4rem;font-size:0.85rem;font-weight:800;display:inline-flex;gap:0.3rem;align-items:center;">${p.number} ${p.name || ''}</span>`).join(' ')
+            : '<span style="color:#ef4444;">⚠️ Port Yok</span>';
+        
+        let html = '';
+        if (conn.firewall) {
+            html = `
+                <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+                    <span style="color:var(--accent);font-weight:600;">${getSourceIcon()} ${conn.source.name}</span>
+                    <span style="color:var(--muted);font-size:0.85rem;">(${conn.source.ip})</span>
+                    <i class="fa fa-arrow-right" style="color:var(--muted);"></i>
+                    <span style="background:linear-gradient(135deg,#1d4ed8,#2563eb);color:#fff;padding:0.4rem 0.8rem;border-radius:0.5rem;font-weight:700;">🧱 FW</span>
+                    <i class="fa fa-arrow-right" style="color:var(--muted);"></i>
+                    <span style="color:#4CAF50;font-weight:600;">${getDestIcon()} ${conn.destination.name}</span>
+                    <span style="color:var(--muted);font-size:0.85rem;">(${conn.destination.ip})</span>
+                    <span style="margin-left:0.5rem;">→</span>
+                    ${portsHtml}
+                </div>
+            `;
+        } else {
+            html = `
+                <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+                    <span style="color:var(--accent);font-weight:600;">${getSourceIcon()} ${conn.source.name}</span>
+                    <span style="color:var(--muted);font-size:0.85rem;">(${conn.source.ip})</span>
+                    <i class="fa fa-arrow-right" style="color:var(--muted);"></i>
+                    <span style="color:#4CAF50;font-weight:600;">${getDestIcon()} ${conn.destination.name}</span>
+                    <span style="color:var(--muted);font-size:0.85rem;">(${conn.destination.ip})</span>
+                    <span style="margin-left:0.5rem;">→</span>
+                    ${portsHtml}
+                </div>
+            `;
+        }
+        
+        return `
+            <div style="padding:1rem;background:#f8f9fa;border-radius:0.5rem;border:1px solid var(--border);margin-bottom:0.8rem;">
+                ${conn.topologyName ? `<div style="font-weight:700;font-size:1rem;color:var(--accent);margin-bottom:0.5rem;"><i class="fa fa-sitemap"></i> ${conn.topologyName}</div>` : ''}
+                ${html}
+                ${conn.note ? `<div style="margin-top:0.5rem;padding:0.5rem;background:rgba(255,159,67,0.1);border-left:3px solid #ff9f43;border-radius:0.3rem;font-size:0.9rem;">📝 ${conn.note}</div>` : ''}
+            </div>
+        `;
+    }).join('');
+}
+
+function renderModalDiagramView(connections) {
+    const container = document.getElementById('modalDiagramViewContent');
+    if (!container) return;
+    
+    container.innerHTML = '<div id="modalTopologyNetwork" style="width:100%;height:600px;border:1px solid var(--border);border-radius:0.5rem;background:#fafafa;"></div>';
+    
+    setTimeout(() => {
+        const networkContainer = document.getElementById('modalTopologyNetwork');
+        if (!networkContainer || typeof vis === 'undefined') return;
+        
+        const nodes = [];
+        const edges = [];
+        const nodeMap = new Map();
+        
+        let nodeId = 1;
+        connections.forEach((conn, idx) => {
+            const sourceKey = `${conn.source.name}_${conn.source.ip}`;
+            const destKey = `${conn.destination.name}_${conn.destination.ip}`;
+            
+            if (!nodeMap.has(sourceKey)) {
+                nodeMap.set(sourceKey, nodeId);
+                nodes.push({
+                    id: nodeId,
+                    label: conn.source.name + '\\n' + conn.source.ip,
+                    shape: conn.source.type === 'server' ? 'box' : 'ellipse',
+                    color: { background: '#667eea', border: '#5a67d8' },
+                    font: { color: '#fff', size: 14 }
+                });
+                nodeId++;
+            }
+            
+            if (!nodeMap.has(destKey)) {
+                nodeMap.set(destKey, nodeId);
+                nodes.push({
+                    id: nodeId,
+                    label: conn.destination.name + '\\n' + conn.destination.ip,
+                    shape: conn.destination.type === 'server' ? 'box' : 'ellipse',
+                    color: { background: '#4CAF50', border: '#45a049' },
+                    font: { color: '#fff', size: 14 }
+                });
+                nodeId++;
+            }
+            
+            if (conn.firewall) {
+                const fwKey = 'firewall';
+                if (!nodeMap.has(fwKey)) {
+                    nodeMap.set(fwKey, nodeId);
+                    nodes.push({
+                        id: nodeId,
+                        label: '🧱 Firewall',
+                        shape: 'diamond',
+                        color: { background: '#ff6b6b', border: '#ff5252' },
+                        font: { color: '#fff', size: 14 }
+                    });
+                    nodeId++;
+                }
+                
+                edges.push({
+                    from: nodeMap.get(sourceKey),
+                    to: nodeMap.get(fwKey),
+                    arrows: 'to',
+                    label: conn.ports.map(p => p.number).join(','),
+                    color: { color: '#3b82f6' }
+                });
+                
+                edges.push({
+                    from: nodeMap.get(fwKey),
+                    to: nodeMap.get(destKey),
+                    arrows: 'to',
+                    label: conn.ports.map(p => p.number).join(','),
+                    color: { color: '#3b82f6' }
+                });
+            } else {
+                edges.push({
+                    from: nodeMap.get(sourceKey),
+                    to: nodeMap.get(destKey),
+                    arrows: 'to',
+                    label: conn.ports.map(p => p.number).join(','),
+                    color: { color: '#3b82f6' }
+                });
+            }
+        });
+        
+        const data = { nodes: new vis.DataSet(nodes), edges: new vis.DataSet(edges) };
+        const options = {
+            nodes: { borderWidth: 2, shadow: true },
+            edges: { width: 2, smooth: { type: 'cubicBezier' } },
+            physics: { enabled: true, barnesHut: { gravitationalConstant: -30000, springLength: 200 } }
+        };
+        
+        new vis.Network(networkContainer, data, options);
+    }, 100);
+}
+
+// ======== SVG'DEN OLUŞTUR MODAL ========
+function setupSvgUploadModal() {
+    const modal = document.getElementById('svgUploadModal');
+    const openBtn = document.getElementById('openSvgUploadModalBtn'); // You can add a trigger button in the UI if needed
+    const closeBtn = document.getElementById('closeSvgUploadModal');
+    const fileInput = document.getElementById('svgFileInput');
+    const preview = document.getElementById('svgPreviewContainer');
+    const drawBtn = document.getElementById('drawSvgBtn');
+
+    // Open modal (if you add a trigger button)
+    if (openBtn) {
+        openBtn.addEventListener('click', () => {
+            modal.style.display = 'flex';
+        });
+    }
+
+    // Close modal
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            modal.style.display = 'none';
+            fileInput.value = '';
+            preview.style.display = 'none';
+            preview.innerHTML = '';
+            drawBtn.style.display = 'none';
+        });
+    }
+
+    // File selection and preview
+    if (fileInput) {
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file && file.type === 'image/svg+xml') {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    preview.innerHTML = evt.target.result;
+                    preview.style.display = 'block';
+                    drawBtn.style.display = 'inline-block';
+                };
+                reader.readAsText(file);
+            } else {
+                preview.innerHTML = '<span style="color:#e53e3e;">Lütfen geçerli bir SVG dosyası seçin.</span>';
+                preview.style.display = 'block';
+                drawBtn.style.display = 'none';
+            }
+        });
+    }
+
+    // Draw button: parse SVG and trigger drawing logic
+    if (drawBtn) {
+        drawBtn.addEventListener('click', () => {
+            const file = fileInput.files[0];
+            if (file && file.type === 'image/svg+xml') {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    const svgContent = evt.target.result;
+                    // Call the global handler for SVG drawing
+                    if (typeof window.handleSvgDrawing === 'function') {
+                        window.handleSvgDrawing(svgContent);
+                    } else {
+                        console.log('SVG içeriği:', svgContent);
+                    }
+                };
+                reader.readAsText(file);
+            }
+            modal.style.display = 'none';
+            fileInput.value = '';
+            preview.style.display = 'none';
+            preview.innerHTML = '';
+            drawBtn.style.display = 'none';
+        });
+    }
+
+// Placeholder for SVG drawing integration
+window.handleSvgDrawing = function(svgContent) {
+    // Gelişmiş SVG analiz: kutu, metin ve çizgi ilişkilerini çıkar
+    const parser = new DOMParser();
+    const svgDoc = parser.parseFromString(svgContent, 'image/svg+xml');
+    const svgRoot = svgDoc.documentElement;
+
+    // 1. Kutu ve daireleri (rect, circle, ellipse) ve metinleri pozisyonlarıyla topla
+    function getBoxCenter(el) {
+        if (el.tagName === 'rect') {
+            return {
+                x: parseFloat(el.getAttribute('x') || 0) + parseFloat(el.getAttribute('width') || 0) / 2,
+                y: parseFloat(el.getAttribute('y') || 0) + parseFloat(el.getAttribute('height') || 0) / 2
+            };
+        }
+        if (el.tagName === 'circle') {
+            return {
+                x: parseFloat(el.getAttribute('cx') || 0),
+                y: parseFloat(el.getAttribute('cy') || 0)
+            };
+        }
+        if (el.tagName === 'ellipse') {
+            return {
+                x: parseFloat(el.getAttribute('cx') || 0),
+                y: parseFloat(el.getAttribute('cy') || 0)
+            };
+        }
+        return {x:0, y:0};
+    }
+
+    // Kutular
+    const boxEls = Array.from(svgRoot.querySelectorAll('rect,circle,ellipse'));
+    const boxes = boxEls.map((el, idx) => ({
+        id: 'box'+idx,
+        el,
+        center: getBoxCenter(el),
+        type: el.tagName
+    }));
+
+    // Metinler
+    const textEls = Array.from(svgRoot.querySelectorAll('text'));
+    const texts = textEls.map((el, idx) => ({
+        id: 'text'+idx,
+        el,
+        text: el.textContent.trim(),
+        x: parseFloat(el.getAttribute('x') || 0),
+        y: parseFloat(el.getAttribute('y') || 0)
+    }));
+
+    // Her kutuya en yakın metni ata (sunucu/port adı)
+    boxes.forEach(box => {
+        let minDist = Infinity, minText = null;
+        texts.forEach(t => {
+            const dx = (box.center.x - t.x), dy = (box.center.y - t.y);
+            const dist = Math.sqrt(dx*dx + dy*dy);
+            if (dist < minDist && dist < 80) { minDist = dist; minText = t; }
+        });
+        box.label = minText ? minText.text : box.type.toUpperCase();
+    });
+
+    // 2. Çizgileri (line, polyline, path) topla
+    const lineEls = Array.from(svgRoot.querySelectorAll('line,polyline,path'));
+    function getLineEndpoints(el) {
+        if (el.tagName === 'line') {
+            return [
+                {x:parseFloat(el.getAttribute('x1')), y:parseFloat(el.getAttribute('y1'))},
+                {x:parseFloat(el.getAttribute('x2')), y:parseFloat(el.getAttribute('y2'))}
+            ];
+        }
+        if (el.tagName === 'polyline') {
+            const points = (el.getAttribute('points')||'').split(' ').map(p=>p.split(',').map(Number));
+            return [
+                {x:points[0][0], y:points[0][1]},
+                {x:points[points.length-1][0], y:points[points.length-1][1]}
+            ];
+        }
+        if (el.tagName === 'path') {
+            // Sadece M ve L komutlarını al (en baş ve son noktalar)
+            const d = el.getAttribute('d')||'';
+            const match = d.match(/M\s*([\d.]+)[, ]([\d.]+).*L\s*([\d.]+)[, ]([\d.]+)/);
+            if (match) {
+                return [
+                    {x:parseFloat(match[1]), y:parseFloat(match[2])},
+                    {x:parseFloat(match[3]), y:parseFloat(match[4])}
+                ];
+            }
+        }
+        return null;
+    }
+    const lines = lineEls.map(el => ({
+        el,
+        endpoints: getLineEndpoints(el)
+    })).filter(l => l.endpoints);
+
+    // 3. Her çizginin başı ve sonunu en yakın kutulara bağla
+    function findClosestBox(pt) {
+        let minDist = Infinity, minBox = null;
+        boxes.forEach(box => {
+            const dx = (box.center.x - pt.x), dy = (box.center.y - pt.y);
+            const dist = Math.sqrt(dx*dx + dy*dy);
+            if (dist < minDist) { minDist = dist; minBox = box; }
+        });
+        return minBox;
+    }
+    const edges = [];
+    lines.forEach(line => {
+        const [start, end] = line.endpoints;
+        const fromBox = findClosestBox(start);
+        const toBox = findClosestBox(end);
+        if (fromBox && toBox && fromBox !== toBox) {
+            edges.push({ from: fromBox.id, to: toBox.id });
+        }
+    });
+
+    // 4. Modern node/edge listesi oluştur
+    const nodes = boxes.map(box => {
+        let color = '#6f86d6', icon = 'fa-server', shape = 'box';
+        if (/fw|firewall/i.test(box.label)) { color = '#ff6b6b'; icon = 'fa-fire'; }
+        else if (/http|https|port|tcp|udp|smtp|ftp|sql|db|oracle|mssql|mysql|redis|mongo|mail|smtp|nfs|rdp|ldap|soap|smb/i.test(box.label)) { color = '#3ed598'; icon = 'fa-plug'; shape = 'ellipse'; }
+        return {
+            id: box.id,
+            label: box.label,
+            shape,
+            color: { background: color, border: '#fff' },
+            font: { color: '#fff', size: 18, face: 'Arial' },
+            icon
+        };
+    });
+
+    // --- MODERN LIST VIEW ---
+    let listView = document.getElementById('listView');
+    if (listView) {
+        let html = '<div style="display:flex;flex-wrap:wrap;gap:1.2rem;">';
+        nodes.forEach(node => {
+            html += `<div style="background:linear-gradient(120deg,#fbc2eb 0%,#a6c1ee 100%);border-radius:1rem;box-shadow:0 2px 8px #a18cd133;padding:1.2rem 1.5rem;min-width:180px;max-width:260px;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+                <div style=\"font-size:2.1rem;color:${node.color.background};margin-bottom:0.5rem;\"><i class='fa ${node.icon}'></i></div>
+                <div style=\"font-size:1.1rem;font-weight:700;color:#4b5563;text-align:center;word-break:break-all;\">${node.label}</div>
+            </div>`;
+        });
+        if (edges.length) {
+            html += '<div style="flex-basis:100%;height:0;"></div>';
+            html += '<div style="width:100%;margin-top:1.2rem;">';
+            html += '<strong style="color:#6f86d6;">Bağlantılar:</strong><ul style="margin:0.5rem 0 0 1.2rem;">';
+            edges.forEach(e => {
+                const from = nodes.find(n => n.id === e.from);
+                const to = nodes.find(n => n.id === e.to);
+                if (from && to) html += `<li>${from.label} <i class='fa fa-arrow-right' style='color:#6f86d6;'></i> ${to.label}</li>`;
+            });
+            html += '</ul></div>';
+        }
+        if (!nodes.length) {
+            html += '<div style="color:var(--muted);font-size:1rem;">SVG içeriği bulunamadı.</div>';
+        }
+        html += '</div>';
+        listView.innerHTML = html;
+        // Show list view, hide diagram view
+        listView.style.display = 'block';
+        let diagramView = document.getElementById('diagramView');
+        if (diagramView) diagramView.style.display = 'none';
+    }
+
+    // --- DIAGRAM VIEW ---
+    let diagramView = document.getElementById('diagramView');
+    if (diagramView) {
+        let container = document.getElementById('topologyNetwork');
+        if (container) {
+            container.innerHTML = '';
+            if (!nodes.length) {
+                container.innerHTML = '<div style="color:#64748b;text-align:center;padding:2rem;font-size:1.2rem;">Henüz bağlantı yok veya SVG içeriği bulunamadı.</div>';
+            } else {
+                let visContainer = document.createElement('div');
+                visContainer.style.width = '100%';
+                visContainer.style.height = '420px';
+                visContainer.style.background = '#fff';
+                visContainer.style.borderRadius = '1rem';
+                visContainer.style.boxShadow = '0 2px 8px #a18cd133';
+                container.appendChild(visContainer);
+                // eslint-disable-next-line no-undef
+                let network = new vis.Network(visContainer, { nodes: new vis.DataSet(nodes), edges: new vis.DataSet(edges) }, {
+                    nodes: {
+                        shape: 'box',
+                        borderWidth: 2,
+                        shadow: true,
+                        font: { color: '#fff', size: 18, face: 'Arial' },
+                    },
+                    edges: {
+                        color: { color: '#6f86d6' },
+                        width: 2,
+                        arrows: 'to',
+                        smooth: { type: 'cubicBezier', forceDirection: 'horizontal', roundness: 0.4 }
+                    },
+                    layout: {
+                        hierarchical: false
+                    },
+                    physics: {
+                        enabled: true,
+                        barnesHut: { gravitationalConstant: -30000, springLength: 180, springConstant: 0.04, damping: 0.7 }
+                    },
+                    interaction: {
+                        dragNodes: true,
+                        dragView: true,
+                        zoomView: true
+                    }
+                });
+            }
+        }
+        // Show diagram view, hide list view
+        diagramView.style.display = 'block';
+        let listView = document.getElementById('listView');
+        if (listView) listView.style.display = 'none';
+    }
+};
+
+    // Switch to diagram view by default
+    let diagramTab = document.getElementById('diagramViewTab');
+    let listTab = document.getElementById('listViewTab');
+    if (diagramTab && listTab) {
+        diagramTab.classList.add('active');
+        listTab.classList.remove('active');
+    }
+};
 const API_BASE = '/api';
 
 let allTopologies = [];
@@ -84,6 +592,7 @@ document.addEventListener('DOMContentLoaded', () => {
     attachFabActions();
     attachDeleteButtons();
     ensureAuth();
+    setupSvgUploadModal();
 });
 
 // ======== SİLME İŞLEMLERİ ========
@@ -239,8 +748,10 @@ function attachChangePassword() {
 
 // ======== TOPOLOJILER (OVERVIEW) ========
 async function loadAndDisplayTopologies() {
+    console.log('loadAndDisplayTopologies called');
     try {
         const response = await fetch(`${API_BASE}/topology/list`, { credentials: 'include' });
+        console.log('API response status:', response.status);
         if (response.ok) {
             allTopologies = await response.json();
             console.log('Loaded topologies:', allTopologies.length);
@@ -255,6 +766,7 @@ async function loadAndDisplayTopologies() {
         allTopologies = [];
     }
     
+    console.log('Calling renderOverview, renderFilters, renderTable...');
     renderOverview();
     renderFilters();
     renderTable(allTopologies);
@@ -262,7 +774,11 @@ async function loadAndDisplayTopologies() {
 
 function renderOverview() {
     const cards = document.getElementById('overviewCards');
-    if (!cards) return;
+    console.log('renderOverview called, cards element:', cards);
+    if (!cards) {
+        console.error('overviewCards element not found!');
+        return;
+    }
     
     // Benzersiz sunucu+ip kombinasyonlarını say (her sunucu için 1)
     const uniqueKeys = new Set();
@@ -419,7 +935,7 @@ function renderTable(rows) {
                 <button class="btn primary" onclick="downloadTopology('${file}')"><i class="fa fa-download"></i> İndir</button>
                 <button class="btn" style="color:#64748b;border:1.5px solid #64748b;background:#fff;" onclick="viewTopology('${file}')"><i class="fa fa-eye"></i> Görüntüle</button>
                 <button class="btn lilac" onclick="showVersionHistory('${server}','${ip}')"><i class="fa fa-history"></i> Geçmiş</button>
-                <button class="btn warning" onclick="editTopology('${server}','${ip}')"><i class="fa fa-pen"></i> İsim Değiştir</button>
+                <button class="btn warning" onclick="editTopology('${server}','${ip}')"><i class="fa fa-pen"></i> Düzenle</button>
                 <button class="btn danger" onclick="deleteTopology('${server}','${ip}')"><i class="fa fa-trash"></i> Sil</button>
             </td>
         </tr>
@@ -499,25 +1015,95 @@ function renderTable(rows) {
 }
 
 
-// Topoloji meta düzenleme (istemci tarafı)
-function editTopology(idOrFile) {
-    const topo = allTopologies.find(t => (t.id && String(t.id) === String(idOrFile)) || t.file === idOrFile);
+
+// Topoloji meta düzenleme (server, ip ile)
+function editTopology(server, ip) {
+    const topo = allTopologies.find(t => {
+        const s = (t.server || t.Server || '').trim().toLowerCase();
+        const i = (t.ip || t.Ip || '').trim();
+        return s === server.trim().toLowerCase() && i === ip.trim();
+    });
     if (!topo) return;
-    currentEditTopology = topo;
-    const saveForm = document.getElementById('saveDrawingForm');
-    const topologySaveForm = document.getElementById('topologySaveForm');
-    if (!topologySaveForm) return;
-    document.getElementById('drawingTopologyName').value = topo.topologyName || topo.Name || topo.name || topo.server || '';
-    document.getElementById('drawingServerName').value = topo.server || '';
-    document.getElementById('drawingServerIp').value = topo.ip || '';
-    document.getElementById('drawingDept').value = topo.dept || '';
-    document.getElementById('drawingPlatform').value = topo.platform || '';
-    document.getElementById('drawingCritical').value = topo.critical || '';
-    document.getElementById('drawingNote').value = topo.note || '';
-    if (saveForm) {
-        saveForm.style.display = 'block';
-        saveForm.scrollIntoView({ behavior: 'smooth' });
+    window.currentEditTopology = topo;
+    // Modalı doldur
+    document.getElementById('editTopologyName').value = topo.name || topo.Name || '';
+    document.getElementById('editServerName').value = topo.server || topo.Server || '';
+    document.getElementById('editServerIp').value = topo.ip || topo.Ip || '';
+    document.getElementById('editFileName').value = topo.file || topo.File || '';
+    document.getElementById('editDept').value = topo.dept || topo.Dept || '';
+    document.getElementById('editPlatform').value = topo.platform || topo.Platform || '';
+    document.getElementById('editCritical').value = topo.critical || topo.Critical || '';
+    document.getElementById('editNote').value = topo.note || topo.Note || '';
+    document.getElementById('editTopologyModal').style.display = 'flex';
+}
+
+// Modal kaydetme işlemi
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('editTopologyForm');
+    if (form) {
+        form.onsubmit = async function(e) {
+            e.preventDefault();
+            const topo = window.currentEditTopology;
+            if (!topo) return;
+            // Yeni değerleri al
+            const updated = {
+                name: document.getElementById('editTopologyName').value,
+                server: document.getElementById('editServerName').value,
+                ip: document.getElementById('editServerIp').value,
+                file: document.getElementById('editFileName').value,
+                dept: document.getElementById('editDept').value,
+                platform: document.getElementById('editPlatform').value,
+                critical: document.getElementById('editCritical').value,
+                note: document.getElementById('editNote').value,
+                version: topo.version || topo.Version || 'v1',
+                date: topo.date || topo.Date || new Date().toISOString().slice(0,10),
+                user: topo.user || topo.User || 'admin'
+            };
+            // Backend'e güncelleme isteği gönder
+            try {
+                const res = await fetch(`/api/topology/update`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify(updated)
+                });
+                if (res.ok) {
+                    document.getElementById('editTopologyModal').style.display = 'none';
+                    await loadAndDisplayTopologies();
+                } else {
+                    alert('Güncelleme başarısız!');
+                }
+            } catch (err) {
+                alert('Sunucuya ulaşılamadı!');
+            }
+        }
     }
+});
+
+// Topoloji silme (server, ip ile)
+async function deleteTopology(server, ip) {
+    if (!confirm('Bu topolojiyi silmek istediğinize emin misiniz?')) return;
+    // Tüm versiyonları bul ve sil
+    const toDelete = allTopologies.filter(t => {
+        const s = (t.server || t.Server || '').trim().toLowerCase();
+        const i = (t.ip || t.Ip || '').trim();
+        return s === server.trim().toLowerCase() && i === ip.trim();
+    });
+    for (const topo of toDelete) {
+        const file = topo.file || topo.File;
+        try {
+            const response = await fetch(`${API_BASE}/topology/delete?file=${encodeURIComponent(file)}`, {
+                method: 'DELETE',
+                credentials: 'include'
+            });
+            if (!response.ok) {
+                alert('Silinemedi: ' + file);
+            }
+        } catch (err) {
+            alert('Silme hatası: ' + file);
+        }
+    }
+    await loadAndDisplayTopologies();
 }
 
 // ======== TEMA ========
@@ -884,9 +1470,23 @@ async function logout() {
     }
     location.href = '/index.html';
 }
+window.logout = logout;
 
-function viewTopology(filename) {
-    window.open(`/uploads/${filename}`, '_blank');
+async function viewTopology(filename) {
+    if (filename.endsWith('_diagram.json')) {
+        // JSON diagram dosyası için özel modal göster
+        try {
+            const response = await fetch(`/uploads/${filename}`);
+            const connections = await response.json();
+            showDiagramModal(connections, filename);
+        } catch (error) {
+            console.error('Error loading diagram:', error);
+            alert('Diyagram yüklenemedi!');
+        }
+    } else {
+        // Diğer dosyalar için normal açılış
+        window.open(`/uploads/${filename}`, '_blank');
+    }
 }
 
 // ======== SUNUCULAR (SERVERS) ========
@@ -1410,13 +2010,48 @@ function attachDrawio() {
     
     if (saveBtn) {
         saveBtn.addEventListener('click', () => {
-            iframe.contentWindow.postMessage(JSON.stringify({action: 'export', format: 'xml'}), '*');
-            setTimeout(() => {
-                if (saveForm) {
-                    saveForm.style.display = 'block';
-                    saveForm.scrollIntoView({ behavior: 'smooth' });
+            // Çizim alanı topolojisini kaydet
+            if (!canvasData.connections || canvasData.connections.length === 0) {
+                alert('⚠️ Kaydedilecek bağlantı yok! Lütfen önce en az bir bağlantı ekleyin.');
+                return;
+            }
+            
+            const firstTopologyName = canvasData.connections[0]?.topologyName;
+            const topologyName = prompt('Topoloji Adı:', firstTopologyName || 'Yeni Topoloji');
+            
+            if (!topologyName || topologyName.trim() === '') {
+                alert('Topoloji adı gerekli!');
+                return;
+            }
+            
+            (async () => {
+                try {
+                    const response = await fetch('/api/topology/save-diagram', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify({
+                            topologyName: topologyName.trim(),
+                            dept: 'Çizim Alanı',
+                            critical: 'Orta',
+                            note: 'Topoloji Oluşturucudan kaydedildi',
+                            connections: canvasData.connections
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        alert('✅ Topoloji başarıyla kaydedildi!');
+                        await loadAndDisplayTopologies();
+                    } else {
+                        alert('❌ Kaydetme başarısız: ' + (data.message || 'Bilinmeyen hata'));
+                    }
+                } catch (error) {
+                    console.error('Save error:', error);
+                    alert('❌ Sunucuya bağlanılamadı!');
                 }
-            }, 500);
+            })();
         });
     }
     
@@ -1852,6 +2487,7 @@ function attachTopologyBuilder() {
             sourceExternalField.style.display = 'none';
             sourceNameField.style.display = 'none';
         } else {
+            // internal-vip veya wan-ip için
             sourceServerField.style.display = 'none';
             sourceExternalField.style.display = 'block';
             sourceNameField.style.display = 'block';
@@ -1869,6 +2505,7 @@ function attachTopologyBuilder() {
             destExternalField.style.display = 'none';
             destNameField.style.display = 'none';
         } else {
+            // internal-vip veya wan-ip için
             destServerField.style.display = 'none';
             destExternalField.style.display = 'block';
             destNameField.style.display = 'block';
@@ -1879,6 +2516,7 @@ function attachTopologyBuilder() {
     addConnectionBtn.addEventListener('click', () => {
         let source = null, destination = null;
         
+        const topologyName = document.getElementById('topologyName')?.value.trim();
         const note = document.getElementById('connectionNote').value.trim();
         const includeFirewall = document.getElementById('includeFirewall').checked;
         const connectionMessage = document.getElementById('connectionMessage');
@@ -1887,8 +2525,16 @@ function attachTopologyBuilder() {
         if (connectionMessage) connectionMessage.textContent = '';
         
         console.log('=== BAĞLANTI EKLEME BAŞLADI ===');
+        console.log('Topoloji Adı:', topologyName);
         console.log('Seçilen portlar:', selectedPorts);
         console.log('Port sayısı:', selectedPorts.length);
+        
+        // Topoloji adı validasyonu
+        if (!topologyName) {
+            if (connectionMessage) connectionMessage.textContent = '⚠️ Topoloji adı giriniz';
+            console.warn('⚠️ Topoloji adı girilmedi!');
+            return;
+        }
         
         // Port validasyonu
         if (selectedPorts.length === 0) {
@@ -1912,15 +2558,17 @@ function attachTopologyBuilder() {
                 ip: server.ip
             };
         } else {
+            // internal-vip veya wan-ip için
             const sourceIp = document.getElementById('sourceIp').value.trim();
             const sourceName = document.getElementById('sourceName').value.trim();
             if (!sourceIp) {
                 if (connectionMessage) connectionMessage.textContent = '❌ Lütfen kaynak IP adresini girin';
                 return;
             }
+            const typeLabel = sourceType.value === 'internal-vip' ? 'Internal VIP' : 'WAN IP';
             source = {
-                type: 'external',
-                name: sourceName || 'Dış IP',
+                type: sourceType.value,
+                name: sourceName || typeLabel,
                 ip: sourceIp
             };
         }
@@ -1940,15 +2588,17 @@ function attachTopologyBuilder() {
                 ip: server.ip
             };
         } else {
+            // internal-vip veya wan-ip için
             const destIp = document.getElementById('destIp').value.trim();
             const destName = document.getElementById('destName').value.trim();
             if (!destIp) {
                 if (connectionMessage) connectionMessage.textContent = '❌ Lütfen hedef IP adresini girin';
                 return;
             }
+            const typeLabel = destType.value === 'internal-vip' ? 'Internal VIP' : 'WAN IP';
             destination = {
-                type: 'external',
-                name: destName || 'Dış IP',
+                type: destType.value,
+                name: destName || typeLabel,
                 ip: destIp
             };
         }
@@ -1957,6 +2607,7 @@ function attachTopologyBuilder() {
         console.log('Eklenecek portlar:', selectedPorts);
         const connection = {
             id: Date.now(),
+            topologyName: topologyName,
             source: source,
             destination: destination,
             ports: selectedPorts.map(p => ({...p})), // Derin kopya
@@ -2047,14 +2698,17 @@ function renderTopologyConnections() {
         }
         
         return `
-            <div style="padding:0.6rem 0.7rem;background:#ffffff;border-radius:0.3rem;border:1px solid var(--border);margin-bottom:0.4rem;display:flex;justify-content:space-between;align-items:center;">
-                <div style="flex:1;">
-                    ${html}
-                    ${conn.note ? `<div style="margin-top:0.4rem;padding:0.3rem 0.5rem;background:rgba(255,159,67,0.08);border-left:2px solid #ff9f43;border-radius:0.2rem;font-size:0.75rem;color:var(--text);max-width:600px;"><strong>📝</strong> ${conn.note}</div>` : ''}
+            <div style="padding:0.6rem 0.7rem;background:#ffffff;border-radius:0.3rem;border:1px solid var(--border);margin-bottom:0.4rem;">
+                ${conn.topologyName ? `<div style="font-weight:700;font-size:0.9rem;color:var(--accent);margin-bottom:0.5rem;display:flex;align-items:center;gap:0.4rem;"><i class="fa fa-sitemap" style="font-size:0.85rem;"></i> ${conn.topologyName}</div>` : ''}
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <div style="flex:1;">
+                        ${html}
+                        ${conn.note ? `<div style="margin-top:0.4rem;padding:0.3rem 0.5rem;background:rgba(255,159,67,0.08);border-left:2px solid #ff9f43;border-radius:0.2rem;font-size:0.75rem;color:var(--text);max-width:600px;"><strong>📝</strong> ${conn.note}</div>` : ''}
+                    </div>
+                    <button type="button" onclick="removeConnection(${conn.id})" style="font-size:0.75rem;background:none;border:none;color:var(--error);cursor:pointer;padding:0.3rem 0.5rem;opacity:0.6;transition:opacity 0.2s;margin-left:0.5rem;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'" title="Sil">
+                        <i class="fa fa-trash"></i>
+                    </button>
                 </div>
-                <button type="button" onclick="removeConnection(${conn.id})" style="font-size:0.75rem;background:none;border:none;color:var(--error);cursor:pointer;padding:0.3rem 0.5rem;opacity:0.6;transition:opacity 0.2s;margin-left:0.5rem;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'" title="Sil">
-                    <i class="fa fa-trash"></i>
-                </button>
             </div>
         `;
     }).join('');
