@@ -212,11 +212,12 @@
         </section>
 
         <section id="sheflikler" class="section">
-            <div class="section-header">
+            <div class="section-header" style="display: flex; justify-content: space-between; align-items: center;">
                 <div>
                     <p class="eyebrow">Şeflikler</p>
-                    <h1>Şeflik Listesi</h1>
+                    <h1>Şeflik Düzenle</h1>
                 </div>
+                <button id="addSheflikBtn" class="btn" style="background: linear-gradient(135deg, #10b981, #059669); color: white; font-size: 1rem; padding: 0.6rem 1.2rem; border: none; border-radius: 0.5rem; cursor: pointer; transition: all 0.3s;"><i class="fa fa-plus"></i> Yeni Şeflik Ekle</button>
             </div>
             <div class="panel">
                 <div class="table-wrap">
@@ -235,6 +236,24 @@
                 </div>
             </div>
         </section>
+
+        <!-- Şeflik Ekleme/Düzenleme Modalı -->
+        <div id="sheflikModal" style="display:none;position:fixed;z-index:99999;left:0;top:0;width:100vw;height:100vh;background:rgba(0,0,0,0.35);align-items:center;justify-content:center;">
+            <div style="background:#fff;padding:2.2rem 2.5rem;border-radius:1.2rem;max-width:500px;min-width:340px;box-shadow:0 8px 32px #0002;position:relative;">
+                <button onclick="closeSheflikModal()" style="position:absolute;top:1rem;right:1rem;font-size:1.2rem;background:none;border:none;cursor:pointer;"><i class='fa fa-times'></i></button>
+                <h2 id="sheflikModalTitle" style="margin-bottom:1.2rem;">Yeni Şeflik Ekle</h2>
+                <form id="sheflikForm">
+                    <div class="form-field" style="margin-bottom:1rem;">
+                        <label style="display:block;font-size:0.9rem;font-weight:600;color:#0f172a;margin-bottom:0.5rem;">Şeflik Adı</label>
+                        <input type="text" id="sheflikNameInput" placeholder="Şeflik adını giriniz..." required style="width:100%;padding:0.6rem;border:1px solid #cbd5e1;border-radius:0.5rem;font-size:0.95rem;color:#0f172a;background:#ffffff;">
+                    </div>
+                    <div class="form-actions" style="margin-top:1.5rem;display:flex;gap:0.8rem;">
+                        <button type="submit" id="sheflikSubmitBtn" class="btn primary" style="flex:1;padding:0.7rem;background:linear-gradient(135deg, #3b82f6, #1d4ed8);color:white;border:none;border-radius:0.5rem;cursor:pointer;font-weight:600;transition:all 0.3s;">Kaydet</button>
+                        <button type="button" onclick="closeSheflikModal()" class="btn" style="flex:1;padding:0.7rem;background:#e2e8f0;color:#0f172a;border:none;border-radius:0.5rem;cursor:pointer;font-weight:600;transition:all 0.3s;">İptal</button>
+                    </div>
+                </form>
+            </div>
+        </div>
 
         <section id="servers" class="section">
             <div class="section-header">

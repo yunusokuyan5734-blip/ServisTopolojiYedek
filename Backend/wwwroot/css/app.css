@@ -567,3 +567,113 @@ body.dark-theme canvas#canvas {
         opacity: 0;
     }
 }
+
+/* Şeflik Yönetimi Stilleri */
+#sheflikTable tbody tr {
+    transition: all 0.2s ease;
+}
+
+#sheflikTable tbody tr:hover {
+    background-color: #f8fafc;
+}
+
+body.dark-theme #sheflikTable tbody tr:hover {
+    background-color: #1e293b;
+}
+
+#sheflikTable .sheflik-actions {
+    display: flex;
+    gap: 0.6rem;
+}
+
+/* Düzenle Butonu */
+.btn-edit {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+    padding: 0.5rem 0.9rem;
+    border: none;
+    border-radius: 0.4rem;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: all 0.3s ease;
+}
+
+.btn-edit:hover {
+    background: linear-gradient(135deg, #d97706, #b45309);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(217, 119, 6, 0.3);
+}
+
+/* Sil Butonu */
+.btn-delete {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+    padding: 0.5rem 0.9rem;
+    border: none;
+    border-radius: 0.4rem;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: all 0.3s ease;
+}
+
+.btn-delete:hover {
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+}
+
+/* Yeni Şeflik Ekle Butonu */
+#addSheflikBtn:hover {
+    background: linear-gradient(135deg, #059669, #047857) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+}
+
+/* Modal Form Stilleri */
+#sheflikForm .form-field input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+#sheflikForm .form-actions button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Notification Animasyonları */
+@keyframes slideIn {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+}
+/* Şeflik Modal Açık Durumu */
+#sheflikModal[style*="display: flex"] {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+}

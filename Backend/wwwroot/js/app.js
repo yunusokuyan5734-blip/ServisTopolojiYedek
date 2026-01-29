@@ -582,7 +582,7 @@ document.addEventListener('DOMContentLoaded', () => {
     attachNav();
     attachChangePassword();
     loadAndDisplayTopologies();
-    attachSheflikler();
+    loadShefliklerFromBackend();
     attachServers();
     attachPorts();
     attachDrawio();
@@ -1119,6 +1119,62 @@ function attachThemeToggle() {
 }
 
 // ======== ŞEFLIKLER ========
+function showNotification(message, type = 'info') {
+    const notificationDiv = document.createElement('div');
+    notificationDiv.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 20px;
+        border-radius: 8px;
+        color: white;
+        font-weight: 600;
+        z-index: 10000;
+        animation: slideIn 0.3s ease-in-out;
+        ${type === 'success' ? 'background: #10b981;' : type === 'error' ? 'background: #ef4444;' : 'background: #3b82f6;'}
+    `;
+    notificationDiv.textContent = message;
+    document.body.appendChild(notificationDiv);
+    
+    setTimeout(() => {
+        notificationDiv.style.animation = 'slideOut 0.3s ease-in-out';
+        setTimeout(() => notificationDiv.remove(), 300);
+    }, 3000);
+}
+
+async function loadShefliklerFromBackend() {
+    try {
+        const response = await fetch('/api/sheflik/list');
+        console.log('API Response status:', response.status, 'ok:', response.ok);
+        
+        const data = await response.json();
+        console.log('Backend\'den gelen veri:', data);
+        
+        if (Array.isArray(data)) {
+            console.log('Veri array, eleman sayısı:', data.length);
+            if (data.length > 0) {
+                console.log('İlk eleman:', data[0]);
+            }
+            
+            sampleSheflikler.length = 0;
+            sampleSheflikler.push(...data.map(s => {
+                console.log('Mapping:', s);
+                return {
+                    name: s.Name || s.name,
+                    status: s.Status || s.status,
+                    date: s.Date || s.date
+                };
+            }));
+            console.log('Yüklenen sampleSheflikler:', sampleSheflikler);
+            attachSheflikler();
+        } else {
+            console.error('Veri array değil:', typeof data);
+        }
+    } catch (error) {
+        console.error('Şeflikler yüklenirken hata:', error);
+    }
+}
+
 function attachSheflikler() {
     const tbody = document.querySelector('#sheflikTable tbody');
     if (!tbody) return;
@@ -1128,13 +1184,132 @@ function attachSheflikler() {
             <td>${s.name}</td>
             <td><span class="badge success">${s.status}</span></td>
             <td>${s.date}</td>
-            <td class="actions">
-                <button class="tag"><i class="fa fa-pen"></i></button>
-                <button class="tag danger"><i class="fa fa-trash"></i></button>
+            <td class="actions sheflik-actions">
+                <button class="btn-edit" onclick="editSheflik(${idx})"><i class="fa fa-pen"></i> Düzenle</button>
+                <button class="btn-delete" onclick="deleteSheflik(${idx})"><i class="fa fa-trash"></i> Sil</button>
             </td>
         </tr>
     `).join('');
 }
+
+function openSheflikModal(mode = 'add', idx = null) {
+    const modal = document.getElementById('sheflikModal');
+    const title = document.getElementById('sheflikModalTitle');
+    const input = document.getElementById('sheflikNameInput');
+    
+    if (mode === 'add') {
+        title.textContent = 'Yeni Şeflik Ekle';
+        input.value = '';
+        input.focus();
+        modal.dataset.mode = 'add';
+        modal.dataset.index = '';
+    } else if (mode === 'edit' && idx !== null) {
+        title.textContent = 'Şeflik Adını Düzenle';
+        input.value = sampleSheflikler[idx].name;
+        input.focus();
+        modal.dataset.mode = 'edit';
+        modal.dataset.index = idx;
+    }
+    
+    modal.style.display = 'flex';
+}
+
+function closeSheflikModal() {
+    document.getElementById('sheflikModal').style.display = 'none';
+}
+
+function editSheflik(idx) {
+    openSheflikModal('edit', idx);
+}
+
+async function deleteSheflik(idx) {
+    if (confirm(`"${sampleSheflikler[idx].name}" şefliğini silmek istediğinize emin misiniz?`)) {
+        try {
+            const response = await fetch(`/api/sheflik/delete/${idx}`, {
+                method: 'DELETE'
+            });
+            
+            if (response.ok) {
+                await loadShefliklerFromBackend();
+                showNotification('Şeflik başarıyla silindi', 'success');
+            } else {
+                showNotification('Şeflik silinirken hata oluştu', 'error');
+            }
+        } catch (error) {
+            console.error('Silme hatası:', error);
+            showNotification('Şeflik silinirken hata oluştu', 'error');
+        }
+    }
+}
+
+// Modal form submit
+document.addEventListener('DOMContentLoaded', function() {
+    const sheflikForm = document.getElementById('sheflikForm');
+    if (sheflikForm) {
+        sheflikForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const name = document.getElementById('sheflikNameInput').value.trim();
+            const modal = document.getElementById('sheflikModal');
+            const mode = modal.dataset.mode;
+            const idx = parseInt(modal.dataset.index);
+            
+            if (!name) {
+                showNotification('Şeflik adı boş olamaz', 'error');
+                return;
+            }
+            
+            try {
+                if (mode === 'add') {
+                    const response = await fetch('/api/sheflik/add', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name: name })
+                    });
+                    
+                    if (response.ok) {
+                        showNotification('Şeflik başarıyla eklendi', 'success');
+                        await loadShefliklerFromBackend();
+                        closeSheflikModal();
+                    } else {
+                        showNotification('Şeflik eklenirken hata oluştu', 'error');
+                    }
+                } else if (mode === 'edit' && !isNaN(idx)) {
+                    const response = await fetch(`/api/sheflik/update/${idx}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name: name })
+                    });
+                    
+                    if (response.ok) {
+                        showNotification('Şeflik başarıyla güncellendi', 'success');
+                        await loadShefliklerFromBackend();
+                        closeSheflikModal();
+                    } else {
+                        showNotification('Şeflik güncellenirken hata oluştu', 'error');
+                    }
+                }
+            } catch (error) {
+                console.error('İşlem hatası:', error);
+                showNotification('İşlem sırasında hata oluştu', 'error');
+                closeSheflikModal();
+            }
+        });
+    }
+    
+    const addSheflikBtn = document.getElementById('addSheflikBtn');
+    if (addSheflikBtn) {
+        addSheflikBtn.addEventListener('click', () => openSheflikModal('add'));
+    }
+    
+    const modal = document.getElementById('sheflikModal');
+    if (modal) {
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                closeSheflikModal();
+            }
+        });
+    }
+});
 
 // ======== DOSYA YÜKLEME ========
 // ======== TOPOLOGY PARSING VE VERSIYONLAMA ========
@@ -3018,7 +3193,7 @@ function switchSection(targetId) {
         } else if (targetId === 'topologies') {
             loadAndDisplayTopologies();
         } else if (targetId === 'sheflikler') {
-            renderSheflikler();
+            loadShefliklerFromBackend();
         } else if (targetId === 'admin-list') {
             renderAdminList();
         } else if (targetId === 'access-list') {
@@ -3194,8 +3369,9 @@ function renderSheflikler() {
             <td>${sheflık.name}</td>
             <td><span class="badge success">${sheflık.status}</span></td>
             <td>${sheflık.date}</td>
-            <td>
-                <button class="btn-small">Düzenle</button>
+            <td class="actions sheflik-actions">
+                <button class="btn-edit" onclick="editSheflik(${idx})"><i class="fa fa-pen"></i> Düzenle</button>
+                <button class="btn-delete" onclick="deleteSheflik(${idx})"><i class="fa fa-trash"></i> Sil</button>
             </td>
         </tr>
     `).join('');

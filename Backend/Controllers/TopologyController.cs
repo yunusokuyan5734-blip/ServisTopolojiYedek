@@ -158,55 +158,6 @@ namespace Backend.Controllers
 
         [HttpDelete("delete")]
         public IActionResult DeleteTopology([FromQuery] string file)
-
-                [HttpPost("save-diagram")]
-                public IActionResult SaveDiagram([FromBody] DiagramSaveRequest request)
-                {
-                    try
-                    {
-                        var username = User.Identity?.Name ?? "admin";
-                
-                        if (string.IsNullOrEmpty(request.TopologyName) || request.Connections == null)
-                        {
-                            return BadRequest(new { message = "Topoloji adı ve bağlantılar gerekli" });
-                        }
-
-                        var fileName = $"{request.TopologyName.Replace(" ", "_")}_diagram.json";
-                        var uploadsFolder = Path.Combine(_env.WebRootPath, "uploads");
-                        if (!Directory.Exists(uploadsFolder))
-                        {
-                            Directory.CreateDirectory(uploadsFolder);
-                        }
-
-                        var filePath = Path.Combine(uploadsFolder, fileName);
-                        var json = System.Text.Json.JsonSerializer.Serialize(request.Connections, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
-                        System.IO.File.WriteAllText(filePath, json);
-
-                        var topology = new Topology
-                        {
-                            Server = request.TopologyName,
-                            Ip = "Diagram",
-                            File = fileName,
-                            Dept = request.Dept ?? "Çizim Alanı",
-                            Version = "v1",
-                            Date = DateTime.Now.ToString("yyyy-MM-dd"),
-                            User = username,
-                            Platform = "Diagram",
-                            Critical = request.Critical ?? "Orta",
-                            Note = request.Note,
-                            Name = request.TopologyName
-                        };
-                        _topoStore.AddTopology(topology);
-                        _logger.LogInformation($"Diagram saved: {request.TopologyName} by {username}");
-
-                        return Ok(new { message = "Topoloji diyagramı başarıyla kaydedildi", file = fileName });
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, "Error saving diagram");
-                        return StatusCode(500, new { message = "Kaydetme hatası: " + ex.Message });
-                    }
-                }
         {
             try
             {
@@ -247,6 +198,55 @@ namespace Backend.Controllers
             {
                 _logger.LogError(ex, "Error deleting topology");
                 return StatusCode(500, new { message = "Silme hatası: " + ex.Message });
+            }
+        }
+
+        [HttpPost("save-diagram")]
+        public IActionResult SaveDiagram([FromBody] DiagramSaveRequest request)
+        {
+            try
+            {
+                var username = User.Identity?.Name ?? "admin";
+
+                if (string.IsNullOrEmpty(request.TopologyName) || request.Connections == null)
+                {
+                    return BadRequest(new { message = "Topoloji adı ve bağlantılar gerekli" });
+                }
+
+                var fileName = $"{request.TopologyName.Replace(" ", "_")}_diagram.json";
+                var uploadsFolder = Path.Combine(_env.WebRootPath, "uploads");
+                if (!Directory.Exists(uploadsFolder))
+                {
+                    Directory.CreateDirectory(uploadsFolder);
+                }
+
+                var filePath = Path.Combine(uploadsFolder, fileName);
+                var json = System.Text.Json.JsonSerializer.Serialize(request.Connections, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+                System.IO.File.WriteAllText(filePath, json);
+
+                var topology = new Topology
+                {
+                    Server = request.TopologyName,
+                    Ip = "Diagram",
+                    File = fileName,
+                    Dept = request.Dept ?? "Çizim Alanı",
+                    Version = "v1",
+                    Date = DateTime.Now.ToString("yyyy-MM-dd"),
+                    User = username,
+                    Platform = "Diagram",
+                    Critical = request.Critical ?? "Orta",
+                    Note = request.Note,
+                    Name = request.TopologyName
+                };
+                _topoStore.AddTopology(topology);
+                _logger.LogInformation($"Diagram saved: {request.TopologyName} by {username}");
+
+                return Ok(new { message = "Topoloji diyagramı başarıyla kaydedildi", file = fileName });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error saving diagram");
+                return StatusCode(500, new { message = "Kaydetme hatası: " + ex.Message });
             }
         }
     }
