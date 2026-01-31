@@ -446,6 +446,44 @@
                                 <input type="text" id="topologyName" placeholder="Örn: Sunucu-Database Bağlantısı" style="background:#ffffff;color:#0f172a;width:100%;">
                             </div>
                         </div>
+
+                        <!-- Topoloji Metadata -->
+                        <div style="margin-bottom:1.5rem;padding:1rem;background:rgba(168,85,247,0.05);border-radius:0.5rem;border-left:3px solid #a855f7;">
+                            <h4 style="margin-bottom:0.8rem;font-size:0.95rem;"><i class="fa fa-circle-info" style="color:#a855f7;margin-right:0.5rem;"></i>Topoloji Bilgileri</h4>
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;margin-bottom:0.8rem;">
+                                <!-- İşletim Sistemi -->
+                                <div class="form-field">
+                                    <label for="topologyPlatform">İşletim Sistemi *</label>
+                                    <select id="topologyPlatform" style="background:#ffffff;color:#0f172a;">
+                                        <option value="">Seçin...</option>
+                                        <option value="Windows">Windows</option>
+                                        <option value="Linux">Linux</option>
+                                    </select>
+                                </div>
+                                <!-- Kritiklik Seviyesi -->
+                                <div class="form-field">
+                                    <label for="topologyCritical">Kritiklik Seviyesi *</label>
+                                    <select id="topologyCritical" style="background:#ffffff;color:#0f172a;">
+                                        <option value="">Seçin...</option>
+                                        <option value="Yüksek">🔴 Yüksek</option>
+                                        <option value="Orta">🟡 Orta</option>
+                                        <option value="Düşük">🟢 Düşük</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <!-- Şeflik -->
+                            <div class="form-field" style="margin-bottom:0.8rem;">
+                                <label for="topologySheflik">Şeflik *</label>
+                                <select id="topologySheflik" style="background:#ffffff;color:#0f172a;">
+                                    <option value="">Şeflik Seçin...</option>
+                                </select>
+                            </div>
+                            <!-- Not -->
+                            <div class="form-field">
+                                <label for="topologyNote">Not</label>
+                                <textarea id="topologyNote" placeholder="Topoloji hakkında notlar..." style="background:#ffffff;color:#0f172a;width:100%;min-height:70px;resize:vertical;padding:0.5rem;border:1px solid #e2e8f0;border-radius:0.4rem;font-family:inherit;"></textarea>
+                            </div>
+                        </div>
                         
                         <!-- Kaynak (Source) -->
                         <div style="margin-bottom:1.5rem;padding:1rem;background:rgba(61,184,255,0.05);border-radius:0.5rem;border-left:3px solid var(--accent);">
@@ -713,6 +751,6 @@
     <button class="fab danger" id="fabLogout"><i class="fa fa-right-from-bracket"></i></button>
 </div>
 
-<script src="js/app.js?v=20260131-2"></script>
+<script src="js/app.js?v=20260131-3"></script>
 </body>
 </html>

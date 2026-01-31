@@ -1213,6 +1213,7 @@ async function loadShefliklerFromBackend() {
             }));
             console.log('Yüklenen sampleSheflikler:', sampleSheflikler);
             attachSheflikler();
+            populateMetadataSelects();
         } else {
             console.error('Veri array değil:', typeof data);
         }
@@ -2210,6 +2211,7 @@ function attachDrawio() {
     const topologySaveForm = document.getElementById('topologySaveForm');
     
     populateDrawingSelects();
+    populateMetadataSelects();
     renderPortReference();
     renderServerLibrary();
     attachTopologyBuilder();
@@ -2258,11 +2260,28 @@ function attachDrawio() {
                 return;
             }
             
-            const firstTopologyName = canvasData.connections[0]?.topologyName;
-            const topologyName = prompt('Topoloji Adı:', firstTopologyName || 'Yeni Topoloji');
+            // Metadata alanlarını al
+            const topologyName = document.getElementById('topologyName')?.value?.trim();
+            const platform = document.getElementById('topologyPlatform')?.value?.trim();
+            const critical = document.getElementById('topologyCritical')?.value?.trim();
+            const sheflik = document.getElementById('topologySheflik')?.value?.trim();
+            const note = document.getElementById('topologyNote')?.value?.trim() || '';
             
-            if (!topologyName || topologyName.trim() === '') {
-                alert('Topoloji adı gerekli!');
+            // Zorunlu alanları kontrol et
+            if (!topologyName) {
+                alert('⚠️ Topoloji Adı zorunludur!');
+                return;
+            }
+            if (!platform) {
+                alert('⚠️ İşletim Sistemi zorunludur!');
+                return;
+            }
+            if (!critical) {
+                alert('⚠️ Kritiklik Seviyesi zorunludur!');
+                return;
+            }
+            if (!sheflik) {
+                alert('⚠️ Şeflik zorunludur!');
                 return;
             }
             
@@ -2273,10 +2292,11 @@ function attachDrawio() {
                         headers: { 'Content-Type': 'application/json' },
                         credentials: 'include',
                         body: JSON.stringify({
-                            topologyName: topologyName.trim(),
-                            dept: 'Çizim Alanı',
-                            critical: 'Orta',
-                            note: 'Topoloji Oluşturucudan kaydedildi',
+                            topologyName: topologyName,
+                            platform: platform,
+                            critical: critical,
+                            dept: sheflik,
+                            note: note,
                             connections: canvasData.connections
                         })
                     });
@@ -2285,6 +2305,14 @@ function attachDrawio() {
                     
                     if (response.ok) {
                         alert('✅ Topoloji başarıyla kaydedildi!');
+                        // Form alanlarını temizle
+                        document.getElementById('topologyName').value = '';
+                        document.getElementById('topologyPlatform').value = '';
+                        document.getElementById('topologyCritical').value = '';
+                        document.getElementById('topologySheflik').value = '';
+                        document.getElementById('topologyNote').value = '';
+                        canvasData.connections = [];
+                        renderTopologyConnections();
                         await loadAndDisplayTopologies();
                     } else {
                         alert('❌ Kaydetme başarısız: ' + (data.message || 'Bilinmeyen hata'));
@@ -2468,6 +2496,17 @@ function exportToPdf() {
     printWindow.document.write(html);
     printWindow.document.close();
     printWindow.print();
+}
+
+// ======== METADATA SELECTS POPULATE ========
+function populateMetadataSelects() {
+    const sheflikSelect = document.getElementById('topologySheflik');
+    
+    if (sheflikSelect) {
+        // Şeflik dropdown'ını populate et
+        sheflikSelect.innerHTML = '<option value="">Şeflik Seçin...</option>' +
+            sampleSheflikler.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
+    }
 }
 
 // ======== TOPOLOGY BUILDER ========
