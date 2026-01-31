@@ -214,298 +214,12 @@ function renderModalDiagramView(connections) {
 }
 
 // ======== SVG'DEN OLUŞTUR MODAL ========
-function setupSvgUploadModal() {
-    const modal = document.getElementById('svgUploadModal');
-    const openBtn = document.getElementById('openSvgUploadModalBtn'); // You can add a trigger button in the UI if needed
-    const closeBtn = document.getElementById('closeSvgUploadModal');
-    const fileInput = document.getElementById('svgFileInput');
-    const preview = document.getElementById('svgPreviewContainer');
-    const drawBtn = document.getElementById('drawSvgBtn');
-
-    // Open modal (if you add a trigger button)
-    if (openBtn) {
-        openBtn.addEventListener('click', () => {
-            modal.style.display = 'flex';
-        });
-    }
-
-    // Close modal
-    if (closeBtn) {
-        closeBtn.addEventListener('click', () => {
-            modal.style.display = 'none';
-            fileInput.value = '';
-            preview.style.display = 'none';
-            preview.innerHTML = '';
-            drawBtn.style.display = 'none';
-        });
-    }
-
-    // File selection and preview
-    if (fileInput) {
-        fileInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file && file.type === 'image/svg+xml') {
-                const reader = new FileReader();
-                reader.onload = function(evt) {
-                    preview.innerHTML = evt.target.result;
-                    preview.style.display = 'block';
-                    drawBtn.style.display = 'inline-block';
-                };
-                reader.readAsText(file);
-            } else {
-                preview.innerHTML = '<span style="color:#e53e3e;">Lütfen geçerli bir SVG dosyası seçin.</span>';
-                preview.style.display = 'block';
-                drawBtn.style.display = 'none';
-            }
-        });
-    }
-
-    // Draw button: parse SVG and trigger drawing logic
-    if (drawBtn) {
-        drawBtn.addEventListener('click', () => {
-            const file = fileInput.files[0];
-            if (file && file.type === 'image/svg+xml') {
-                const reader = new FileReader();
-                reader.onload = function(evt) {
-                    const svgContent = evt.target.result;
-                    // Call the global handler for SVG drawing
-                    if (typeof window.handleSvgDrawing === 'function') {
-                        window.handleSvgDrawing(svgContent);
-                    } else {
-                        console.log('SVG içeriği:', svgContent);
-                    }
-                };
-                reader.readAsText(file);
-            }
-            modal.style.display = 'none';
-            fileInput.value = '';
-            preview.style.display = 'none';
-            preview.innerHTML = '';
-            drawBtn.style.display = 'none';
-        });
-    }
-
-// Placeholder for SVG drawing integration
+// SVG drawing integration removed - not needed
 window.handleSvgDrawing = function(svgContent) {
-    // Gelişmiş SVG analiz: kutu, metin ve çizgi ilişkilerini çıkar
-    const parser = new DOMParser();
-    const svgDoc = parser.parseFromString(svgContent, 'image/svg+xml');
-    const svgRoot = svgDoc.documentElement;
-
-    // 1. Kutu ve daireleri (rect, circle, ellipse) ve metinleri pozisyonlarıyla topla
-    function getBoxCenter(el) {
-        if (el.tagName === 'rect') {
-            return {
-                x: parseFloat(el.getAttribute('x') || 0) + parseFloat(el.getAttribute('width') || 0) / 2,
-                y: parseFloat(el.getAttribute('y') || 0) + parseFloat(el.getAttribute('height') || 0) / 2
-            };
-        }
-        if (el.tagName === 'circle') {
-            return {
-                x: parseFloat(el.getAttribute('cx') || 0),
-                y: parseFloat(el.getAttribute('cy') || 0)
-            };
-        }
-        if (el.tagName === 'ellipse') {
-            return {
-                x: parseFloat(el.getAttribute('cx') || 0),
-                y: parseFloat(el.getAttribute('cy') || 0)
-            };
-        }
-        return {x:0, y:0};
-    }
-
-    // Kutular
-    const boxEls = Array.from(svgRoot.querySelectorAll('rect,circle,ellipse'));
-    const boxes = boxEls.map((el, idx) => ({
-        id: 'box'+idx,
-        el,
-        center: getBoxCenter(el),
-        type: el.tagName
-    }));
-
-    // Metinler
-    const textEls = Array.from(svgRoot.querySelectorAll('text'));
-    const texts = textEls.map((el, idx) => ({
-        id: 'text'+idx,
-        el,
-        text: el.textContent.trim(),
-        x: parseFloat(el.getAttribute('x') || 0),
-        y: parseFloat(el.getAttribute('y') || 0)
-    }));
-
-    // Her kutuya en yakın metni ata (sunucu/port adı)
-    boxes.forEach(box => {
-        let minDist = Infinity, minText = null;
-        texts.forEach(t => {
-            const dx = (box.center.x - t.x), dy = (box.center.y - t.y);
-            const dist = Math.sqrt(dx*dx + dy*dy);
-            if (dist < minDist && dist < 80) { minDist = dist; minText = t; }
-        });
-        box.label = minText ? minText.text : box.type.toUpperCase();
-    });
-
-    // 2. Çizgileri (line, polyline, path) topla
-    const lineEls = Array.from(svgRoot.querySelectorAll('line,polyline,path'));
-    function getLineEndpoints(el) {
-        if (el.tagName === 'line') {
-            return [
-                {x:parseFloat(el.getAttribute('x1')), y:parseFloat(el.getAttribute('y1'))},
-                {x:parseFloat(el.getAttribute('x2')), y:parseFloat(el.getAttribute('y2'))}
-            ];
-        }
-        if (el.tagName === 'polyline') {
-            const points = (el.getAttribute('points')||'').split(' ').map(p=>p.split(',').map(Number));
-            return [
-                {x:points[0][0], y:points[0][1]},
-                {x:points[points.length-1][0], y:points[points.length-1][1]}
-            ];
-        }
-        if (el.tagName === 'path') {
-            // Sadece M ve L komutlarını al (en baş ve son noktalar)
-            const d = el.getAttribute('d')||'';
-            const match = d.match(/M\s*([\d.]+)[, ]([\d.]+).*L\s*([\d.]+)[, ]([\d.]+)/);
-            if (match) {
-                return [
-                    {x:parseFloat(match[1]), y:parseFloat(match[2])},
-                    {x:parseFloat(match[3]), y:parseFloat(match[4])}
-                ];
-            }
-        }
-        return null;
-    }
-    const lines = lineEls.map(el => ({
-        el,
-        endpoints: getLineEndpoints(el)
-    })).filter(l => l.endpoints);
-
-    // 3. Her çizginin başı ve sonunu en yakın kutulara bağla
-    function findClosestBox(pt) {
-        let minDist = Infinity, minBox = null;
-        boxes.forEach(box => {
-            const dx = (box.center.x - pt.x), dy = (box.center.y - pt.y);
-            const dist = Math.sqrt(dx*dx + dy*dy);
-            if (dist < minDist) { minDist = dist; minBox = box; }
-        });
-        return minBox;
-    }
-    const edges = [];
-    lines.forEach(line => {
-        const [start, end] = line.endpoints;
-        const fromBox = findClosestBox(start);
-        const toBox = findClosestBox(end);
-        if (fromBox && toBox && fromBox !== toBox) {
-            edges.push({ from: fromBox.id, to: toBox.id });
-        }
-    });
-
-    // 4. Modern node/edge listesi oluştur
-    const nodes = boxes.map(box => {
-        let color = '#6f86d6', icon = 'fa-server', shape = 'box';
-        if (/fw|firewall/i.test(box.label)) { color = '#ff6b6b'; icon = 'fa-fire'; }
-        else if (/http|https|port|tcp|udp|smtp|ftp|sql|db|oracle|mssql|mysql|redis|mongo|mail|smtp|nfs|rdp|ldap|soap|smb/i.test(box.label)) { color = '#3ed598'; icon = 'fa-plug'; shape = 'ellipse'; }
-        return {
-            id: box.id,
-            label: box.label,
-            shape,
-            color: { background: color, border: '#fff' },
-            font: { color: '#fff', size: 18, face: 'Arial' },
-            icon
-        };
-    });
-
-    // --- MODERN LIST VIEW ---
-    let listView = document.getElementById('listView');
-    if (listView) {
-        let html = '<div style="display:flex;flex-wrap:wrap;gap:1.2rem;">';
-        nodes.forEach(node => {
-            html += `<div style="background:linear-gradient(120deg,#fbc2eb 0%,#a6c1ee 100%);border-radius:1rem;box-shadow:0 2px 8px #a18cd133;padding:1.2rem 1.5rem;min-width:180px;max-width:260px;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-                <div style=\"font-size:2.1rem;color:${node.color.background};margin-bottom:0.5rem;\"><i class='fa ${node.icon}'></i></div>
-                <div style=\"font-size:1.1rem;font-weight:700;color:#4b5563;text-align:center;word-break:break-all;\">${node.label}</div>
-            </div>`;
-        });
-        if (edges.length) {
-            html += '<div style="flex-basis:100%;height:0;"></div>';
-            html += '<div style="width:100%;margin-top:1.2rem;">';
-            html += '<strong style="color:#6f86d6;">Bağlantılar:</strong><ul style="margin:0.5rem 0 0 1.2rem;">';
-            edges.forEach(e => {
-                const from = nodes.find(n => n.id === e.from);
-                const to = nodes.find(n => n.id === e.to);
-                if (from && to) html += `<li>${from.label} <i class='fa fa-arrow-right' style='color:#6f86d6;'></i> ${to.label}</li>`;
-            });
-            html += '</ul></div>';
-        }
-        if (!nodes.length) {
-            html += '<div style="color:var(--muted);font-size:1rem;">SVG içeriği bulunamadı.</div>';
-        }
-        html += '</div>';
-        listView.innerHTML = html;
-        // Show list view, hide diagram view
-        listView.style.display = 'block';
-        let diagramView = document.getElementById('diagramView');
-        if (diagramView) diagramView.style.display = 'none';
-    }
-
-    // --- DIAGRAM VIEW ---
-    let diagramView = document.getElementById('diagramView');
-    if (diagramView) {
-        let container = document.getElementById('topologyNetwork');
-        if (container) {
-            container.innerHTML = '';
-            if (!nodes.length) {
-                container.innerHTML = '<div style="color:#64748b;text-align:center;padding:2rem;font-size:1.2rem;">Henüz bağlantı yok veya SVG içeriği bulunamadı.</div>';
-            } else {
-                let visContainer = document.createElement('div');
-                visContainer.style.width = '100%';
-                visContainer.style.height = '420px';
-                visContainer.style.background = '#fff';
-                visContainer.style.borderRadius = '1rem';
-                visContainer.style.boxShadow = '0 2px 8px #a18cd133';
-                container.appendChild(visContainer);
-                // eslint-disable-next-line no-undef
-                let network = new vis.Network(visContainer, { nodes: new vis.DataSet(nodes), edges: new vis.DataSet(edges) }, {
-                    nodes: {
-                        shape: 'box',
-                        borderWidth: 2,
-                        shadow: true,
-                        font: { color: '#fff', size: 18, face: 'Arial' },
-                    },
-                    edges: {
-                        color: { color: '#6f86d6' },
-                        width: 2,
-                        arrows: 'to',
-                        smooth: { type: 'cubicBezier', forceDirection: 'horizontal', roundness: 0.4 }
-                    },
-                    layout: {
-                        hierarchical: false
-                    },
-                    physics: {
-                        enabled: true,
-                        barnesHut: { gravitationalConstant: -30000, springLength: 180, springConstant: 0.04, damping: 0.7 }
-                    },
-                    interaction: {
-                        dragNodes: true,
-                        dragView: true,
-                        zoomView: true
-                    }
-                });
-            }
-        }
-        // Show diagram view, hide list view
-        diagramView.style.display = 'block';
-        let listView = document.getElementById('listView');
-        if (listView) listView.style.display = 'none';
-    }
+    console.log('SVG drawing removed');
 };
 
-    // Switch to diagram view by default
-    let diagramTab = document.getElementById('diagramViewTab');
-    let listTab = document.getElementById('listViewTab');
-    if (diagramTab && listTab) {
-        diagramTab.classList.add('active');
-        listTab.classList.remove('active');
-    }
-};
+// API URL tanımı
 const API_BASE = '/api';
 
 let allTopologies = [];
@@ -593,7 +307,6 @@ document.addEventListener('DOMContentLoaded', () => {
     attachFabActions();
     attachDeleteButtons();
     ensureAuth();
-    setupSvgUploadModal();
 });
 
 // ======== SİLME İŞLEMLERİ ========
@@ -1652,12 +1365,16 @@ function attachFabActions() {
 async function ensureAuth() {
     try {
         const res = await fetch(`${API_BASE}/auth/status`, { credentials: 'include' });
+        console.log('Auth status response:', res.status, res.ok);
         if (!res.ok) {
+            console.error('Auth failed: response not ok');
             location.href = '/index.html';
             return;
         }
         const data = await res.json();
+        console.log('Auth data:', data);
         if (!data.authenticated) {
+            console.error('Auth failed: not authenticated');
             location.href = '/index.html';
             return;
         }

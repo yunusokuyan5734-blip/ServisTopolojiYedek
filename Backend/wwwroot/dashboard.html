@@ -392,24 +392,6 @@
             </div>
         </section>
 
-        <!-- SVG'den Oluştur Modal -->
-        <div id="svgUploadModal" style="display:none;position:fixed;z-index:10000;left:0;top:0;width:100vw;height:100vh;background:rgba(0,0,0,0.4);align-items:center;justify-content:center;">
-            <div style="background:linear-gradient(120deg,#a18cd1 0%,#fbc2eb 100%);padding:2.5rem 2.5rem 2rem 2.5rem;border-radius:1.5rem;max-width:95vw;max-height:90vh;overflow:auto;box-shadow:0 8px 32px #0002;position:relative;min-width:340px;display:flex;flex-direction:column;align-items:center;">
-                <button id="closeSvgUploadModal" style="position:absolute;top:1.2rem;right:1.2rem;font-size:1.3rem;background:none;border:none;cursor:pointer;color:#6f86d6;"><i class='fa fa-times'></i></button>
-                <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;">
-                    <div style="background:rgba(255,255,255,0.7);border-radius:50%;padding:1.2rem 1.2rem 1.1rem 1.2rem;margin-bottom:1rem;box-shadow:0 2px 12px #a18cd144;">
-                        <i class="fa fa-file-code" style="font-size:3.2rem;color:#6f86d6;"></i>
-                    </div>
-                    <h2 style="margin-bottom:0.5rem;color:#6f86d6;font-weight:800;font-size:1.5rem;letter-spacing:0.5px;">SVG'den Oluştur</h2>
-                    <p style="color:#4b5563;font-size:1.05rem;margin-bottom:1.5rem;text-align:center;max-width:340px;">SVG dosyanızı yükleyin, otomatik olarak modern ve görsel bir topoloji çizimi oluşturulsun.</p>
-                </div>
-                <label for="svgFileInput" style="font-weight:700;color:#6f86d6;font-size:1.1rem;margin-bottom:0.7rem;">SVG Dosyası Seç</label>
-                <input type="file" id="svgFileInput" accept=".svg" style="display:block;margin-bottom:1.2rem;">
-                <div id="svgPreviewContainer" style="display:none;margin-bottom:1.2rem;padding:1rem;background:rgba(255,255,255,0.85);border-radius:10px;max-height:300px;overflow:auto;box-shadow:0 2px 8px #a18cd133;"></div>
-                <button id="drawSvgBtn" class="btn primary" style="margin-top:0.5rem;display:none;background:linear-gradient(90deg,#6f86d6 0%,#a18cd1 100%);color:#fff;font-weight:700;font-size:1.1rem;padding:0.7rem 2.2rem;border-radius:2rem;box-shadow:0 2px 8px #a18cd133;"><i class="fa fa-pen-nib"></i> Çizimi Yap</button>
-            </div>
-        </div>
-
         <section id="canvas" class="section">
             <!-- Only keep the correct button group at the top, remove duplicate below -->
             <div class="section-header">
@@ -423,7 +405,6 @@
                     <div class="btn-group">
                         <button type="button" id="saveDrawingBtn" class="btn primary"><i class="fa fa-save"></i> Topolojiyi Kaydet</button>
                         <button type="button" id="newDrawingBtn" class="btn ghost"><i class="fa fa-plus"></i> Yeni Çizim</button>
-                        <button type="button" id="openSvgUploadModalBtn" class="svg-create-btn" style="margin-left:0.5rem;display:inline-flex;align-items:center;gap:0.5rem;background:linear-gradient(90deg,#a18cd1 0%,#6f86d6 100%);color:#fff;border:none;border-radius:2rem;padding:0.5rem 1.2rem;font-weight:600;font-size:1rem;box-shadow:0 2px 8px #a18cd133;transition:background 0.2s;cursor:pointer;"><i class="fa fa-pen-nib"></i> SVG'den Oluştur</button>
                     </div>
                     <div class="btn-group">
                         <button type="button" id="exportExcelBtn" class="btn success"><i class="fa fa-file-excel"></i> Excel'e Aktar</button>
@@ -751,6 +732,6 @@
     <button class="fab danger" id="fabLogout"><i class="fa fa-right-from-bracket"></i></button>
 </div>
 
-<script src="js/app.js?v=20260131-3"></script>
+<script src="js/app.js?v=20260131-7"></script>
 </body>
 </html>
