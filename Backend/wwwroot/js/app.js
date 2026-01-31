@@ -509,15 +509,15 @@ window.handleSvgDrawing = function(svgContent) {
 const API_BASE = '/api';
 
 let allTopologies = [];
-let allServers = [
-    { id: 1, name: 'IETTMSSQLDB01', ip: '10.100.0.36', critical: 'Yüksek', date: '26.01.2026' },
-    { id: 2, name: 'IETTMSSQLDB02', ip: '10.100.0.37', critical: 'Yüksek', date: '26.01.2026' },
-    { id: 3, name: 'AYSPROD2', ip: '172.16.80.174', critical: 'Yüksek', date: '26.01.2026' },
-    { id: 4, name: 'ABONEWEB', ip: '172.16.80.8', critical: 'Orta', date: '26.01.2026' },
-    { id: 5, name: 'EMC_BACKUP_SRV', ip: '10.98.100.120', critical: 'Orta', date: '26.01.2026' }
-];
+let allServers = [];
 let allPorts = [];
 let canvasData = { shapes: [], connections: [] };
+let currentPage = 1;
+let pageSize = 10;
+let lastFilteredRaw = [];
+let serverCriticalFilter = null;
+let preserveServerFilterOnce = false;
+let pendingLatestTopologiesCount = null;
 
 const sampleSheflikler = [
     { name: 'YAZILIM ŞEFLİĞİ', status: 'Aktif', date: '07.05.2025 16:13' },
@@ -583,6 +583,7 @@ document.addEventListener('DOMContentLoaded', () => {
     attachChangePassword();
     loadAndDisplayTopologies();
     loadShefliklerFromBackend();
+    attachTopologyFilters();
     attachServers();
     attachPorts();
     attachDrawio();
@@ -766,66 +767,47 @@ async function loadAndDisplayTopologies() {
         allTopologies = [];
     }
     
+    rebuildServersFromTopologies(allTopologies);
     console.log('Calling renderOverview, renderFilters, renderTable...');
     renderOverview();
     renderFilters();
     renderTable(allTopologies);
+    if (typeof renderServersTable === 'function') renderServersTable();
+    if (typeof renderServerLibrary === 'function') renderServerLibrary();
+    if (pendingLatestTopologiesCount) {
+        renderLatestTopologies(pendingLatestTopologiesCount);
+        pendingLatestTopologiesCount = null;
+    }
 }
 
-function renderOverview() {
-    const cards = document.getElementById('overviewCards');
-    console.log('renderOverview called, cards element:', cards);
-    if (!cards) {
-        console.error('overviewCards element not found!');
-        return;
-    }
-    
-    // Benzersiz sunucu+ip kombinasyonlarını say (her sunucu için 1)
-    const uniqueKeys = new Set();
-    allTopologies.forEach(t => {
-        const server = (t.server || t.Server || '').trim().toLowerCase();
+function rebuildServersFromTopologies(topologies) {
+    const grouped = {};
+    (topologies || []).forEach(t => {
+        const server = (t.server || t.Server || '').trim();
         const ip = (t.ip || t.Ip || '').trim();
-        if (server && ip) uniqueKeys.add(server + '|' + ip);
+        if (!server || !ip) return;
+        const key = server.toLowerCase() + '|' + ip;
+        const versionNum = parseInt((t.version || t.Version || 'v1').replace(/\D/g, '')) || 1;
+        if (!grouped[key] || versionNum > grouped[key].__versionNum) {
+            grouped[key] = { ...t, __versionNum: versionNum, __server: server, __ip: ip };
+        }
     });
-    const total = uniqueKeys.size;
-    const highCritical = allServers.filter(s => s.critical === 'Yüksek').length;
-    const mediumCritical = allServers.filter(s => s.critical === 'Orta').length;
-    const lowCritical = allServers.filter(s => s.critical === 'Düşük').length;
-    const lastDate = allServers.length > 0 ? allServers[allServers.length - 1]?.date || '-' : '-';
-    cards.innerHTML = `
-        <div class="info-card">
-            <p class="label">En Son Görüntülenenler</p>
-            <h3>${lastDate}</h3>
-            <p class="muted">En son eklenen sunucu tarihi</p>
-        </div>
-        <div class="info-card">
-            <p class="label">Topoloji Sayısı</p>
-            <h3>${total}</h3>
-            <p class="muted">Ekli sunucu sayısı (her sunucu için 1)</p>
-        </div>
-        <div class="info-card">
-            <p class="label">Yüksek Kritik</p>
-            <h3 style="color: #ff6b6b;">${highCritical}</h3>
-            <p class="muted">Kritiklik seviyesi yüksek sunucular</p>
-        </div>
-        <div class="info-card">
-            <p class="label">Orta Seviye</p>
-            <h3 style="color: #ff9f43;">${mediumCritical}</h3>
-            <p class="muted">Kritiklik seviyesi orta sunucular</p>
-        </div>
-        <div class="info-card">
-            <p class="label">Düşük Seviye</p>
-            <h3 style="color: #3ed598;">${lowCritical}</h3>
-            <p class="muted">Kritiklik seviyesi düşük sunucular</p>
-        </div>
-    `;
+
+    const latestRows = Object.values(grouped);
+    allServers = latestRows.map((r, idx) => ({
+        id: idx + 1,
+        name: r.__server || r.server || r.Server || 'İsimsiz',
+        ip: r.__ip || r.ip || r.Ip || '-',
+        critical: r.critical || r.Critical || '-',
+        date: r.date || r.Date || '-'
+    }));
 }
 
 function renderFilters() {
     const deptSelect = document.getElementById('filterDept');
     if (!deptSelect) return;
     deptSelect.innerHTML = '<option value="">Tüm Şeflikler</option>';
-    const depts = [...new Set(allTopologies.map(t => t.dept))];
+    const depts = [...new Set(allTopologies.map(t => t.dept || t.Dept).filter(Boolean))];
     depts.forEach(d => {
         const opt = document.createElement('option');
         opt.value = d;
@@ -834,18 +816,70 @@ function renderFilters() {
     });
 }
 
+function attachTopologyFilters() {
+    const dept = document.getElementById('filterDept');
+    const crit = document.getElementById('filterCrit');
+    const search = document.getElementById('filterSearch');
+    const server = document.getElementById('filterServer');
+    const reset = document.getElementById('filterReset');
+    const sizeSelect = document.getElementById('pageSizeSelect');
+    const prevBtn = document.getElementById('prevPageBtn');
+    const nextBtn = document.getElementById('nextPageBtn');
+
+    if (dept) dept.addEventListener('change', applyFilters);
+    if (crit) crit.addEventListener('change', applyFilters);
+    if (search) search.addEventListener('input', applyFilters);
+    if (server) server.addEventListener('input', applyFilters);
+    if (reset) reset.addEventListener('click', (e) => {
+        e.preventDefault();
+        resetFilters();
+    });
+    if (sizeSelect) {
+        sizeSelect.addEventListener('change', () => {
+            const val = sizeSelect.value;
+            pageSize = val === 'all' ? 0 : parseInt(val, 10);
+            currentPage = 1;
+            renderTable(lastFilteredRaw.length ? lastFilteredRaw : allTopologies);
+        });
+    }
+    if (prevBtn) {
+        prevBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (currentPage > 1) {
+                currentPage -= 1;
+                renderTable(lastFilteredRaw.length ? lastFilteredRaw : allTopologies);
+            }
+        });
+    }
+    if (nextBtn) {
+        nextBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            currentPage += 1;
+            renderTable(lastFilteredRaw.length ? lastFilteredRaw : allTopologies);
+        });
+    }
+}
+
 function applyFilters() {
     const dept = document.getElementById('filterDept')?.value || '';
     const crit = document.getElementById('filterCrit')?.value || '';
     const text = (document.getElementById('filterSearch')?.value || '').toLowerCase();
+    const serverText = (document.getElementById('filterServer')?.value || '').toLowerCase();
 
     const filtered = allTopologies.filter(t => {
-        const matchDept = dept ? t.dept === dept : true;
-        const matchCrit = crit ? t.critical === crit : true;
-        const matchText = text ? (t.server + t.file + t.dept).toLowerCase().includes(text) : true;
-        return matchDept && matchCrit && matchText;
+        const deptVal = (t.dept || t.Dept || '').trim();
+        const critVal = (t.critical || t.Critical || '').trim();
+        const serverVal = (t.server || t.Server || '').trim();
+        const ipVal = (t.ip || t.Ip || '').trim();
+        const fileVal = (t.file || t.File || '').trim();
+        const matchDept = dept ? deptVal === dept : true;
+        const matchCrit = crit ? critVal === crit : true;
+        const matchServer = serverText ? `${serverVal} ${ipVal}`.toLowerCase().includes(serverText) : true;
+        const matchText = text ? `${serverVal} ${fileVal} ${deptVal} ${ipVal}`.toLowerCase().includes(text) : true;
+        return matchDept && matchCrit && matchServer && matchText;
     });
 
+    currentPage = 1;
     renderTable(filtered);
 }
 
@@ -853,15 +887,31 @@ function resetFilters() {
     const dept = document.getElementById('filterDept');
     const crit = document.getElementById('filterCrit');
     const search = document.getElementById('filterSearch');
+    const server = document.getElementById('filterServer');
     if (dept) dept.value = '';
     if (crit) crit.value = '';
     if (search) search.value = '';
+    if (server) server.value = '';
+    currentPage = 1;
     renderTable(allTopologies);
+}
+
+function updatePagination(totalCount, pageCount, shownCount) {
+    const countEl = document.getElementById('topologyCount');
+    const infoEl = document.getElementById('pageInfo');
+    const prevBtn = document.getElementById('prevPageBtn');
+    const nextBtn = document.getElementById('nextPageBtn');
+
+    if (countEl) countEl.textContent = `Görüntülenen: ${shownCount} / Toplam: ${totalCount}`;
+    if (infoEl) infoEl.textContent = pageSize === 0 ? 'Tümü' : `${currentPage} / ${pageCount}`;
+    if (prevBtn) prevBtn.disabled = currentPage <= 1 || pageSize === 0;
+    if (nextBtn) nextBtn.disabled = currentPage >= pageCount || pageSize === 0;
 }
 
 function renderTable(rows) {
     const tbody = document.querySelector('#topologyTable tbody');
     if (!tbody) return;
+    lastFilteredRaw = Array.isArray(rows) ? rows : [];
     
     // Debug: İlk satırı console'a yazdır
     if (rows.length > 0) {
@@ -897,9 +947,23 @@ function renderTable(rows) {
         }
     });
     const latestRows = Object.values(grouped);
+    const totalCount = latestRows.length;
+
+    let pageCount = 1;
+    let pageRows = latestRows;
+    if (pageSize > 0) {
+        pageCount = Math.max(1, Math.ceil(totalCount / pageSize));
+        if (currentPage > pageCount) currentPage = pageCount;
+        const start = (currentPage - 1) * pageSize;
+        pageRows = latestRows.slice(start, start + pageSize);
+    } else {
+        currentPage = 1;
+    }
+
+    updatePagination(totalCount, pageCount, pageRows.length);
 
     // Tablo sadece son versiyonu gösterir, ama allTopologies tüm versiyonları içerir
-    tbody.innerHTML = latestRows.map(r => {
+    tbody.innerHTML = pageRows.map(r => {
         const name = r.name || r.Name || r.server || r.Server || 'İsimsiz';
         const server = r.server || r.Server || '-';
         const ip = r.ip || r.Ip || '-';
@@ -993,24 +1057,6 @@ function renderTable(rows) {
     window.closeVersionModal = function() {
         const modal = document.getElementById('versionModal');
         if (modal) modal.style.display = 'none';
-    }
-    // Sunucular tablosuna otomatik ekleme
-    if (Array.isArray(allServers)) {
-        rows.forEach(r => {
-            const server = r.server || r.Server;
-            const ip = r.ip || r.Ip;
-            const critical = r.critical || r.Critical || '-';
-            if (server && ip && !allServers.some(s => s.name === server && s.ip === ip)) {
-                allServers.push({
-                    id: Date.now() + Math.random(),
-                    name: server,
-                    ip: ip,
-                    critical: critical,
-                    date: r.date || r.Date || new Date().toLocaleDateString('tr-TR')
-                });
-            }
-        });
-        if (typeof renderServersTable === 'function') renderServersTable();
     }
 }
 
@@ -1692,6 +1738,13 @@ function attachServers() {
             renderServerLibrary();
         });
     }
+
+    document.getElementById('exportServersExcelBtn')?.addEventListener('click', () => {
+        exportServersCurrentFilter('excel');
+    });
+    document.getElementById('exportServersPdfBtn')?.addEventListener('click', () => {
+        exportServersCurrentFilter('pdf');
+    });
     
     renderServersTable();
 }
@@ -1699,15 +1752,29 @@ function attachServers() {
 function renderServersTable() {
     const serversTable = document.getElementById('serversTable')?.querySelector('tbody');
     if (!serversTable) return;
+    const filteredServers = serverCriticalFilter
+        ? allServers.filter(s => s.critical === serverCriticalFilter)
+        : allServers;
     
-    serversTable.innerHTML = allServers.map(server => `
+    serversTable.innerHTML = filteredServers.map(server => `
         <tr>
             <td><div style="display:flex;align-items:center;gap:0.5rem;"><div style="width:40px;height:40px;background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);border-radius:6px;display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;font-size:1.2rem;box-shadow:0 2px 8px rgba(102, 126, 234, 0.4);">🖥️</div><div><strong>${server.name}</strong><div style="font-size:0.85em;color:var(--muted);">${server.ip}</div></div></div></td>
             <td><span class="badge" style="background:${server.critical === 'Yüksek' ? '#ff6b6b' : server.critical === 'Orta' ? '#ff9f43' : server.critical === 'Düşük' ? '#3ed598' : '#ccc'};color:white;font-weight:600;padding:6px 12px;border-radius:20px;box-shadow:0 2px 8px rgba(0,0,0,0.2);display:inline-flex;align-items:center;gap:6px;"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.8);"></span>${server.critical}</span></td>
             <td>${server.date}</td>
-            <td><button class="btn btn-sm ghost" onclick="deleteServer(${server.id})"><i class="fa fa-trash"></i></button></td>
+            <td>
+                <button class="btn btn-sm ghost" onclick="viewServerTopologies('${server.name}','${server.ip}')"><i class="fa fa-eye"></i></button>
+                <button class="btn btn-sm ghost" onclick="deleteServer(${server.id})"><i class="fa fa-trash"></i></button>
+            </td>
         </tr>
     `).join('');
+    updateServersFilterLabel(filteredServers.length);
+}
+
+function updateServersFilterLabel(count) {
+    const label = document.getElementById('serversFilterLabel');
+    if (!label) return;
+    const title = serverCriticalFilter ? `Filtre: ${serverCriticalFilter}` : 'Filtre: Tümü';
+    label.textContent = `${title} (Görüntülenen: ${count})`;
 }
 
 function deleteServer(id) {
@@ -3187,6 +3254,10 @@ function switchSection(targetId) {
         } else if (targetId === 'canvas') {
             attachTopologyBuilder();
         } else if (targetId === 'servers') {
+            if (!preserveServerFilterOnce) {
+                serverCriticalFilter = null;
+            }
+            preserveServerFilterOnce = false;
             renderServers();
         } else if (targetId === 'ports') {
             renderPorts();
@@ -3212,6 +3283,7 @@ function renderOverview() {
     const criticalServers = allServers.filter(s => s.critical === 'Yüksek').length;
     const mediumServers = allServers.filter(s => s.critical === 'Orta').length;
     const lowServers = allServers.filter(s => s.critical === 'Düşük').length;
+    const latestTopologies = getLatestTopologies(3);
     
     container.innerHTML = `
         <div class="info-card" onclick="switchSection('topologies')" style="cursor:pointer;transition:transform 0.2s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='translateY(0)'">
@@ -3230,78 +3302,185 @@ function renderOverview() {
             <div class="card-value">${totalSheflikler}</div>
             <p class="card-meta">Aktif şeflik</p>
         </div>
-        <div class="info-card" onclick="switchSection('servers')" style="cursor:pointer;transition:transform 0.2s;border-left:4px solid #ef4444;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='translateY(0)'">
+        <div class="info-card" onclick="showServersByCritical('Yüksek')" style="cursor:pointer;transition:transform 0.2s;border-left:4px solid #ef4444;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='translateY(0)'">
             <div class="card-header">
                 <h3>Kritik Sunucu</h3>
                 <i class="fa fa-exclamation-triangle" style="color:#ef4444"></i>
             </div>
             <div class="card-value" style="color:#ef4444">${criticalServers}</div>
             <p class="card-meta">Yüksek kritiklik seviyesi</p>
+            <div style="display:flex;gap:0.4rem;margin-top:0.4rem;">
+                <button class="btn ghost" style="padding:0.25rem 0.5rem;" onclick="event.stopPropagation(); exportServersByCritical('Yüksek','excel')"><i class="fa fa-file-excel"></i></button>
+                <button class="btn ghost" style="padding:0.25rem 0.5rem;" onclick="event.stopPropagation(); exportServersByCritical('Yüksek','pdf')"><i class="fa fa-file-pdf"></i></button>
+            </div>
         </div>
-        <div class="info-card" onclick="switchSection('servers')" style="cursor:pointer;transition:transform 0.2s;border-left:4px solid #f59e0b;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='translateY(0)'">
+        <div class="info-card" onclick="showServersByCritical('Orta')" style="cursor:pointer;transition:transform 0.2s;border-left:4px solid #f59e0b;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='translateY(0)'">
             <div class="card-header">
                 <h3>Orta Seviye Sunucu</h3>
                 <i class="fa fa-server" style="color:#f59e0b"></i>
             </div>
             <div class="card-value" style="color:#f59e0b">${mediumServers}</div>
             <p class="card-meta">Orta kritiklik seviyesi</p>
+            <div style="display:flex;gap:0.4rem;margin-top:0.4rem;">
+                <button class="btn ghost" style="padding:0.25rem 0.5rem;" onclick="event.stopPropagation(); exportServersByCritical('Orta','excel')"><i class="fa fa-file-excel"></i></button>
+                <button class="btn ghost" style="padding:0.25rem 0.5rem;" onclick="event.stopPropagation(); exportServersByCritical('Orta','pdf')"><i class="fa fa-file-pdf"></i></button>
+            </div>
         </div>
-        <div class="info-card" onclick="switchSection('servers')" style="cursor:pointer;transition:transform 0.2s;border-left:4px solid #10b981;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='translateY(0)'">
+        <div class="info-card" onclick="showServersByCritical('Düşük')" style="cursor:pointer;transition:transform 0.2s;border-left:4px solid #10b981;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='translateY(0)'">
             <div class="card-header">
                 <h3>Düşük Seviye Sunucu</h3>
                 <i class="fa fa-check-circle" style="color:#10b981"></i>
             </div>
             <div class="card-value" style="color:#10b981">${lowServers}</div>
             <p class="card-meta">Düşük kritiklik seviyesi</p>
+            <div style="display:flex;gap:0.4rem;margin-top:0.4rem;">
+                <button class="btn ghost" style="padding:0.25rem 0.5rem;" onclick="event.stopPropagation(); exportServersByCritical('Düşük','excel')"><i class="fa fa-file-excel"></i></button>
+                <button class="btn ghost" style="padding:0.25rem 0.5rem;" onclick="event.stopPropagation(); exportServersByCritical('Düşük','pdf')"><i class="fa fa-file-pdf"></i></button>
+            </div>
         </div>
-        <div class="info-card" onclick="switchSection('canvas')" style="cursor:pointer;transition:transform 0.2s;background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);color:white;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='translateY(0)'">
+        <div class="info-card" onclick="showLatestTopologies(10)" style="cursor:pointer;transition:transform 0.2s;background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);color:white;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='translateY(0)'">
             <div class="card-header">
                 <h3 style="color:white;">Son Topolojiler</h3>
                 <i class="fa fa-clock-rotate-left" style="color:white"></i>
             </div>
             <div class="card-value" style="color:white;font-size:1.5rem;">
-                ${allTopologies.slice(-3).map(t => `<div style="font-size:0.85rem;margin:0.3rem 0;">${t.topologyName || t.Name || t.name || 'İsimsiz'}</div>`).join('') || '<div style="font-size:0.9rem;">Henüz topoloji yok</div>'}
+                ${latestTopologies.map(t => `<div style="font-size:0.85rem;margin:0.3rem 0;">${t.topologyName || t.Name || t.name || 'İsimsiz'}</div>`).join('') || '<div style="font-size:0.9rem;">Henüz topoloji yok</div>'}
             </div>
             <p class="card-meta" style="color:rgba(255,255,255,0.8);">Son görüntülenen tasarımlar</p>
         </div>
     `;
 }
 
+function parseTopologyDate(value) {
+    if (!value) return new Date(0);
+    const iso = new Date(value);
+    if (!isNaN(iso.getTime())) return iso;
+    const match = String(value).match(/(\d{2})\.(\d{2})\.(\d{4})(?:\s*(\d{2}):(\d{2}))?/);
+    if (match) {
+        const day = parseInt(match[1], 10);
+        const month = parseInt(match[2], 10) - 1;
+        const year = parseInt(match[3], 10);
+        const hour = parseInt(match[4] || '0', 10);
+        const minute = parseInt(match[5] || '0', 10);
+        return new Date(year, month, day, hour, minute);
+    }
+    return new Date(0);
+}
+
+function getLatestTopologies(count) {
+    return [...allTopologies]
+        .sort((a, b) => parseTopologyDate(b.date || b.Date) - parseTopologyDate(a.date || a.Date))
+        .slice(0, count);
+}
+
+function showLatestTopologies(count) {
+    pendingLatestTopologiesCount = count;
+    switchSection('topologies');
+}
+
+function renderLatestTopologies(count) {
+    const latest = getLatestTopologies(count);
+    const dept = document.getElementById('filterDept');
+    const crit = document.getElementById('filterCrit');
+    const search = document.getElementById('filterSearch');
+    const server = document.getElementById('filterServer');
+    if (dept) dept.value = '';
+    if (crit) crit.value = '';
+    if (search) search.value = '';
+    if (server) server.value = '';
+    pageSize = 0;
+    const sizeSelect = document.getElementById('pageSizeSelect');
+    if (sizeSelect) sizeSelect.value = 'all';
+    renderTable(latest);
+}
+
+function showServersByCritical(level) {
+    serverCriticalFilter = level;
+    preserveServerFilterOnce = true;
+    switchSection('servers');
+}
+
+function viewServerTopologies(serverName, serverIp) {
+    switchSection('topologies');
+    const dept = document.getElementById('filterDept');
+    const crit = document.getElementById('filterCrit');
+    const search = document.getElementById('filterSearch');
+    const server = document.getElementById('filterServer');
+    if (dept) dept.value = '';
+    if (crit) crit.value = '';
+    if (search) search.value = '';
+    if (server) server.value = `${serverName} ${serverIp}`.trim();
+    applyFilters();
+}
+
+function exportServersByCritical(level, format) {
+    const servers = allServers.filter(s => s.critical === level);
+    if (format === 'excel') {
+        let csv = 'Sunucu Adı,IP Adresi,Kritiklik,Tarih\n';
+        servers.forEach(s => {
+            const row = [s.name || '', s.ip || '', s.critical || '', s.date || '']
+                .map(v => `"${v}"`).join(',');
+            csv += row + '\n';
+        });
+        const link = document.createElement('a');
+        link.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+        link.download = `Sunucular_${level}_${new Date().toLocaleDateString('tr-TR')}.csv`;
+        link.click();
+    } else {
+        const printWindow = window.open('', '_blank');
+        let html = `<h2>${level} Kritiklik Sunucular</h2>`;
+        html += '<table border="1" cellpadding="10"><tr><th>Sunucu</th><th>IP</th><th>Kritiklik</th><th>Tarih</th></tr>';
+        servers.forEach(s => {
+            html += `<tr>
+                <td>${s.name || ''}</td>
+                <td>${s.ip || ''}</td>
+                <td>${s.critical || ''}</td>
+                <td>${s.date || ''}</td>
+            </tr>`;
+        });
+        html += '</table>';
+        printWindow.document.write(html);
+        printWindow.document.close();
+        printWindow.print();
+    }
+}
+
+function exportServersCurrentFilter(format) {
+    const label = serverCriticalFilter ? serverCriticalFilter : 'Tümü';
+    const servers = serverCriticalFilter ? allServers.filter(s => s.critical === serverCriticalFilter) : allServers;
+    if (format === 'excel') {
+        let csv = 'Sunucu Adı,IP Adresi,Kritiklik,Tarih\n';
+        servers.forEach(s => {
+            const row = [s.name || '', s.ip || '', s.critical || '', s.date || '']
+                .map(v => `"${v}"`).join(',');
+            csv += row + '\n';
+        });
+        const link = document.createElement('a');
+        link.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+        link.download = `Sunucular_${label}_${new Date().toLocaleDateString('tr-TR')}.csv`;
+        link.click();
+    } else {
+        const printWindow = window.open('', '_blank');
+        let html = `<h2>${label} Sunucular</h2>`;
+        html += '<table border="1" cellpadding="10"><tr><th>Sunucu</th><th>IP</th><th>Kritiklik</th><th>Tarih</th></tr>';
+        servers.forEach(s => {
+            html += `<tr>
+                <td>${s.name || ''}</td>
+                <td>${s.ip || ''}</td>
+                <td>${s.critical || ''}</td>
+                <td>${s.date || ''}</td>
+            </tr>`;
+        });
+        html += '</table>';
+        printWindow.document.write(html);
+        printWindow.document.close();
+        printWindow.print();
+    }
+}
 
 function renderServers() {
-    const tbody = document.querySelector('#serversTable tbody');
-    if (!tbody) return;
-    
-    const criticalColors = {
-        'Yüksek': '#ef4444',
-        'Orta': '#f59e0b',
-        'Düşük': '#10b981'
-    };
-    
-    tbody.innerHTML = allServers.map(server => `
-        <tr>
-            <td>
-                <div style="display:flex;align-items:center;gap:0.8rem;">
-                    <div style="width:40px;height:40px;background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);border-radius:8px;display:flex;align-items:center;justify-content:center;">
-                        <i class="fa fa-server" style="color:white;font-size:1.2rem;"></i>
-                    </div>
-                    <div>
-                        <div style="font-weight:600;color:var(--text);">${server.name}</div>
-                        <div style="font-size:0.85rem;color:var(--muted);">${server.ip}</div>
-                    </div>
-                </div>
-            </td>
-            <td>
-                <span class="badge" style="background:${criticalColors[server.critical] || '#64748b'};color:white;padding:0.3rem 0.8rem;border-radius:6px;font-size:0.85rem;font-weight:600;">
-                    ${server.critical || '-'}
-                </span>
-            </td>
-            <td>${server.date || '-'}</td>
-            <td>
-                <button class="btn-small danger" onclick="deleteServer('${server.id}')">Sil</button>
-            </td>
-        </tr>
-    `).join('');
+    renderServersTable();
+    if (typeof renderServerLibrary === 'function') renderServerLibrary();
 }
 
 function renderPorts() {
