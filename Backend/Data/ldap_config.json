@@ -1,0 +1,14 @@
+[
+  {
+    "Name": "LDAP \u0130ETT",
+    "Host": "10.100.3.11",
+    "Port": 636,
+    "BaseDn": "dc=iett,dc=yerel",
+    "BindDn": "srvtopology@iett.yerel",
+    "BindPassword": "\u0130ett.1871!,",
+    "EnableLdap": true,
+    "EnableJitProvisioning": false,
+    "UserSearchFilter": "(sAMAccountName={0})",
+    "GroupMemberAttribute": "memberOf"
+  }
+]

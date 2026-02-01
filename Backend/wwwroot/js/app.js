@@ -397,6 +397,15 @@ function showSection(id) {
     document.querySelectorAll('.section').forEach(sec => {
         sec.classList.toggle('active', sec.id === id);
     });
+
+    if (id === 'integration') {
+        if (typeof loadLdapConfig === 'function') loadLdapConfig();
+        if (typeof loadLdapMappings === 'function') loadLdapMappings();
+    }
+
+    if (id === 'admin-list' || id === 'access-list') {
+        if (typeof loadUsers === 'function') loadUsers();
+    }
 }
 
 // ======== ŞIFRE DEĞIŞTIR ========
@@ -1379,22 +1388,71 @@ async function ensureAuth() {
             return;
         }
         const user = data.username || 'admin';
+        const role = data.role || 'User';
+        const seflikId = data.seflikId || null;
+        const seflikName = data.seflikName || null;
+
+        window.currentUserRole = role;
+        
         const tag = document.getElementById('usernameTag');
-        if (tag) tag.textContent = user;
+        if (tag) {
+            tag.textContent = user;
+            // Rol ve şeflik bilgisini kullanıcı adının altına ekle
+            if (role && role !== 'Admin') {
+                const roleInfo = document.createElement('div');
+                roleInfo.style.cssText = 'font-size:0.75rem;color:#94a3b8;margin-top:0.2rem;';
+                roleInfo.textContent = role === 'SheflikYetkilisi' ? `Şeflik: ${seflikName || seflikId || '-'}` : role;
+                tag.parentElement.appendChild(roleInfo);
+            }
+        }
         
         const currentUserEl = document.getElementById('currentUser');
-        if (currentUserEl) currentUserEl.textContent = 'Hoş geldiniz, ' + user;
+        if (currentUserEl) {
+            currentUserEl.textContent = 'Hoş geldiniz, ' + user;
+            if (role && role !== 'User') {
+                currentUserEl.textContent += ` (${role === 'Admin' ? 'Yönetici' : role === 'SheflikYetkilisi' ? 'Şeflik Yetkilisi' : role})`;
+            }
+        }
+        
+        // *** ROL BAZLI UI KISITLAMASI ***
+        // Şeflik Yetkilisi için sidebar'daki belirli menüleri gizle
+        if (role === 'SheflikYetkilisi') {
+            const restrictedTargets = ['servers', 'ports', 'canvas', 'admin'];
+            restrictedTargets.forEach(target => {
+                const navItem = document.querySelector(`.nav-item[data-target="${target}"]`);
+                if (navItem) {
+                    navItem.style.display = 'none';
+                }
+            });
+            console.log('Şeflik Yetkilisi UI kısıtlaması uygulandı');
+        }
+        
+        // Admin değilse admin panelini gizle
+        if (role !== 'Admin') {
+            const adminNavItem = document.querySelector('.nav-item[data-target="admin"]');
+            if (adminNavItem) {
+                adminNavItem.style.display = 'none';
+            }
+        }
         
         const adminBtn = document.getElementById('adminTopBtn');
         if (adminBtn) {
-            adminBtn.addEventListener('click', () => {
-                showSection('admin');
-                document.querySelectorAll('.nav-item[data-target]').forEach(btn => {
-                    btn.classList.toggle('active', btn.getAttribute('data-target') === 'admin');
+            // Admin değilse butonu gizle
+            if (role !== 'Admin') {
+                adminBtn.style.display = 'none';
+            } else {
+                adminBtn.addEventListener('click', () => {
+                    showSection('admin');
+                    document.querySelectorAll('.nav-item[data-target]').forEach(btn => {
+                        btn.classList.toggle('active', btn.getAttribute('data-target') === 'admin');
+                    });
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
                 });
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            });
+            }
         }
+
+        attachLdapIntegration();
+        attachUserManagement();
     } catch (error) {
         console.error('Auth check failed', error);
         location.href = '/index.html';
@@ -3025,6 +3083,10 @@ function switchSection(targetId) {
             renderAdminList();
         } else if (targetId === 'access-list') {
             renderAccessList();
+        } else if (targetId === 'admin') {
+            // LDAP konfigürasyonlarını ve mappings'i yükle
+            loadLdapConfigsList();
+            loadLdapMappings();
         }
     }
 }
@@ -3401,4 +3463,1443 @@ document.addEventListener('DOMContentLoaded', () => {
     renderPorts();
 });
 
+// ======== LDAP ENTEGRASYON YÖNETİMİ ========
+let currentEditingMappingId = null;
 
+async function readJsonSafe(response) {
+    const contentType = response.headers.get('content-type') || '';
+    if (contentType.includes('application/json')) {
+        try {
+            const data = await response.json();
+            return { ok: true, data: data, isHtml: false };
+        } catch (error) {
+            console.error('JSON parse hatası:', error);
+            return { ok: false, data: null, isHtml: false, error: error.message };
+        }
+    }
+
+    const text = await response.text();
+    const trimmed = text.trim();
+    const isHtml = contentType.includes('text/html') || /^\s*<!DOCTYPE/i.test(text);
+    if (!isHtml && (trimmed.startsWith('{') || trimmed.startsWith('['))) {
+        try {
+            const data = JSON.parse(trimmed);
+            return { ok: true, data: data, isHtml: false };
+        } catch (error) {
+            console.error('JSON parse hatası (text):', error);
+            return { ok: false, data: null, isHtml: false, error: error.message, text };
+        }
+    }
+    return { ok: false, data: null, isHtml, text };
+}
+
+function attachLdapIntegration() {
+    const ldapConfigForm = document.getElementById('ldapConfigForm');
+    const addMappingBtn = document.getElementById('addMappingBtn');
+    const ldapMappingForm = document.getElementById('ldapMappingForm');
+    const newLdapConfigBtn = document.getElementById('newLdapConfigBtn');
+    const closeLdapFormBtn = document.getElementById('closeLdapFormBtn');
+
+    if (window.currentUserRole && window.currentUserRole !== 'Admin') {
+        if (newLdapConfigBtn) newLdapConfigBtn.disabled = true;
+        if (addMappingBtn) addMappingBtn.disabled = true;
+        const msgDiv = document.getElementById('ldapConfigMessage');
+        if (msgDiv) {
+            msgDiv.textContent = 'Bu alan yalnızca Admin kullanıcılar içindir.';
+            msgDiv.style.display = 'block';
+            msgDiv.style.background = '#fee2e2';
+            msgDiv.style.color = '#991b1b';
+            msgDiv.style.border = '1px solid #ef4444';
+        }
+        return;
+    }
+
+    // Sayfa yüklendiğinde konfigürasyonları yükle
+    loadLdapConfigsList();
+
+    // Yeni Yapılandırma butonu
+    if (newLdapConfigBtn) {
+        newLdapConfigBtn.addEventListener('click', () => {
+            openLdapConfigForm(null);
+        });
+    }
+
+    // Formu Kapat butonu
+    if (closeLdapFormBtn) {
+        closeLdapFormBtn.addEventListener('click', () => {
+            closeLdapConfigForm();
+        });
+    }
+
+    // LDAP Config Kaydetme
+    if (ldapConfigForm) {
+        ldapConfigForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const nameField = document.getElementById('ldapName');
+            if (!nameField.value.trim()) {
+                showMessage('ldapConfigMessage', 'LDAP İsmi gereklidir!', 'error');
+                return;
+            }
+
+            const config = {
+                name: nameField.value.trim(),
+                host: document.getElementById('ldapHost').value.trim(),
+                port: parseInt(document.getElementById('ldapPort').value) || 389,
+                baseDn: document.getElementById('ldapBaseDn').value.trim(),
+                bindDn: document.getElementById('ldapBindDn').value.trim(),
+                bindPassword: document.getElementById('ldapBindPassword').value,
+                userSearchFilter: document.getElementById('ldapUserFilter').value.trim() || '(sAMAccountName={0})',
+                groupMemberAttribute: document.getElementById('ldapGroupAttr').value.trim() || 'memberOf',
+                enableLdap: document.getElementById('ldapEnableLdap').checked,
+                enableJitProvisioning: document.getElementById('ldapEnableJit').checked
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/ldap/config`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify(config)
+                });
+
+                if (response.ok) {
+                    showMessage('ldapConfigMessage', '✓ LDAP yapılandırması başarıyla kaydedildi!', 'success');
+                    setTimeout(() => {
+                        closeLdapConfigForm();
+                        loadLdapConfigsList();
+                    }, 1500);
+                } else {
+                    const result = await readJsonSafe(response);
+                    const errorMsg = result.ok ? (result.data?.message || 'Kayıt başarısız') : (result.error || result.text || 'Kayıt başarısız');
+                    showMessage('ldapConfigMessage', '✗ Hata: ' + errorMsg, 'error');
+                }
+            } catch (error) {
+                showMessage('ldapConfigMessage', '✗ Bağlantı hatası: ' + error.message, 'error');
+            }
+        });
+    }
+
+    // LDAP bağlantı testi
+    const testLdapBtn = document.getElementById('testLdapBtn');
+    if (testLdapBtn) {
+        testLdapBtn.addEventListener('click', async () => {
+            const msgDiv = document.getElementById('ldapConfigMessage');
+            msgDiv.textContent = '⏳ Bağlantı test ediliyor...';
+            msgDiv.style.display = 'block';
+            msgDiv.style.background = '#dbeafe';
+            msgDiv.style.color = '#1e40af';
+            msgDiv.style.border = '1px solid #3b82f6';
+
+            try {
+                const testConfig = {
+                    host: document.getElementById('ldapHost').value.trim(),
+                    port: parseInt(document.getElementById('ldapPort').value) || 389,
+                    baseDn: document.getElementById('ldapBaseDn').value.trim(),
+                    bindDn: document.getElementById('ldapBindDn').value.trim(),
+                    bindPassword: document.getElementById('ldapBindPassword').value,
+                    userSearchFilter: document.getElementById('ldapUserFilter').value.trim(),
+                    groupMemberAttribute: document.getElementById('ldapGroupAttr').value.trim(),
+                    enableLdap: document.getElementById('ldapEnableLdap').checked,
+                    enableJitProvisioning: document.getElementById('ldapEnableJit').checked
+                };
+
+                const response = await fetch(`${API_BASE}/ldap/test`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify(testConfig)
+                });
+
+                const result = await readJsonSafe(response);
+                const data = result.data || {};
+
+                if (response.ok) {
+                    // Sunucudan gelen success bayrağını kontrol et
+                    if (data.success) {
+                        msgDiv.textContent = '✓ ' + (data.message || 'LDAP bağlantısı başarılı!');
+                        msgDiv.style.background = '#d1fae5';
+                        msgDiv.style.color = '#065f46';
+                        msgDiv.style.border = '1px solid #10b981';
+                    } else {
+                        msgDiv.textContent = '✗ ' + (data.message || 'LDAP bağlantısı başarısız');
+                        msgDiv.style.background = '#fee2e2';
+                        msgDiv.style.color = '#991b1b';
+                        msgDiv.style.border = '1px solid #ef4444';
+                    }
+                } else {
+                    msgDiv.textContent = '✗ Bağlantı başarısız: ' + (data.message || (result.isHtml ? 'Oturum geçersiz, lütfen yeniden giriş yapın.' : 'Bilinmeyen hata'));
+                    msgDiv.style.background = '#fee2e2';
+                    msgDiv.style.color = '#991b1b';
+                    msgDiv.style.border = '1px solid #ef4444';
+                }
+
+                setTimeout(() => { msgDiv.style.display = 'none'; }, 4000);
+            } catch (error) {
+                msgDiv.textContent = '✗ Test hatası: ' + error.message;
+                msgDiv.style.background = '#fee2e2';
+                msgDiv.style.color = '#991b1b';
+                msgDiv.style.border = '1px solid #ef4444';
+            }
+        });
+    }
+
+    // Mapping ekleme butonu
+    if (addMappingBtn) {
+        addMappingBtn.addEventListener('click', () => {
+            currentEditingMappingId = null;
+            document.getElementById('ldapMappingModalTitle').textContent = 'Yeni Grup Eşleştirmesi';
+            document.getElementById('mappingLdapGroup').value = '';
+            const seflikSelect = document.getElementById('mappingSeflikSelect');
+            if (seflikSelect) {
+                seflikSelect.value = '';
+            }
+            document.getElementById('mappingRole').value = '';
+            document.getElementById('ldapMappingModal').style.display = 'flex';
+            // Şeflikleri yükle ve autocomplete'i başlat
+            loadSefliklerForMapping();
+            setTimeout(() => setupLdapGroupAutocomplete(), 100);
+        });
+    }
+
+    // Şeflikleri mapping için yükle
+    async function loadSefliklerForMapping() {
+        try {
+            const response = await fetch(`${API_BASE}/sheflik/list`, { credentials: 'include' });
+            if (response.ok) {
+                const sheflikler = await response.json();
+                const select = document.getElementById('mappingSeflikSelect');
+                if (select) {
+                    select.innerHTML = '<option value="">Şeflik seçiniz...</option>';
+                    sheflikler.forEach(s => {
+                        const opt = document.createElement('option');
+                        const name = s.name || s.Name || '';
+                        opt.value = name;
+                        opt.textContent = name;
+                        select.appendChild(opt);
+                    });
+                }
+            }
+        } catch (error) {
+            console.error('Şeflikler yüklenemedi:', error);
+        }
+    }
+
+    function normalizeSeflikId(seflikName) {
+        if (!seflikName) return '';
+        return seflikName
+            .toLocaleUpperCase('tr-TR')
+            .replace(/[^A-Z0-9]+/g, '_')
+            .replace(/^_+|_+$/g, '')
+            .replace(/_+/g, '_');
+    }
+
+    // LDAP Grup Adı Otomatik Tamamlama
+    function setupLdapGroupAutocomplete() {
+        const groupInput = document.getElementById('mappingLdapGroup');
+        const autocompleteDiv = document.getElementById('ldapGroupAutocomplete');
+        
+        if (!groupInput || !autocompleteDiv) {
+            console.error('Autocomplete elementleri bulunamadı');
+            return;
+        }
+
+        let debounceTimer;
+        
+        groupInput.addEventListener('input', async (e) => {
+            const searchTerm = e.target.value.trim();
+            
+            // Debounce - 300ms bekle
+            clearTimeout(debounceTimer);
+            
+            // Az karakterse gösterme
+            if (searchTerm.length < 2) {
+                autocompleteDiv.style.display = 'none';
+                autocompleteDiv.innerHTML = '';
+                return;
+            }
+
+            debounceTimer = setTimeout(async () => {
+                try {
+                    // Yapılandırılmış LDAP'ları al (sadece aktif olanı kullan)
+                    const configsRes = await fetch(`${API_BASE}/ldap/configs`, { credentials: 'include' });
+                    
+                    if (!configsRes.ok) {
+                        console.error('LDAP configs yüklenemedi:', configsRes.status);
+                        autocompleteDiv.innerHTML = '<div style="padding:0.5rem;color:#991b1b;">LDAP yapılandırması yüklenemedi</div>';
+                        autocompleteDiv.style.display = 'block';
+                        return;
+                    }
+                    
+                    const configsResult = await readJsonSafe(configsRes);
+                    const configs = configsResult.data || [];
+                    
+                    console.log('LDAP Configs:', configs);
+                    
+                    if (!configs.length) {
+                        autocompleteDiv.innerHTML = '<div style="padding:0.5rem;color:#94a3b8;">LDAP yapılandırması yok</div>';
+                        autocompleteDiv.style.display = 'block';
+                        return;
+                    }
+
+                    const configName = configs[0].name;
+                    console.log('Grup aranıyor:', searchTerm, 'Config:', configName);
+                    
+                    // Grupları ara
+                    const response = await fetch(`${API_BASE}/ldap/search-groups`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify({ configName, searchTerm })
+                    });
+
+                    if (!response.ok) {
+                        console.error('Grup arama başarısız:', response.status);
+                        autocompleteDiv.innerHTML = '<div style="padding:0.5rem;color:#991b1b;">Grup araması başarısız</div>';
+                        autocompleteDiv.style.display = 'block';
+                        return;
+                    }
+
+                    const result = await readJsonSafe(response);
+                    console.log('Grup arama sonucu:', result);
+                    
+                    const groups = (result.data?.groups || []).slice(0, 10); // Max 10 sonuç
+
+                    if (groups.length === 0) {
+                        autocompleteDiv.innerHTML = '<div style="padding:0.5rem;color:#94a3b8;">Grup bulunamadı</div>';
+                    } else {
+                        autocompleteDiv.innerHTML = groups.map(group => `
+                            <div style="padding:0.6rem 0.75rem;cursor:pointer;border-bottom:1px solid #e2e8f0;transition:background 0.2s;color:#334155;" 
+                                 onmouseover="this.style.background='#f1f5f9'"
+                                 onmouseout="this.style.background='transparent'"
+                                 onclick="selectLdapGroup('${group.replace(/'/g, "\\'")}')">
+                                ${escapeHtml(group)}
+                            </div>
+                        `).join('');
+                    }
+                    
+                    autocompleteDiv.style.display = 'block';
+                } catch (error) {
+                    console.error('Grup arama hatası:', error);
+                    autocompleteDiv.innerHTML = '<div style="padding:0.5rem;color:#991b1b;">Hata: ' + error.message + '</div>';
+                    autocompleteDiv.style.display = 'block';
+                }
+            }, 300);
+        });
+
+        // Enter tuşu çalışmasını sağla
+        groupInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                autocompleteDiv.style.display = 'none';
+            }
+        });
+
+        // Dış tıklama kapatma
+        document.addEventListener('click', (e) => {
+            if (!groupInput.contains(e.target) && !autocompleteDiv.contains(e.target)) {
+                autocompleteDiv.style.display = 'none';
+            }
+        });
+    }
+
+    window.selectLdapGroup = function(groupName) {
+        const groupInput = document.getElementById('mappingLdapGroup');
+        const autocompleteDiv = document.getElementById('ldapGroupAutocomplete');
+        
+        // Get the base DN from LDAP config to construct proper group DN
+        const selectedConfig = document.getElementById('ldapName');
+        let cn_value = groupName;
+        
+        // Usually we set just the CN and let admin add full DN if needed
+        groupInput.value = `CN=${cn_value}`;
+        autocompleteDiv.style.display = 'none';
+        autocompleteDiv.innerHTML = '';
+    };
+
+    // Mapping form submit
+    if (ldapMappingForm) {
+        ldapMappingForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const seflikSelect = document.getElementById('mappingSeflikSelect');
+            const seflikName = seflikSelect ? seflikSelect.value.trim() : '';
+            if (!seflikName) {
+                showNotification('Lütfen bir şeflik seçin', 'error');
+                return;
+            }
+
+            const mapping = {
+                ldapGroupName: document.getElementById('mappingLdapGroup').value.trim(),
+                seflikId: normalizeSeflikId(seflikName),
+                seflikName: seflikName,
+                assignedRole: document.getElementById('mappingRole').value
+            };
+
+            try {
+                let response;
+                if (currentEditingMappingId !== null) {
+                    // Güncelleme
+                    response = await fetch(`${API_BASE}/ldap/mappings/${currentEditingMappingId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify(mapping)
+                    });
+                } else {
+                    // Yeni ekleme
+                    response = await fetch(`${API_BASE}/ldap/mappings`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify(mapping)
+                    });
+                }
+
+                const result = await readJsonSafe(response);
+                const data = result.data || {};
+                const msgDiv = document.getElementById('ldapMappingMessage');
+
+                if (response.ok) {
+                    msgDiv.textContent = '✓ Eşleştirme başarıyla kaydedildi!';
+                    msgDiv.style.display = 'block';
+                    msgDiv.style.background = '#d1fae5';
+                    msgDiv.style.color = '#065f46';
+                    msgDiv.style.border = '1px solid #10b981';
+                    
+                    setTimeout(() => {
+                        closeLdapMappingModal();
+                        loadLdapMappings();
+                    }, 1000);
+                } else {
+                    msgDiv.textContent = '✗ Hata: ' + (data.message || (result.isHtml ? 'Oturum geçersiz, lütfen yeniden giriş yapın.' : 'İşlem başarısız'));
+                    msgDiv.style.display = 'block';
+                    msgDiv.style.background = '#fee2e2';
+                    msgDiv.style.color = '#991b1b';
+                    msgDiv.style.border = '1px solid #ef4444';
+                }
+            } catch (error) {
+                const msgDiv = document.getElementById('ldapMappingMessage');
+                msgDiv.textContent = '✗ Hata: ' + error.message;
+                msgDiv.style.display = 'block';
+                msgDiv.style.background = '#fee2e2';
+                msgDiv.style.color = '#991b1b';
+                msgDiv.style.border = '1px solid #ef4444';
+            }
+        });
+    }
+
+    // Mappingleri yükle
+    loadLdapMappings();
+}
+
+async function loadLdapConfig() {
+    try {
+        const response = await fetch(`${API_BASE}/ldap/config`, { credentials: 'include' });
+        const result = await readJsonSafe(response);
+        
+        if (!response.ok) {
+            console.warn('LDAP config yanıt hatası:', response.status);
+            updateLdapConfigStatus(false);
+            return;
+        }
+        
+        if (!result.ok) {
+            console.warn('readJsonSafe hatası:', result.error || result.text);
+            updateLdapConfigStatus(false);
+            return;
+        }
+        
+        const config = result.data || {};
+        console.log('LDAP config yüklendi:', config);
+        
+        // Config durumunu kontrol et - şifre varsa (masked bile olsa) yapılandırılmış sayılır
+        const isConfigured = config.host && config.baseDn && config.bindDn && config.bindPassword;
+        updateLdapConfigStatus(isConfigured);
+        
+        document.getElementById('ldapHost').value = config.host || '';
+        document.getElementById('ldapPort').value = config.port || 389;
+        document.getElementById('ldapBaseDn').value = config.baseDn || '';
+        document.getElementById('ldapBindDn').value = config.bindDn || '';
+        // Password backend'den masked geliyor, boş bırakıyoruz
+        const passwordField = document.getElementById('ldapBindPassword');
+        passwordField.value = '';
+        if (config.bindPassword === '********') {
+            passwordField.placeholder = '🔒 Mevcut şifre korunuyor (değiştirmek için yeni şifre girin)';
+            passwordField.style.borderColor = '#10b981';
+        } else {
+            passwordField.placeholder = 'Bind şifresini girin';
+            passwordField.style.borderColor = '#cbd5e1';
+        }
+        document.getElementById('ldapUserFilter').value = config.userSearchFilter || '(sAMAccountName={0})';
+        document.getElementById('ldapGroupAttr').value = config.groupMemberAttribute || 'memberOf';
+        document.getElementById('ldapEnableLdap').checked = config.enableLdap || false;
+        document.getElementById('ldapEnableJit').checked = config.enableJitProvisioning || false;
+    } catch (error) {
+        console.error('LDAP config yüklenemedi:', error);
+        updateLdapConfigStatus(false);
+    }
+}
+
+function updateLdapConfigStatus(isConfigured) {
+    const statusEl = document.getElementById('ldapConfigStatus');
+    if (!statusEl) return;
+    
+    if (isConfigured) {
+        statusEl.textContent = '✓ Ekli';
+        statusEl.style.display = 'inline-block';
+        statusEl.style.background = '#d1fae5';
+        statusEl.style.color = '#065f46';
+        statusEl.style.border = '1px solid #10b981';
+    } else {
+        statusEl.textContent = '○ Yapılandırılmamış';
+        statusEl.style.display = 'inline-block';
+        statusEl.style.background = '#fee2e2';
+        statusEl.style.color = '#991b1b';
+        statusEl.style.border = '1px solid #ef4444';
+    }
+}
+
+// LDAP Configurasyonları Listesi
+async function loadLdapConfigsList() {
+    try {
+        const response = await fetch(`${API_BASE}/ldap/configs`, { credentials: 'include' });
+        const result = await readJsonSafe(response);
+
+        const listDiv = document.getElementById('ldapConfigsList');
+        const emptyDiv = document.getElementById('ldapConfigsEmpty');
+
+        if (!listDiv || !emptyDiv) {
+            console.error('LDAP DOM elemanları bulunamadı');
+            return;
+        }
+
+        if (!response.ok) {
+            console.error('LDAP configs API hatası:', response.status, result.data || result.text);
+            listDiv.innerHTML = '';
+            emptyDiv.style.display = 'block';
+            emptyDiv.textContent = 'LDAP yapılandırmaları yüklenemedi. Admin olarak giriş yapın.';
+            return;
+        }
+
+        if (!result.ok) {
+            console.warn('LDAP configs JSON hatası:', result.error || result.text);
+            listDiv.innerHTML = '';
+            emptyDiv.style.display = 'block';
+            emptyDiv.textContent = 'LDAP yapılandırmaları yüklenirken hata oluştu.';
+            return;
+        }
+
+        // API direkt array döndürüyor
+        const configs = Array.isArray(result.data) ? result.data : [];
+        console.log('LDAP configs yüklendi:', configs);
+
+        if (configs.length === 0) {
+            listDiv.innerHTML = '';
+            emptyDiv.style.display = 'block';
+            return;
+        }
+
+        emptyDiv.style.display = 'none';
+        listDiv.innerHTML = configs.filter(c => c && c.name).map(config => `
+            <div style="background:#fff;border:1px solid #cbd5e1;border-radius:0.5rem;padding:1rem;cursor:pointer;transition:all 0.2s;hover:box-shadow:0 4px 12px rgba(0,0,0,0.1);" onclick="openLdapConfigForm('${(config.name || '').replace(/'/g, "\\'")}')">
+                <div style="display:flex;align-items:start;justify-content:space-between;margin-bottom:0.8rem;">
+                    <div>
+                        <h4 style="margin:0;color:#1e293b;font-weight:600;">${escapeHtml(config.name || '')}</h4>
+                        <small style="color:#64748b;">${config.host || 'Not configured'}</small>
+                    </div>
+                    <span style="padding:0.3rem 0.6rem;background:${config.enableLdap ? '#d1fae5' : '#fee2e2'};color:${config.enableLdap ? '#065f46' : '#991b1b'};border-radius:0.3rem;font-size:0.75rem;font-weight:600;white-space:nowrap;">
+                        ${config.enableLdap ? '✓ Aktif' : '○ Devre Dışı'}
+                    </span>
+                </div>
+                <div style="display:flex;gap:0.5rem;margin-top:0.8rem;">
+                    <button type="button" class="btn ghost" style="flex:1;padding:0.4rem;font-size:0.85rem;white-space:nowrap;" onclick="event.stopPropagation(); editLdapConfig('${(config.name || '').replace(/'/g, "\\'")}')" title="Düzenle"><i class="fa fa-edit"></i> Düzenle</button>
+                    <button type="button" class="btn ghost" style="flex:1;padding:0.4rem;font-size:0.85rem;color:#ef4444;white-space:nowrap;" onclick="event.stopPropagation(); deleteLdapConfig('${(config.name || '').replace(/'/g, "\\'")}')" title="Sil"><i class="fa fa-trash"></i> Sil</button>
+                </div>
+            </div>
+        `).join('');
+    } catch (error) {
+        console.error('LDAP configs listesi yüklenemedi:', error);
+        const listDiv = document.getElementById('ldapConfigsList');
+        const emptyDiv = document.getElementById('ldapConfigsEmpty');
+        if (listDiv && emptyDiv) {
+            listDiv.innerHTML = '';
+            emptyDiv.style.display = 'block';
+            emptyDiv.textContent = 'Hata: ' + error.message;
+        }
+    }
+}
+
+function openLdapConfigForm(name) {
+    const formSection = document.getElementById('ldapConfigFormSection');
+    const formTitle = document.getElementById('ldapFormTitle');
+    const nameField = document.getElementById('ldapName');
+
+    if (name) {
+        formTitle.innerHTML = '<i class="fa fa-cog"></i> LDAP Sunucu Ayarlarını Düzenle';
+        nameField.readOnly = true; // İsim değiştirilemez
+        loadLdapConfigToForm(name);
+    } else {
+        formTitle.innerHTML = '<i class="fa fa-cog"></i> Yeni LDAP Sunucu Yapılandırması';
+        nameField.readOnly = false;
+        clearLdapConfigForm();
+    }
+
+    formSection.style.display = 'block';
+    window.scrollTo({ top: document.getElementById('ldapConfigFormSection').offsetTop, behavior: 'smooth' });
+}
+
+function closeLdapConfigForm() {
+    document.getElementById('ldapConfigFormSection').style.display = 'none';
+    clearLdapConfigForm();
+}
+
+function clearLdapConfigForm() {
+    document.getElementById('ldapName').value = '';
+    document.getElementById('ldapHost').value = '';
+    document.getElementById('ldapPort').value = '389';
+    document.getElementById('ldapBaseDn').value = '';
+    document.getElementById('ldapBindDn').value = '';
+    document.getElementById('ldapBindPassword').value = '';
+    document.getElementById('ldapBindPassword').placeholder = '••••••••';
+    document.getElementById('ldapBindPassword').style.borderColor = '#cbd5e1';
+    document.getElementById('ldapUserFilter').value = '(sAMAccountName={0})';
+    document.getElementById('ldapGroupAttr').value = 'memberOf';
+    document.getElementById('ldapEnableLdap').checked = false;
+    document.getElementById('ldapEnableJit').checked = false;
+    document.getElementById('ldapConfigMessage').style.display = 'none';
+}
+
+async function loadLdapConfigToForm(name) {
+    try {
+        const response = await fetch(`${API_BASE}/ldap/config?name=${encodeURIComponent(name)}`, { credentials: 'include' });
+        const result = await readJsonSafe(response);
+
+        if (!response.ok || !result.ok) {
+            showMessage('ldapConfigMessage', 'Yapılandırma yüklenemedi', 'error');
+            return;
+        }
+
+        const config = result.data || {};
+        document.getElementById('ldapName').value = config.name || '';
+        document.getElementById('ldapHost').value = config.host || '';
+        document.getElementById('ldapPort').value = config.port || 389;
+        document.getElementById('ldapBaseDn').value = config.baseDn || '';
+        document.getElementById('ldapBindDn').value = config.bindDn || '';
+        document.getElementById('ldapBindPassword').value = '';
+        
+        if (config.bindPassword === '********') {
+            document.getElementById('ldapBindPassword').placeholder = '🔒 Mevcut şifre korunuyor (değiştirmek için yeni şifre girin)';
+            document.getElementById('ldapBindPassword').style.borderColor = '#10b981';
+        } else {
+            document.getElementById('ldapBindPassword').placeholder = '••••••••';
+            document.getElementById('ldapBindPassword').style.borderColor = '#cbd5e1';
+        }
+
+        document.getElementById('ldapUserFilter').value = config.userSearchFilter || '(sAMAccountName={0})';
+        document.getElementById('ldapGroupAttr').value = config.groupMemberAttribute || 'memberOf';
+        document.getElementById('ldapEnableLdap').checked = config.enableLdap || false;
+        document.getElementById('ldapEnableJit').checked = config.enableJitProvisioning || false;
+    } catch (error) {
+        console.error('Yapılandırma yüklenemedi:', error);
+        showMessage('ldapConfigMessage', 'Yapılandırma yüklenemedi: ' + error.message, 'error');
+    }
+}
+
+function editLdapConfig(name) {
+    openLdapConfigForm(name);
+}
+
+async function deleteLdapConfig(name) {
+    if (!confirm(`"${name}" yapılandırmasını silmek istediğinize emin misiniz?`)) return;
+
+    try {
+        const response = await fetch(`${API_BASE}/ldap/config/${encodeURIComponent(name)}`, {
+            method: 'DELETE',
+            credentials: 'include'
+        });
+
+        if (response.ok) {
+            showMessage('ldapConfigMessage', '✓ Yapılandırma başarıyla silindi!', 'success');
+            setTimeout(() => loadLdapConfigsList(), 1000);
+        } else {
+            showMessage('ldapConfigMessage', '✗ Silme başarısız!', 'error');
+        }
+    } catch (error) {
+        showMessage('ldapConfigMessage', '✗ Hata: ' + error.message, 'error');
+    }
+}
+
+function showMessage(elementId, text, type) {
+    const msgDiv = document.getElementById(elementId);
+    if (!msgDiv) return;
+    
+    msgDiv.textContent = text;
+    msgDiv.style.display = 'block';
+    
+    if (type === 'success') {
+        msgDiv.style.background = '#d1fae5';
+        msgDiv.style.color = '#065f46';
+        msgDiv.style.border = '1px solid #10b981';
+    } else if (type === 'error') {
+        msgDiv.style.background = '#fee2e2';
+        msgDiv.style.color = '#991b1b';
+        msgDiv.style.border = '1px solid #ef4444';
+    } else {
+        msgDiv.style.background = '#dbeafe';
+        msgDiv.style.color = '#0c4a6e';
+        msgDiv.style.border = '1px solid #0284c7';
+    }
+}
+
+function escapeHtml(text) {
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, m => map[m]);
+}
+
+async function loadLdapMappings() {
+    try {
+        const response = await fetch(`${API_BASE}/ldap/mappings`, { credentials: 'include' });
+        
+        if (!response.ok) {
+            console.warn('LDAP mappings yanıt hatası:', response.status);
+            if (response.status === 401 || response.status === 403) {
+                console.warn('Yetki hatası - Admin olarak giriş yapın');
+            }
+            return;
+        }
+        
+        const result = await readJsonSafe(response);
+        
+        if (!result.ok) {
+            if (result.isHtml) {
+                console.warn('LDAP mappings alınamadı: oturum geçersiz veya yetkisiz.');
+            } else {
+                console.error('LDAP mappings JSON hatası:', result.error || result.text);
+            }
+            return;
+        }
+
+        const mappings = Array.isArray(result.data) ? result.data : [];
+        console.log('LDAP mappings yüklendi:', mappings.length, 'adet');
+        
+        const tbody = document.getElementById('ldapMappingsBody');
+        if (!tbody) {
+            console.error('ldapMappingsBody elementi bulunamadı');
+            return;
+        }
+        
+        if (!mappings || mappings.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="5" style="text-align:center;padding:2rem;color:#94a3b8;">
+                        <i class="fa fa-inbox" style="font-size:2rem;margin-bottom:0.5rem;display:block;"></i>
+                        Henüz eşleştirme eklenmemiş. "Yeni Eşleştirme Ekle" butonuna tıklayın.
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        tbody.innerHTML = mappings.map(m => {
+            const roleColor = m.assignedRole === 'Admin' ? '#ef4444' : m.assignedRole === 'SheflikYetkilisi' ? '#3b82f6' : '#10b981';
+            const roleName = m.assignedRole === 'Admin' ? 'Admin' : m.assignedRole === 'SheflikYetkilisi' ? 'Şeflik Yetkilisi' : 'Kullanıcı';
+            
+            return `
+                <tr style="border-bottom:1px solid #e2e8f0;">
+                    <td style="padding:0.75rem;font-family:monospace;font-size:0.9rem;color:#475569;">${m.ldapGroupName || m.LdapGroupName}</td>
+                    <td style="padding:0.75rem;"><span style="background:#f1f5f9;padding:0.3rem 0.6rem;border-radius:0.4rem;font-weight:600;color:#334155;">${m.seflikId || m.SeflikId}</span></td>
+                    <td style="padding:0.75rem;color:#1e293b;font-weight:500;">${m.seflikName || m.SeflikName}</td>
+                    <td style="padding:0.75rem;"><span style="background:${roleColor};color:#fff;padding:0.3rem 0.8rem;border-radius:0.4rem;font-weight:600;font-size:0.85rem;">${roleName}</span></td>
+                    <td style="padding:0.75rem;text-align:center;">
+                        <button onclick="editLdapMapping(${m.id || m.Id})" class="btn" style="padding:0.4rem 0.8rem;margin-right:0.5rem;background:#f1f5f9;color:#334155;border:1px solid #cbd5e1;"><i class="fa fa-pen"></i></button>
+                        <button onclick="deleteLdapMapping(${m.id || m.Id})" class="btn danger" style="padding:0.4rem 0.8rem;"><i class="fa fa-trash"></i></button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    } catch (error) {
+        console.error('LDAP mappings yüklenemedi:', error);
+    }
+}
+
+window.editLdapMapping = async function(id) {
+    try {
+        const response = await fetch(`${API_BASE}/ldap/mappings`, { credentials: 'include' });
+        if (response.ok) {
+            const mappings = await response.json();
+            const mapping = mappings.find(m => (m.id || m.Id) === id);
+            
+            if (mapping) {
+                currentEditingMappingId = id;
+                document.getElementById('ldapMappingModalTitle').textContent = 'Grup Eşleştirmesini Düzenle';
+                document.getElementById('mappingLdapGroup').value = mapping.ldapGroupName || mapping.LdapGroupName;
+                await loadSefliklerForMapping();
+                const seflikSelect = document.getElementById('mappingSeflikSelect');
+                const seflikName = mapping.seflikName || mapping.SeflikName || '';
+                if (seflikSelect) {
+                    seflikSelect.value = seflikName;
+                }
+                document.getElementById('mappingRole').value = mapping.assignedRole || mapping.AssignedRole;
+                document.getElementById('ldapMappingModal').style.display = 'flex';
+            }
+        }
+    } catch (error) {
+        console.error('Mapping yüklenemedi:', error);
+        alert('Eşleştirme yüklenemedi');
+    }
+}
+
+window.deleteLdapMapping = async function(id) {
+    if (!confirm('Bu eşleştirmeyi silmek istediğinize emin misiniz?')) return;
+
+    try {
+        const response = await fetch(`${API_BASE}/ldap/mappings/${id}`, {
+            method: 'DELETE',
+            credentials: 'include'
+        });
+
+        if (response.ok) {
+            showNotification('Eşleştirme başarıyla silindi', 'success');
+            loadLdapMappings();
+        } else {
+            const data = await response.json();
+            showNotification('Silme başarısız: ' + (data.message || 'Bilinmeyen hata'), 'error');
+        }
+    } catch (error) {
+        showNotification('Silme hatası: ' + error.message, 'error');
+    }
+}
+
+window.closeLdapMappingModal = function() {
+    document.getElementById('ldapMappingModal').style.display = 'none';
+    document.getElementById('ldapMappingMessage').style.display = 'none';
+    currentEditingMappingId = null;
+}
+
+// ============== KULLANICI YÖNETİMİ ==============
+let currentEditingUser = null;
+let allTopologiesForSelection = [];
+
+function attachUserManagement() {
+    const addUserBtn = document.getElementById('addUserBtn');
+    const addAdminBtn = document.getElementById('addAdminBtn');
+    const userForm = document.getElementById('userForm');
+    const adminUserForm = document.getElementById('adminUserForm');
+
+    if (addUserBtn) {
+        addUserBtn.addEventListener('click', () => openUserModal());
+    }
+
+    if (addAdminBtn) {
+        addAdminBtn.addEventListener('click', () => openAdminUserModal());
+    }
+
+    if (userForm) {
+        userForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await saveUser();
+        });
+    }
+
+    if (adminUserForm) {
+        adminUserForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await saveAdminUser();
+        });
+    }
+
+    // Kullanıcıları yükle
+    loadUsers();
+    
+    // Şeflik dropdown'ını doldur
+    populateSheflikDropdown();
+    
+    // Topoloji listesini yükle
+    loadTopologiesForSelection();
+}
+
+async function loadUsers() {
+    // Sadece Admin kullanıcılar için kullanıcı listesini yükle
+    if (window.currentUserRole !== 'Admin') {
+        console.log('Kullanıcı listesi sadece Admin kullanıcılar için yüklenebilir');
+        return;
+    }
+
+    try {
+        const adminTable = document.getElementById('adminUsersTable');
+        const usersTable = document.getElementById('usersTable');
+        if (adminTable) {
+            adminTable.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#94a3b8;">Yükleniyor...</td></tr>';
+        }
+        if (usersTable) {
+            usersTable.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#94a3b8;">Yükleniyor...</td></tr>';
+        }
+
+        const response = await fetch(`${API_BASE}/user/list`, { credentials: 'include' });
+        if (!response.ok) {
+            console.error('Kullanıcılar yüklenemedi, status:', response.status);
+            if (adminTable) {
+                adminTable.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#ef4444;">Kullanıcı listesi alınamadı</td></tr>';
+            }
+            if (usersTable) {
+                usersTable.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#ef4444;">Kullanıcı listesi alınamadı</td></tr>';
+            }
+            return;
+        }
+
+        const result = await readJsonSafe(response);
+        if (!result.ok || result.isHtml) {
+            console.error('Kullanıcılar yüklenirken hata:', result.error || 'HTML response');
+            if (adminTable) {
+                adminTable.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#ef4444;">Oturum geçersiz veya veri okunamadı</td></tr>';
+            }
+            if (usersTable) {
+                usersTable.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#ef4444;">Oturum geçersiz veya veri okunamadı</td></tr>';
+            }
+            return;
+        }
+
+        const users = result.data;
+        if (!Array.isArray(users)) {
+            console.error('Kullanıcı listesi formatı hatalı:', users);
+            if (adminTable) {
+                adminTable.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#ef4444;">Kullanıcı listesi formatı hatalı</td></tr>';
+            }
+            if (usersTable) {
+                usersTable.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#ef4444;">Kullanıcı listesi formatı hatalı</td></tr>';
+            }
+            return;
+        }
+        
+        // Admin kullanıcıları
+        const admins = users.filter(u => (u.role || u.Role) === 'Admin');
+        if (adminTable) {
+            if (admins.length === 0) {
+                adminTable.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#94a3b8;">Henüz admin kullanıcı eklenmemiş</td></tr>';
+            } else {
+                adminTable.innerHTML = admins.map(u => `
+                    <tr>
+                        <td><strong>${u.username || u.Username}</strong></td>
+                        <td><span style="padding:0.3rem 0.6rem;border-radius:0.3rem;background:${(u.isLdapUser ?? u.IsLdapUser) ? '#dbeafe' : '#fef3c7'};color:${(u.isLdapUser ?? u.IsLdapUser) ? '#1e40af' : '#92400e'};font-size:0.85rem;">${(u.isLdapUser ?? u.IsLdapUser) ? 'LDAP' : 'Lokal'}</span></td>
+                        <td>${new Date(u.createdAt || u.CreatedAt).toLocaleDateString('tr-TR')}</td>
+                        <td>
+                            <button onclick="editUser('${u.username || u.Username}')" class="btn-edit" ${(u.username || u.Username) === 'admin' ? 'disabled' : ''}><i class="fa fa-edit"></i> Düzenle</button>
+                            <button onclick="deleteUser('${u.username || u.Username}')" class="btn-delete" ${(u.username || u.Username) === 'admin' ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''}><i class="fa fa-trash"></i> Sil</button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        // Diğer kullanıcılar
+        const otherUsers = users.filter(u => (u.role || u.Role) !== 'Admin');
+        if (usersTable) {
+            if (otherUsers.length === 0) {
+                usersTable.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#94a3b8;">Henüz kullanıcı eklenmemiş</td></tr>';
+            } else {
+                usersTable.innerHTML = otherUsers.map(u => {
+                    const role = u.role || u.Role;
+                    const roleColor = role === 'SheflikYetkilisi' ? '#3b82f6' : '#10b981';
+                    const roleName = role === 'SheflikYetkilisi' ? 'Şeflik Yetkilisi' : 'Kullanıcı';
+                    const allowedIds = u.allowedTopologyIds || u.AllowedTopologyIds || [];
+                    const permType = (u.permissionType || u.PermissionType) === 'Specific' ? `Spesifik (${allowedIds.length} sunucu)` : 'Şeflik Bazlı';
+                    const isLdapUser = (u.isLdapUser ?? u.IsLdapUser);
+                    const username = u.username || u.Username;
+                    const seflikName = u.seflikName || u.SeflikName || '-';
+                    const createdAt = new Date(u.createdAt || u.CreatedAt).toLocaleDateString('tr-TR');
+                    
+                    return `
+                        <tr>
+                            <td><strong>${username}</strong></td>
+                            <td><span style="padding:0.3rem 0.6rem;border-radius:0.3rem;background:${roleColor}15;color:${roleColor};font-size:0.85rem;">${roleName}</span></td>
+                            <td>${seflikName}</td>
+                            <td><span style="font-size:0.85rem;color:#64748b;">${permType}</span></td>
+                            <td><span style="padding:0.3rem 0.6rem;border-radius:0.3rem;background:${isLdapUser ? '#dbeafe' : '#fef3c7'};color:${isLdapUser ? '#1e40af' : '#92400e'};font-size:0.85rem;">${isLdapUser ? 'LDAP' : 'Lokal'}</span></td>
+                            <td>${createdAt}</td>
+                            <td>
+                                <button onclick="editUser('${username}')" class="btn-edit"><i class="fa fa-edit"></i> Düzenle</button>
+                                <button onclick="deleteUser('${username}')" class="btn-delete"><i class="fa fa-trash"></i> Sil</button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+        }
+    } catch (error) {
+        console.error('Kullanıcılar yüklenirken hata:', error);
+    }
+}
+
+function openUserModal(defaultRole = null) {
+    currentEditingUser = null;
+    document.getElementById('userModalTitle').textContent = 'Yeni Giriş Yetkilisi';
+    document.getElementById('userForm').reset();
+    
+    // Lokal kullanıcı seçili
+    document.querySelector('input[name="userType"][value="local"]').checked = true;
+    toggleUserType();
+    
+    // Şeflik bazlı seçili
+    document.querySelector('input[name="permType"][value="Sheflik"]').checked = true;
+    togglePermType();
+    
+    // LDAP kullanıcı autocomplete'i başlat
+    setTimeout(() => setupLdapUserAutocomplete('user'), 100);
+    
+    document.getElementById('userModal').style.display = 'flex';
+}
+
+function openAdminUserModal() {
+    currentEditingUser = null;
+    document.getElementById('adminUserModalTitle').textContent = 'Yeni Admin Kullanıcı';
+    document.getElementById('adminUserForm').reset();
+    
+    // Lokal kullanıcı seçili
+    document.querySelector('input[name="adminUserType"][value="local"]').checked = true;
+    toggleAdminUserType();
+    
+    // LDAP kullanıcı autocomplete'i başlat
+    setTimeout(() => setupLdapUserAutocomplete('admin'), 100);
+    
+    document.getElementById('adminUserModal').style.display = 'flex';
+}
+
+// LDAP Kullanıcı Autocomplete
+function setupLdapUserAutocomplete(modalType) {
+    const inputId = modalType === 'admin' ? 'adminUsername' : 'userUsername';
+    const autocompleteId = modalType === 'admin' ? 'adminUserAutocomplete' : 'userAutocomplete';
+    const userTypeRadioName = modalType === 'admin' ? 'adminUserType' : 'userType';
+    
+    const userInput = document.getElementById(inputId);
+    const autocompleteDiv = document.getElementById(autocompleteId);
+    
+    if (!userInput || !autocompleteDiv) {
+        console.error('User autocomplete elementleri bulunamadı');
+        return;
+    }
+
+    let debounceTimer;
+    
+    userInput.addEventListener('input', async (e) => {
+        const searchTerm = e.target.value.trim();
+        
+        // Sadece LDAP kullanıcı seçiliyse autocomplete çalışsın
+        const isLdap = document.querySelector(`input[name="${userTypeRadioName}"]:checked`)?.value === 'ldap';
+        
+        if (!isLdap || searchTerm.length < 2) {
+            autocompleteDiv.style.display = 'none';
+            autocompleteDiv.innerHTML = '';
+            return;
+        }
+
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(async () => {
+            try {
+                // LDAP config'i al
+                const configsRes = await fetch(`${API_BASE}/ldap/configs`, { credentials: 'include' });
+                
+                if (!configsRes.ok) {
+                    console.error('LDAP configs yüklenemedi');
+                    return;
+                }
+                
+                const configsResult = await readJsonSafe(configsRes);
+                const configs = configsResult.data || [];
+                
+                if (!configs.length) {
+                    autocompleteDiv.innerHTML = '<div style="padding:0.5rem;color:#94a3b8;">LDAP yapılandırması yok</div>';
+                    autocompleteDiv.style.display = 'block';
+                    return;
+                }
+
+                const configName = configs[0].name;
+                
+                // Kullanıcıları ara
+                const response = await fetch(`${API_BASE}/ldap/search-users`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ configName, searchTerm })
+                });
+
+                if (!response.ok) {
+                    console.error('Kullanıcı arama başarısız:', response.status);
+                    return;
+                }
+
+                const result = await readJsonSafe(response);
+                const users = (result.data?.users || []).slice(0, 10);
+
+                if (users.length === 0) {
+                    autocompleteDiv.innerHTML = '<div style="padding:0.5rem;color:#94a3b8;">Kullanıcı bulunamadı</div>';
+                } else {
+                    autocompleteDiv.innerHTML = users.map(user => {
+                        // "username (Display Name)" formatından username'i çıkar
+                        const username = user.split(' (')[0];
+                        return `
+                            <div style="padding:0.6rem 0.75rem;cursor:pointer;border-bottom:1px solid #e2e8f0;transition:background 0.2s;color:#334155;" 
+                                 onmouseover="this.style.background='#f1f5f9'"
+                                 onmouseout="this.style.background='transparent'"
+                                 onclick="selectLdapUser('${username.replace(/'/g, "\\'")}', '${modalType}')">
+                                ${escapeHtml(user)}
+                            </div>
+                        `;
+                    }).join('');
+                }
+                
+                autocompleteDiv.style.display = 'block';
+            } catch (error) {
+                console.error('Kullanıcı arama hatası:', error);
+                autocompleteDiv.innerHTML = '<div style="padding:0.5rem;color:#991b1b;">Hata: ' + error.message + '</div>';
+                autocompleteDiv.style.display = 'block';
+            }
+        }, 300);
+    });
+
+    // Escape tuşu ile kapat
+    userInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            autocompleteDiv.style.display = 'none';
+        }
+    });
+}
+
+window.selectLdapUser = function(username, modalType) {
+    const inputId = modalType === 'admin' ? 'adminUsername' : 'userUsername';
+    const autocompleteId = modalType === 'admin' ? 'adminUserAutocomplete' : 'userAutocomplete';
+    
+    const userInput = document.getElementById(inputId);
+    const autocompleteDiv = document.getElementById(autocompleteId);
+    
+    userInput.value = username;
+    autocompleteDiv.style.display = 'none';
+    autocompleteDiv.innerHTML = '';
+};
+
+window.editUser = async function(username) {
+    try {
+        const response = await fetch(`${API_BASE}/user/list`, { credentials: 'include' });
+        if (!response.ok) return;
+        
+        const users = await response.json();
+        const user = users.find(u => u.username === username);
+        
+        if (user) {
+            currentEditingUser = username;
+            document.getElementById('userModalTitle').textContent = 'Kullanıcıyı Düzenle';
+            document.getElementById('userUsername').value = user.username;
+            document.getElementById('userUsername').readOnly = true;
+            document.getElementById('userRole').value = user.role;
+            
+            // Şeflik seç
+            const seflikSelect = document.getElementById('userSeflik');
+            for (let opt of seflikSelect.options) {
+                if (opt.value === user.seflikId) {
+                    opt.selected = true;
+                    break;
+                }
+            }
+            
+            // Kullanıcı tipi
+            if (user.isLdapUser) {
+                document.querySelector('input[name="userType"][value="ldap"]').checked = true;
+            } else {
+                document.querySelector('input[name="userType"][value="local"]').checked = true;
+            }
+            toggleUserType();
+            
+            // İzin tipi
+            document.querySelector(`input[name="permType"][value="${user.permissionType}"]`).checked = true;
+            togglePermType();
+            
+            // Spesifik sunucular
+            if (user.permissionType === 'Specific' && user.allowedTopologyIds) {
+                setTimeout(() => {
+                    user.allowedTopologyIds.forEach(id => {
+                        const checkbox = document.querySelector(`#topologyCheckboxes input[value="${id}"]`);
+                        if (checkbox) checkbox.checked = true;
+                    });
+                }, 500);
+            }
+            
+            document.getElementById('userModal').style.display = 'flex';
+        }
+    } catch (error) {
+        console.error('Kullanıcı yüklenemedi:', error);
+    }
+}
+
+window.deleteUser = async function(username) {
+    if (!confirm(`"${username}" kullanıcısını silmek istediğinize emin misiniz?`)) return;
+    
+    try {
+        const response = await fetch(`${API_BASE}/user/delete/${username}`, {
+            method: 'DELETE',
+            credentials: 'include'
+        });
+        
+        if (response.ok) {
+            showNotification('Kullanıcı başarıyla silindi', 'success');
+            loadUsers();
+        } else {
+            const data = await response.json();
+            showNotification('Silme başarısız: ' + (data.message || 'Bilinmeyen hata'), 'error');
+        }
+    } catch (error) {
+        showNotification('Silme hatası: ' + error.message, 'error');
+    }
+}
+
+async function saveUser() {
+    const username = document.getElementById('userUsername').value.trim();
+    const password = document.getElementById('userPassword').value;
+    const seflikSelect = document.getElementById('userSeflik');
+    const seflikId = seflikSelect.value;
+    const seflikName = seflikSelect.options[seflikSelect.selectedIndex]?.text;
+    const isLdapUser = document.querySelector('input[name="userType"]:checked').value === 'ldap';
+    const permType = document.querySelector('input[name="permType"]:checked').value;
+    
+    // Spesifik sunucuları topla
+    let allowedTopologyIds = [];
+    if (permType === 'Specific') {
+        const checkboxes = document.querySelectorAll('#topologyCheckboxes input[type="checkbox"]:checked');
+        allowedTopologyIds = Array.from(checkboxes).map(cb => cb.value);
+    }
+    
+    const userData = {
+        username,
+        password: password || null,
+        role: 'User', // Giriş yetkilisi her zaman User rolü
+        seflikId: seflikId || null,
+        seflikName: seflikName !== 'Seçiniz...' ? seflikName : null,
+        isLdapUser,
+        permissionType: permType,
+        allowedTopologyIds
+    };
+    
+    try {
+        const url = currentEditingUser ? `${API_BASE}/user/update` : `${API_BASE}/user/add`;
+        const response = await fetch(url, {
+            method: currentEditingUser ? 'PUT' : 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(userData)
+        });
+        
+        const msgDiv = document.getElementById('userModalMessage');
+        
+        if (response.ok) {
+            msgDiv.textContent = '✓ Kullanıcı başarıyla kaydedildi!';
+            msgDiv.style.display = 'block';
+            msgDiv.style.background = '#d1fae5';
+            msgDiv.style.color = '#065f46';
+            msgDiv.style.border = '1px solid #10b981';
+            
+            setTimeout(() => {
+                closeUserModal();
+                loadUsers();
+            }, 1500);
+        } else {
+            const data = await response.json();
+            msgDiv.textContent = '✗ Hata: ' + (data.message || 'Kayıt başarısız');
+            msgDiv.style.display = 'block';
+            msgDiv.style.background = '#fee2e2';
+            msgDiv.style.color = '#991b1b';
+            msgDiv.style.border = '1px solid #ef4444';
+        }
+    } catch (error) {
+        const msgDiv = document.getElementById('userModalMessage');
+        msgDiv.textContent = '✗ Bağlantı hatası: ' + error.message;
+        msgDiv.style.display = 'block';
+        msgDiv.style.background = '#fee2e2';
+        msgDiv.style.color = '#991b1b';
+        msgDiv.style.border = '1px solid #ef4444';
+    }
+}
+
+async function saveAdminUser() {
+    const username = document.getElementById('adminUsername').value.trim();
+    const password = document.getElementById('adminPassword').value;
+    const isLdapUser = document.querySelector('input[name="adminUserType"]:checked').value === 'ldap';
+    
+    // LDAP kullanıcısı seçiliyse şifre zorunlu değil
+    if (!isLdapUser && !password && !currentEditingUser) {
+        const msgDiv = document.getElementById('adminUserModalMessage');
+        msgDiv.textContent = '✗ Lokal kullanıcılar için şifre zorunludur';
+        msgDiv.style.display = 'block';
+        msgDiv.style.background = '#fee2e2';
+        msgDiv.style.color = '#991b1b';
+        msgDiv.style.border = '1px solid #ef4444';
+        return;
+    }
+    
+    const userData = {
+        username,
+        password: password || null,
+        role: 'Admin', // Admin rolü sabit
+        seflikId: null,
+        seflikName: null,
+        isLdapUser,
+        permissionType: 'Sheflik',
+        allowedTopologyIds: []
+    };
+    
+    try {
+        const url = currentEditingUser ? `${API_BASE}/user/update` : `${API_BASE}/user/add`;
+        const response = await fetch(url, {
+            method: currentEditingUser ? 'PUT' : 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(userData)
+        });
+        
+        const msgDiv = document.getElementById('adminUserModalMessage');
+        
+        if (response.ok) {
+            msgDiv.textContent = '✓ Admin kullanıcı başarıyla kaydedildi!';
+            msgDiv.style.display = 'block';
+            msgDiv.style.background = '#d1fae5';
+            msgDiv.style.color = '#065f46';
+            msgDiv.style.border = '1px solid #10b981';
+            
+            setTimeout(() => {
+                closeAdminUserModal();
+                loadUsers();
+            }, 1500);
+        } else {
+            const data = await response.json();
+            msgDiv.textContent = '✗ Hata: ' + (data.message || 'Kayıt başarısız');
+            msgDiv.style.display = 'block';
+            msgDiv.style.background = '#fee2e2';
+            msgDiv.style.color = '#991b1b';
+            msgDiv.style.border = '1px solid #ef4444';
+        }
+    } catch (error) {
+        const msgDiv = document.getElementById('adminUserModalMessage');
+        msgDiv.textContent = '✗ Bağlantı hatası: ' + error.message;
+        msgDiv.style.display = 'block';
+        msgDiv.style.background = '#fee2e2';
+        msgDiv.style.color = '#991b1b';
+        msgDiv.style.border = '1px solid #ef4444';
+    }
+}
+
+window.closeUserModal = function() {
+    document.getElementById('userModal').style.display = 'none';
+    document.getElementById('userModalMessage').style.display = 'none';
+    document.getElementById('userUsername').readOnly = false;
+    currentEditingUser = null;
+}
+
+window.closeAdminUserModal = function() {
+    document.getElementById('adminUserModal').style.display = 'none';
+    document.getElementById('adminUserModalMessage').style.display = 'none';
+    document.getElementById('adminUsername').readOnly = false;
+    currentEditingUser = null;
+}
+
+window.toggleUserType = function() {
+    const isLdap = document.querySelector('input[name="userType"]:checked').value === 'ldap';
+    const passwordField = document.getElementById('passwordField');
+    const passwordInput = document.getElementById('userPassword');
+    
+    if (isLdap) {
+        passwordField.style.display = 'none';
+        passwordInput.required = false;
+        document.getElementById('localUserLabel').style.borderColor = '#e2e8f0';
+        document.getElementById('localUserLabel').style.background = '#fff';
+        document.getElementById('ldapUserLabel').style.borderColor = '#3b82f6';
+        document.getElementById('ldapUserLabel').style.background = '#eff6ff';
+    } else {
+        passwordField.style.display = 'block';
+        passwordInput.required = !currentEditingUser; // Düzenlemede zorunlu değil
+        document.getElementById('localUserLabel').style.borderColor = '#3b82f6';
+        document.getElementById('localUserLabel').style.background = '#eff6ff';
+        document.getElementById('ldapUserLabel').style.borderColor = '#e2e8f0';
+        document.getElementById('ldapUserLabel').style.background = '#fff';
+    }
+}
+
+window.toggleAdminUserType = function() {
+    const isLdap = document.querySelector('input[name="adminUserType"]:checked').value === 'ldap';
+    const passwordField = document.getElementById('adminPasswordField');
+    const passwordInput = document.getElementById('adminPassword');
+    
+    if (isLdap) {
+        passwordField.style.display = 'none';
+        passwordInput.required = false;
+        document.getElementById('adminLocalUserLabel').style.borderColor = '#e2e8f0';
+        document.getElementById('adminLocalUserLabel').style.background = '#fff';
+        document.getElementById('adminLdapUserLabel').style.borderColor = '#3b82f6';
+        document.getElementById('adminLdapUserLabel').style.background = '#eff6ff';
+    } else {
+        passwordField.style.display = 'block';
+        passwordInput.required = !currentEditingUser;
+        document.getElementById('adminLocalUserLabel').style.borderColor = '#3b82f6';
+        document.getElementById('adminLocalUserLabel').style.background = '#eff6ff';
+        document.getElementById('adminLdapUserLabel').style.borderColor = '#e2e8f0';
+        document.getElementById('adminLdapUserLabel').style.background = '#fff';
+    }
+}
+
+window.togglePermType = function() {
+    const isSpecific = document.querySelector('input[name="permType"]:checked').value === 'Specific';
+    const specificField = document.getElementById('specificServersField');
+    
+    if (isSpecific) {
+        specificField.style.display = 'block';
+        document.getElementById('sheflikPermLabel').style.borderColor = '#e2e8f0';
+        document.getElementById('sheflikPermLabel').style.background = '#fff';
+        document.getElementById('specificPermLabel').style.borderColor = '#3b82f6';
+        document.getElementById('specificPermLabel').style.background = '#eff6ff';
+    } else {
+        specificField.style.display = 'none';
+        document.getElementById('sheflikPermLabel').style.borderColor = '#3b82f6';
+        document.getElementById('sheflikPermLabel').style.background = '#eff6ff';
+        document.getElementById('specificPermLabel').style.borderColor = '#e2e8f0';
+        document.getElementById('specificPermLabel').style.background = '#fff';
+    }
+}
+
+function populateSheflikDropdown() {
+    const select = document.getElementById('userSeflik');
+    if (!select) return;
+    
+    select.innerHTML = '<option value="">Seçiniz...</option>' +
+        sampleSheflikler.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+}
+
+async function loadTopologiesForSelection() {
+    try {
+        const response = await fetch(`${API_BASE}/topology/list`, { credentials: 'include' });
+        if (!response.ok) return;
+        
+        allTopologiesForSelection = await response.json();
+        updateTopologyCheckboxes();
+    } catch (error) {
+        console.error('Topolojiler yüklenemedi:', error);
+    }
+}
+
+function updateTopologyCheckboxes() {
+    const container = document.getElementById('topologyCheckboxes');
+    if (!container) return;
+    
+    if (allTopologiesForSelection.length === 0) {
+        container.innerHTML = '<p style="color:#94a3b8;text-align:center;">Henüz sunucu eklenmemiş</p>';
+        return;
+    }
+    
+    container.innerHTML = allTopologiesForSelection.map(t => `
+        <label style="display:block;padding:0.5rem;border-bottom:1px solid #e2e8f0;cursor:pointer;transition:background 0.2s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='transparent'">
+            <input type="checkbox" value="${t.id}" style="margin-right:0.5rem;">
+            <strong>${t.server || t.name}</strong> <span style="color:#64748b;font-size:0.85rem;">(${t.ip || 'IP yok'}) - ${t.dept || 'Şeflik yok'}</span>
+        </label>
+    `).join('');
+}

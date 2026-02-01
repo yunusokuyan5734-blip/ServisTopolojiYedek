@@ -35,6 +35,7 @@
             <button class="nav-item" data-target="canvas"><i class="fa fa-pencil-ruler"></i><span>Çizim Alanı</span></button>
             <button class="nav-item" data-target="admin-list"><i class="fa fa-users"></i><span>Adminler</span></button>
             <button class="nav-item" data-target="access-list"><i class="fa fa-id-card"></i><span>Giriş Yetkililer</span></button>
+            <button class="nav-item" data-target="integration"><i class="fa fa-plug"></i><span>Entegrasyon</span></button>
         </nav>
         <button class="nav-item logout" onclick="logout()"><i class="fa fa-right-from-bracket"></i><span>Çıkış</span></button>
     </aside>
@@ -705,12 +706,27 @@
         <section id="admin-list" class="section">
             <div class="section-header">
                 <div>
-                    <p class="eyebrow">Adminler</p>
-                    <h1>Admin Listesi</h1>
+                    <p class="eyebrow">Yönetim</p>
+                    <h1>Admin Kullanıcılar</h1>
                 </div>
+                <button id="addAdminBtn" class="btn primary"><i class="fa fa-user-plus"></i> Yeni Admin Ekle</button>
             </div>
             <div class="panel">
-                <p class="muted">Örnek alan: admin kullanıcılarını burada listeleyip yönetebilirsiniz.</p>
+                <div class="table-wrap">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Kullanıcı Adı</th>
+                                <th>Tip</th>
+                                <th>Oluşturma Tarihi</th>
+                                <th>İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminUsersTable">
+                            <tr><td colspan="4" style="text-align:center;color:#94a3b8;">Yükleniyor...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </section>
 
@@ -718,14 +734,352 @@
             <div class="section-header">
                 <div>
                     <p class="eyebrow">Giriş Yetkililer</p>
-                    <h1>Yetkili Listesi</h1>
+                    <h1>Yetkili Kullanıcılar</h1>
                 </div>
+                <button id="addUserBtn" class="btn primary"><i class="fa fa-user-plus"></i> Yeni Kullanıcı Ekle</button>
             </div>
             <div class="panel">
-                <p class="muted">Örnek alan: giriş yetkili kullanıcılarını burada yönetebilirsiniz.</p>
+                <div class="table-wrap">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Kullanıcı Adı</th>
+                                <th>Rol</th>
+                                <th>Şeflik</th>
+                                <th>İzin Tipi</th>
+                                <th>Tip</th>
+                                <th>Oluşturma Tarihi</th>
+                                <th>İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTable">
+                            <tr><td colspan="7" style="text-align:center;color:#94a3b8;">Yükleniyor...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ENTEGRASYON SEKSİYONU -->
+        <section id="integration" class="section">
+            <div class="section-header">
+                <div>
+                    <p class="eyebrow">Entegrasyon</p>
+                    <h1>Sistem Entegrasyonları</h1>
+                </div>
+            </div>
+
+            <!-- LDAP Entegrasyon Paneli -->
+            <div class="panel">
+                <div class="panel-header">
+                    <h2><i class="fa fa-network-wired"></i> LDAP / Active Directory Entegrasyonu</h2>
+                    <p class="muted">LDAP sunucusu ayarlarını yapılandırın ve grup eşleştirmelerini yönetin</p>
+                </div>
+
+                <!-- LDAP Yapılandırmaları Listesi -->
+                <div style="background:#f8fafc;padding:1.5rem;border-radius:0.75rem;margin-bottom:1.5rem;border:1px solid #e2e8f0;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+                        <h3 style="color:#1e293b;font-size:1.1rem;margin:0;"><i class="fa fa-server"></i> Yapılandırılmış LDAP Sunucuları</h3>
+                        <button id="newLdapConfigBtn" class="btn primary"><i class="fa fa-plus"></i> Yeni Yapılandırma</button>
+                    </div>
+
+                    <div id="ldapConfigsList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:1rem;margin-bottom:1rem;">
+                        <!-- Dinamik olarak doldurulacak -->
+                    </div>
+
+                    <div id="ldapConfigsEmpty" style="text-align:center;padding:2rem;color:#64748b;">
+                        <i class="fa fa-inbox" style="font-size:2.5rem;margin-bottom:0.5rem;display:block;opacity:0.5;"></i>
+                        <p>Henüz LDAP yapılandırması yok. "Yeni Yapılandırma" butonuna tıklayın.</p>
+                    </div>
+                </div>
+
+                <!-- LDAP Yapılandırma Formu -->
+                <div id="ldapConfigFormSection" style="background:#f8fafc;padding:1.5rem;border-radius:0.75rem;margin-bottom:1.5rem;border:1px solid #e2e8f0;display:none;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+                        <h3 id="ldapFormTitle" style="color:#1e293b;font-size:1.1rem;margin:0;"><i class="fa fa-cog"></i> LDAP Sunucu Ayarları</h3>
+                        <button type="button" id="closeLdapFormBtn" class="btn ghost" style="color:#ef4444;"><i class="fa fa-times"></i> Kapat</button>
+                    </div>
+
+                    <form id="ldapConfigForm">
+                        <div class="form-field" style="margin-bottom:1rem;">
+                            <label style="display:block;font-weight:600;margin-bottom:0.4rem;color:#334155;">LDAP İsmi *</label>
+                            <input type="text" id="ldapName" placeholder="Örn: LDAP İETT, LDAP Test" required style="width:100%;padding:0.6rem;border:1px solid #cbd5e1;border-radius:0.5rem;">
+                            <small style="color:#64748b;font-size:0.85rem;">Bu LDAP sunucusunun tanımı (değiştirilemez)</small>
+                        </div>
+
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+                            <div class="form-field">
+                                <label style="display:block;font-weight:600;margin-bottom:0.4rem;color:#334155;">Sunucu Adresi (Host)</label>
+                                <input type="text" id="ldapHost" placeholder="ldap.example.com" style="width:100%;padding:0.6rem;border:1px solid #cbd5e1;border-radius:0.5rem;">
+                            </div>
+                            <div class="form-field">
+                                <label style="display:block;font-weight:600;margin-bottom:0.4rem;color:#334155;">Port</label>
+                                <input type="number" id="ldapPort" value="636" placeholder="636" style="width:100%;padding:0.6rem;border:1px solid #cbd5e1;border-radius:0.5rem;">
+                            </div>
+                        </div>
+
+                        <div class="form-field" style="margin-bottom:1rem;">
+                            <label style="display:block;font-weight:600;margin-bottom:0.4rem;color:#334155;">Base DN</label>
+                            <input type="text" id="ldapBaseDn" placeholder="DC=example,DC=com" style="width:100%;padding:0.6rem;border:1px solid #cbd5e1;border-radius:0.5rem;">
+                        </div>
+
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+                            <div class="form-field">
+                                <label style="display:block;font-weight:600;margin-bottom:0.4rem;color:#334155;">Bind DN (Admin Kullanıcı)</label>
+                                <input type="text" id="ldapBindDn" placeholder="CN=admin,DC=example,DC=com" style="width:100%;padding:0.6rem;border:1px solid #cbd5e1;border-radius:0.5rem;">
+                            </div>
+                            <div class="form-field">
+                                <label style="display:block;font-weight:600;margin-bottom:0.4rem;color:#334155;">Bind Şifresi</label>
+                                <input type="password" id="ldapBindPassword" placeholder="••••••••" style="width:100%;padding:0.6rem;border:1px solid #cbd5e1;border-radius:0.5rem;">
+                            </div>
+                        </div>
+
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+                            <div class="form-field">
+                                <label style="display:block;font-weight:600;margin-bottom:0.4rem;color:#334155;">Kullanıcı Arama Filtresi</label>
+                                <input type="text" id="ldapUserFilter" value="(sAMAccountName={0})" style="width:100%;padding:0.6rem;border:1px solid #cbd5e1;border-radius:0.5rem;">
+                                <small style="color:#64748b;font-size:0.85rem;">{0} yerini kullanıcı adıyla değiştirir</small>
+                            </div>
+                            <div class="form-field">
+                                <label style="display:block;font-weight:600;margin-bottom:0.4rem;color:#334155;">Grup Üyelik Özniteliği</label>
+                                <input type="text" id="ldapGroupAttr" value="memberOf" style="width:100%;padding:0.6rem;border:1px solid #cbd5e1;border-radius:0.5rem;">
+                            </div>
+                        </div>
+
+                        <div style="background:#fff;padding:1rem;border-radius:0.5rem;margin-bottom:1rem;border:1px solid #e2e8f0;">
+                            <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;">
+                                <input type="checkbox" id="ldapEnableLdap" style="width:1.2rem;height:1.2rem;cursor:pointer;">
+                                <span style="font-weight:600;color:#334155;">LDAP Kimlik Doğrulamayı Etkinleştir</span>
+                            </label>
+                            <p style="font-size:0.85rem;color:#64748b;margin:0.5rem 0 0 1.7rem;">Aktif edildiğinde kullanıcılar LDAP ile giriş yapabilir</p>
+                        </div>
+
+                        <div style="background:#fff;padding:1rem;border-radius:0.5rem;border:1px solid #e2e8f0;">
+                            <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;">
+                                <input type="checkbox" id="ldapEnableJit" style="width:1.2rem;height:1.2rem;cursor:pointer;">
+                                <span style="font-weight:600;color:#334155;">JIT (Just-In-Time) Provisioning</span>
+                            </label>
+                            <p style="font-size:0.85rem;color:#64748b;margin:0.5rem 0 0 1.7rem;">Aktif edildiğinde LDAP kullanıcıları ilk girişte otomatik olarak sisteme eklenir</p>
+                        </div>
+
+                        <div style="margin-top:1.5rem;display:flex;gap:1rem;flex-wrap:wrap;">
+                            <button type="submit" class="btn primary" style="flex:1;min-width:200px;"><i class="fa fa-save"></i> Yapılandırmayı Kaydet</button>
+                            <button type="button" id="testLdapBtn" class="btn" style="background:#10b981;color:#fff;border:none;flex:0.8;min-width:150px;"><i class="fa fa-check-circle"></i> Bağlantıyı Test Et</button>
+                        </div>
+                    </form>
+
+                    <div id="ldapConfigMessage" style="margin-top:1rem;padding:0.75rem;border-radius:0.5rem;display:none;"></div>
+                </div>
+
+                <!-- LDAP Grup Eşleştirmeleri -->
+                <div style="background:#f8fafc;padding:1.5rem;border-radius:0.75rem;border:1px solid #e2e8f0;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+                        <h3 style="color:#1e293b;font-size:1.1rem;"><i class="fa fa-link"></i> AD Grup ↔ Şeflik Eşleştirmeleri</h3>
+                        <button id="addMappingBtn" class="btn primary"><i class="fa fa-plus"></i> Yeni Eşleştirme Ekle</button>
+                    </div>
+
+                    <div style="overflow-x:auto;">
+                        <table class="table" id="ldapMappingsTable" style="min-width:100%;">
+                            <thead style="background:#e2e8f0;">
+                                <tr>
+                                    <th style="padding:0.75rem;color:#1e293b;font-weight:600;">LDAP Grup Adı (CN)</th>
+                                    <th style="padding:0.75rem;color:#1e293b;font-weight:600;">Şeflik ID</th>
+                                    <th style="padding:0.75rem;color:#1e293b;font-weight:600;">Şeflik Adı</th>
+                                    <th style="padding:0.75rem;color:#1e293b;font-weight:600;">Atanan Rol</th>
+                                    <th style="padding:0.75rem;color:#1e293b;font-weight:600;text-align:center;">İşlemler</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ldapMappingsBody">
+                                <tr>
+                                    <td colspan="5" style="text-align:center;padding:2rem;color:#94a3b8;">
+                                        <i class="fa fa-inbox" style="font-size:2rem;margin-bottom:0.5rem;display:block;"></i>
+                                        Henüz eşleştirme eklenmemiş. "Yeni Eşleştirme Ekle" butonuna tıklayın.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </section>
     </main>
+</div>
+
+<!-- LDAP Eşleştirme Ekleme/Düzenleme Modalı -->
+<div id="ldapMappingModal" style="display:none;position:fixed;z-index:99999;left:0;top:0;width:100vw;height:100vh;background:rgba(0,0,0,0.4);align-items:center;justify-content:center;">
+    <div style="background:#fff;padding:2rem 2.5rem;border-radius:1rem;max-width:600px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,0.15);position:relative;">
+        <button onclick="closeLdapMappingModal()" style="position:absolute;top:1rem;right:1rem;font-size:1.2rem;background:none;border:none;cursor:pointer;color:#64748b;"><i class="fa fa-times"></i></button>
+        <h2 style="margin-bottom:1.5rem;color:#1e293b;" id="ldapMappingModalTitle">Yeni Grup Eşleştirmesi</h2>
+        
+        <form id="ldapMappingForm">
+            <div class="form-field" style="margin-bottom:1rem;position:relative;">
+                <label style="display:block;font-weight:600;margin-bottom:0.4rem;color:#334155;">LDAP Grup Adı (CN)</label>
+                <input type="text" id="mappingLdapGroup" placeholder="CN=Yazilim_Sefligi,OU=Groups,DC=example,DC=com" required style="width:100%;padding:0.6rem;border:1px solid #cbd5e1;border-radius:0.5rem;">
+                <div id="ldapGroupAutocomplete" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid #cbd5e1;border-top:none;border-radius:0 0 0.5rem 0.5rem;max-height:200px;overflow-y:auto;z-index:1000;margin-top:-0.25rem;"></div>
+                <small style="color:#64748b;font-size:0.85rem;">Örnek: CN=Yazilim_Sefligi,OU=Groups,DC=example,DC=com</small>
+            </div>
+
+            <div class="form-field" style="margin-bottom:1rem;">
+                <label style="display:block;font-weight:600;margin-bottom:0.4rem;color:#334155;">Şeflik Seçimi</label>
+                <select id="mappingSeflikSelect" required style="width:100%;padding:0.6rem;border:1px solid #cbd5e1;border-radius:0.5rem;">
+                    <option value="">Şeflik seçiniz...</option>
+                </select>
+                <small style="color:#64748b;font-size:0.85rem;">Listeden bir şeflik seçmeniz yeterlidir</small>
+            </div>
+
+            <div class="form-field" style="margin-bottom:1.5rem;">
+                <label style="display:block;font-weight:600;margin-bottom:0.4rem;color:#334155;">Atanan Rol</label>
+                <select id="mappingRole" required style="width:100%;padding:0.6rem;border:1px solid #cbd5e1;border-radius:0.5rem;">
+                    <option value="">Rol seçiniz...</option>
+                    <option value="Admin">Admin (Tüm Yetkilere Sahip)</option>
+                    <option value="SheflikYetkilisi">Şeflik Yetkilisi (Sadece Kendi Şefliği)</option>
+                    <option value="User">Kullanıcı (Sadece Görüntüleme)</option>
+                </select>
+            </div>
+
+            <div style="display:flex;gap:1rem;">
+                <button type="submit" class="btn primary" style="flex:1;"><i class="fa fa-save"></i> Kaydet</button>
+                <button type="button" onclick="closeLdapMappingModal()" class="btn ghost" style="flex:0.5;">İptal</button>
+            </div>
+        </form>
+
+        <div id="ldapMappingMessage" style="margin-top:1rem;padding:0.75rem;border-radius:0.5rem;display:none;"></div>
+    </div>
+</div>
+
+<!-- Admin Kullanıcı Ekleme/Düzenleme Modalı -->
+<div id="adminUserModal" style="display:none;position:fixed;z-index:99999;left:0;top:0;width:100vw;height:100vh;background:rgba(0,0,0,0.4);align-items:center;justify-content:center;">
+    <div style="background:#fff;padding:2rem 2.5rem;border-radius:1rem;max-width:600px;width:90%;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.15);position:relative;">
+        <button onclick="closeAdminUserModal()" style="position:absolute;top:1rem;right:1rem;font-size:1.2rem;background:none;border:none;cursor:pointer;color:#64748b;"><i class="fa fa-times"></i></button>
+        <h2 style="margin-bottom:1.5rem;color:#1e293b;" id="adminUserModalTitle">Yeni Admin Kullanıcı</h2>
+        
+        <form id="adminUserForm">
+            <!-- Kullanıcı Tipi Seçimi -->
+            <div class="form-field" style="margin-bottom:1.5rem;">
+                <label style="display:block;font-weight:600;margin-bottom:0.8rem;color:#334155;">Kullanıcı Tipi</label>
+                <div style="display:flex;gap:1rem;">
+                    <label style="flex:1;padding:1rem;border:2px solid #e2e8f0;border-radius:0.5rem;cursor:pointer;transition:all 0.2s;" id="adminLocalUserLabel">
+                        <input type="radio" name="adminUserType" value="local" checked onchange="toggleAdminUserType()" style="margin-right:0.5rem;">
+                        <strong>Lokal Kullanıcı</strong>
+                        <br><small style="color:#64748b;">Şifre ile giriş</small>
+                    </label>
+                    <label style="flex:1;padding:1rem;border:2px solid #e2e8f0;border-radius:0.5rem;cursor:pointer;transition:all 0.2s;" id="adminLdapUserLabel">
+                        <input type="radio" name="adminUserType" value="ldap" onchange="toggleAdminUserType()" style="margin-right:0.5rem;">
+                        <strong>LDAP Kullanıcı</strong>
+                        <br><small style="color:#64748b;">AD kimlik doğrulama</small>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Kullanıcı Adı -->
+            <div class="form-field" style="margin-bottom:1rem;position:relative;">
+                <label style="display:block;font-weight:600;margin-bottom:0.4rem;color:#334155;">Kullanıcı Adı *</label>
+                <input type="text" id="adminUsername" required style="width:100%;padding:0.6rem;border:1px solid #cbd5e1;border-radius:0.5rem;background:#fff;color:#1e293b;">
+                <div id="adminUserAutocomplete" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid #cbd5e1;border-top:none;border-radius:0 0 0.5rem 0.5rem;max-height:200px;overflow-y:auto;z-index:1000;margin-top:-0.25rem;"></div>
+            </div>
+
+            <!-- Şifre (Sadece Lokal) -->
+            <div class="form-field" id="adminPasswordField" style="margin-bottom:1rem;">
+                <label style="display:block;font-weight:600;margin-bottom:0.4rem;color:#334155;">Şifre *</label>
+                <input type="password" id="adminPassword" required style="width:100%;padding:0.6rem;border:1px solid #cbd5e1;border-radius:0.5rem;background:#fff;color:#1e293b;">
+            </div>
+
+            <div style="padding:1rem;background:#f1f5f9;border-radius:0.5rem;margin-bottom:1rem;">
+                <p style="margin:0;color:#64748b;font-size:0.9rem;"><i class="fa fa-info-circle" style="color:#3b82f6;"></i> Admin kullanıcılar tüm sisteme erişebilir</p>
+            </div>
+
+            <div style="display:flex;gap:1rem;">
+                <button type="submit" class="btn primary" style="flex:1;"><i class="fa fa-save"></i> Kaydet</button>
+                <button type="button" onclick="closeAdminUserModal()" class="btn ghost" style="flex:0.5;">İptal</button>
+            </div>
+        </form>
+
+        <div id="adminUserModalMessage" style="margin-top:1rem;padding:0.75rem;border-radius:0.5rem;display:none;"></div>
+    </div>
+</div>
+
+<!-- Giriş Yetkilisi Kullanıcı Ekleme/Düzenleme Modalı -->
+<div id="userModal" style="display:none;position:fixed;z-index:99999;left:0;top:0;width:100vw;height:100vh;background:rgba(0,0,0,0.4);align-items:center;justify-content:center;">
+    <div style="background:#fff;padding:2rem 2.5rem;border-radius:1rem;max-width:700px;width:90%;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.15);position:relative;">
+        <button onclick="closeUserModal()" style="position:absolute;top:1rem;right:1rem;font-size:1.2rem;background:none;border:none;cursor:pointer;color:#64748b;"><i class="fa fa-times"></i></button>
+        <h2 style="margin-bottom:1.5rem;color:#1e293b;" id="userModalTitle">Yeni Giriş Yetkilisi</h2>
+        
+        <form id="userForm">
+            <!-- Kullanıcı Tipi Seçimi -->
+            <div class="form-field" style="margin-bottom:1.5rem;">
+                <label style="display:block;font-weight:600;margin-bottom:0.8rem;color:#334155;">Kullanıcı Tipi</label>
+                <div style="display:flex;gap:1rem;">
+                    <label style="flex:1;padding:1rem;border:2px solid #e2e8f0;border-radius:0.5rem;cursor:pointer;transition:all 0.2s;" id="localUserLabel">
+                        <input type="radio" name="userType" value="local" checked onchange="toggleUserType()" style="margin-right:0.5rem;">
+                        <strong>Lokal Kullanıcı</strong>
+                        <br><small style="color:#64748b;">Şifre ile giriş</small>
+                    </label>
+                    <label style="flex:1;padding:1rem;border:2px solid #e2e8f0;border-radius:0.5rem;cursor:pointer;transition:all 0.2s;" id="ldapUserLabel">
+                        <input type="radio" name="userType" value="ldap" onchange="toggleUserType()" style="margin-right:0.5rem;">
+                        <strong>LDAP Kullanıcı</strong>
+                        <br><small style="color:#64748b;">AD kimlik doğrulama</small>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Kullanıcı Adı -->
+            <div class="form-field" style="margin-bottom:1rem;position:relative;">
+                <label style="display:block;font-weight:600;margin-bottom:0.4rem;color:#334155;">Kullanıcı Adı *</label>
+                <input type="text" id="userUsername" required style="width:100%;padding:0.6rem;border:1px solid #cbd5e1;border-radius:0.5rem;background:#fff;color:#1e293b;">
+                <div id="userAutocomplete" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid #cbd5e1;border-top:none;border-radius:0 0 0.5rem 0.5rem;max-height:200px;overflow-y:auto;z-index:1000;margin-top:-0.25rem;"></div>
+            </div>
+
+            <!-- Şifre (Sadece Lokal) -->
+            <div class="form-field" id="passwordField" style="margin-bottom:1rem;">
+                <label style="display:block;font-weight:600;margin-bottom:0.4rem;color:#334155;">Şifre *</label>
+                <input type="password" id="userPassword" required style="width:100%;padding:0.6rem;border:1px solid #cbd5e1;border-radius:0.5rem;background:#fff;color:#1e293b;">
+                <small style="color:#64748b;font-size:0.85rem;">Boş bırakılırsa mevcut şifre korunur (düzenleme için)</small>
+            </div>
+
+            <!-- Şeflik Seçimi -->
+            <div class="form-field" style="margin-bottom:1rem;">
+                <label style="display:block;font-weight:600;margin-bottom:0.4rem;color:#334155;">Şeflik *</label>
+                <select id="userSeflik" required style="width:100%;padding:0.6rem;border:1px solid #cbd5e1;border-radius:0.5rem;">
+                    <option value="">Seçiniz...</option>
+                </select>
+            </div>
+
+            <!-- İzin Tipi -->
+            <div class="form-field" style="margin-bottom:1rem;">
+                <label style="display:block;font-weight:600;margin-bottom:0.4rem;color:#334155;">İzin Tipi</label>
+                <div style="display:flex;gap:1rem;margin-bottom:0.5rem;">
+                    <label style="flex:1;padding:0.8rem;border:2px solid #e2e8f0;border-radius:0.5rem;cursor:pointer;" id="sheflikPermLabel">
+                        <input type="radio" name="permType" value="Sheflik" checked onchange="togglePermType()" style="margin-right:0.5rem;">
+                        <strong>Şeflik Bazlı</strong>
+                        <br><small style="color:#64748b;">Şefliğin tüm sunucuları</small>
+                    </label>
+                    <label style="flex:1;padding:0.8rem;border:2px solid #e2e8f0;border-radius:0.5rem;cursor:pointer;" id="specificPermLabel">
+                        <input type="radio" name="permType" value="Specific" onchange="togglePermType()" style="margin-right:0.5rem;">
+                        <strong>Spesifik Sunucular</strong>
+                        <br><small style="color:#64748b;">Seçili sunucular</small>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Sunucu Seçimi (Specific için) -->
+            <div id="specificServersField" style="display:none;margin-bottom:1rem;">
+                <label style="display:block;font-weight:600;margin-bottom:0.4rem;color:#334155;">İzin Verilen Sunucular</label>
+                <div style="border:1px solid #cbd5e1;border-radius:0.5rem;padding:1rem;max-height:200px;overflow-y:auto;background:#f8fafc;">
+                    <div id="topologyCheckboxes">
+                        <p style="color:#94a3b8;text-align:center;">Yükleniyor...</p>
+                    </div>
+                </div>
+                <small style="color:#64748b;font-size:0.85rem;">Kullanıcının görebileceği sunucuları seçin</small>
+            </div>
+
+            <div style="display:flex;gap:1rem;margin-top:1.5rem;">
+                <button type="submit" class="btn primary" style="flex:1;"><i class="fa fa-save"></i> Kaydet</button>
+                <button type="button" onclick="closeUserModal()" class="btn ghost" style="flex:0.5;">İptal</button>
+            </div>
+        </form>
+
+        <div id="userModalMessage" style="margin-top:1rem;padding:0.75rem;border-radius:0.5rem;display:none;"></div>
+    </div>
 </div>
 
 <div class="fab-stack">

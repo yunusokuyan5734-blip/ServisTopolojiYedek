@@ -41,6 +41,7 @@ namespace Backend.Services
         public void EnsureDefaultAdmin(PasswordService passwordService)
         {
             var users = LoadUsers();
+            users = users.Where(u => !string.IsNullOrWhiteSpace(u.Username)).ToList();
             var admin = users.FirstOrDefault(u => u.Username == "admin");
 
             if (admin == null)
@@ -48,7 +49,12 @@ namespace Backend.Services
                 users.Add(new User
                 {
                     Username = "admin",
-                    PasswordHash = passwordService.HashPassword("admin")
+                    PasswordHash = passwordService.HashPassword("admin"),
+                    Role = "Admin",
+                    SeflikId = null,
+                    SeflikName = null,
+                    IsLdapUser = false,
+                    CreatedAt = DateTime.UtcNow
                 });
                 SaveUsers(users);
                 return;
@@ -57,6 +63,14 @@ namespace Backend.Services
             if (string.IsNullOrEmpty(admin.PasswordHash))
             {
                 admin.PasswordHash = passwordService.HashPassword("admin");
+                admin.Role = "Admin";
+                SaveUsers(users);
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(admin.Role))
+            {
+                admin.Role = "Admin";
                 SaveUsers(users);
             }
         }
@@ -69,8 +83,34 @@ namespace Backend.Services
             if (existing != null)
             {
                 existing.PasswordHash = user.PasswordHash;
+                existing.Role = user.Role;
+                existing.SeflikId = user.SeflikId;
+                existing.SeflikName = user.SeflikName;
+                existing.LdapDistinguishedName = user.LdapDistinguishedName;
+                existing.IsLdapUser = user.IsLdapUser;
+                existing.PermissionType = user.PermissionType;
+                existing.AllowedTopologyIds = user.AllowedTopologyIds;
                 SaveUsers(users);
             }
+        }
+
+        public void AddUser(User user)
+        {
+            var users = LoadUsers();
+            users.Add(user);
+            SaveUsers(users);
+        }
+
+        public List<User> GetAllUsers()
+        {
+            return LoadUsers();
+        }
+
+        public void DeleteUser(string username)
+        {
+            var users = LoadUsers();
+            users.RemoveAll(u => u.Username == username);
+            SaveUsers(users);
         }
     }
 }

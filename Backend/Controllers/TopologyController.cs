@@ -14,12 +14,14 @@ namespace Backend.Controllers
         private readonly IWebHostEnvironment _env;
         private readonly ILogger<TopologyController> _logger;
         private readonly TopologyStoreService _topoStore;
+        private readonly JsonStoreService _userStore;
 
-        public TopologyController(IWebHostEnvironment env, ILogger<TopologyController> logger, TopologyStoreService topoStore)
+        public TopologyController(IWebHostEnvironment env, ILogger<TopologyController> logger, TopologyStoreService topoStore, JsonStoreService userStore)
         {
             _env = env;
             _logger = logger;
             _topoStore = topoStore;
+            _userStore = userStore;
         }
 
         [HttpPost("update")]
@@ -58,6 +60,42 @@ namespace Backend.Controllers
         public IActionResult GetTopologies()
         {
             var topologies = _topoStore.LoadTopologies();
+            
+            // Rol ve şeflik kontrolü
+            var role = User.FindFirst(ClaimTypes.Role)?.Value;
+            var username = User.Identity?.Name;
+            var userSeflikId = User.FindFirst("SeflikId")?.Value;
+
+            // Admin ise tüm topolojileri göster
+            if (role == "Admin")
+            {
+                return Ok(topologies);
+            }
+
+            // Kullanıcının izin tipini al
+            var user = _userStore.GetUser(username ?? "");
+            if (user == null)
+            {
+                return Ok(new List<Topology>()); // Kullanıcı yoksa boş liste
+            }
+
+            // İzin tipine göre filtreleme
+            if (user.PermissionType == "Specific" && user.AllowedTopologyIds != null && user.AllowedTopologyIds.Any())
+            {
+                // Spesifik sunucular - sadece AllowedTopologyIds'deki topolojileri göster
+                topologies = topologies.Where(t => user.AllowedTopologyIds.Contains(t.Id)).ToList();
+            }
+            else if (!string.IsNullOrEmpty(userSeflikId))
+            {
+                // Şeflik bazlı - şefliğin tüm topolojilerini göster
+                topologies = topologies.Where(t => t.Dept == userSeflikId).ToList();
+            }
+            else
+            {
+                // İzin yok
+                topologies = new List<Topology>();
+            }
+
             return Ok(topologies);
         }
 

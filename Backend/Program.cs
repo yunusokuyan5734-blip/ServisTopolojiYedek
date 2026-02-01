@@ -7,11 +7,13 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
-        options.JsonSerializerOptions.PropertyNamingPolicy = null; // PascalCase kullan
+        options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
     });
 builder.Services.AddScoped<JsonStoreService>();
 builder.Services.AddScoped<PasswordService>();
 builder.Services.AddScoped<TopologyStoreService>();
+builder.Services.AddScoped<LdapService>();
+builder.Services.AddScoped<LdapConfigService>();
 builder.Services.AddLogging();
 builder.Services.AddCors(options =>
 {

@@ -324,6 +324,28 @@ body.light-theme .nav-item.logout {
     box-shadow: 0 0 0 3px rgba(126,217,87,0.25);
 }
 
+/* Entegrasyon (LDAP) formu: beyaz arka plan ve okunaklı yazı */
+#integration .form-field input,
+#integration .form-field select,
+#integration .form-field textarea {
+    background: #ffffff;
+    color: #0f172a;
+    border: 1px solid #cbd5e1;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+#integration .form-field input::placeholder,
+#integration .form-field textarea::placeholder {
+    color: #94a3b8;
+}
+
+#integration .form-field input:focus,
+#integration .form-field select:focus,
+#integration .form-field textarea:focus {
+    outline: 1px solid #7ed957;
+    box-shadow: 0 0 0 3px rgba(126,217,87,0.25);
+}
+
 .form-actions {
     display: flex;
     align-items: center;
@@ -676,4 +698,27 @@ body.dark-theme #sheflikTable tbody tr:hover {
     display: flex !important;
     align-items: center;
     justify-content: center;
+}
+
+/* LDAP Mapping Modal Form Stilleri */
+#ldapMappingModal input,
+#ldapMappingModal select,
+#ldapMappingModal textarea {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
+}
+
+#ldapMappingModal input::placeholder,
+#ldapMappingModal textarea::placeholder {
+    color: #94a3b8 !important;
+}
+
+#ldapMappingModal input:focus,
+#ldapMappingModal select:focus,
+#ldapMappingModal textarea:focus {
+    outline: 1px solid #3b82f6 !important;
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.15) !important;
+    border-color: #3b82f6 !important;
 }

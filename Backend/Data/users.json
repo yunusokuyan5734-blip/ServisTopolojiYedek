@@ -1,10 +1,38 @@
 [
   {
-    "Username": null,
-    "PasswordHash": null
+    "Username": "admin",
+    "PasswordHash": "$2a$11$51FoceUOfJd./eUuxcZ8WeDz166CXB28FnVes/oKgrJVgTUAIrltu",
+    "Role": "Admin",
+    "SeflikId": null,
+    "SeflikName": null,
+    "LdapDistinguishedName": null,
+    "CreatedAt": "2026-02-01T00:00:00Z",
+    "IsLdapUser": false,
+    "PermissionType": "Sheflik",
+    "AllowedTopologyIds": []
   },
   {
-    "Username": "admin",
-    "PasswordHash": "$2a$11$UT6E3QlPw7ABpP1XUdYw8uK9rcwiQM98MN0nND4ii/4Xv3L7oamoi"
+    "Username": "dk_yokuyan",
+    "PasswordHash": null,
+    "Role": "Admin",
+    "SeflikId": null,
+    "SeflikName": null,
+    "LdapDistinguishedName": null,
+    "CreatedAt": "2026-02-01T17:08:00.8401453Z",
+    "IsLdapUser": true,
+    "PermissionType": "Sheflik",
+    "AllowedTopologyIds": []
+  },
+  {
+    "Username": "sa_yokuyan",
+    "PasswordHash": null,
+    "Role": "Admin",
+    "SeflikId": null,
+    "SeflikName": null,
+    "LdapDistinguishedName": null,
+    "CreatedAt": "2026-02-01T17:09:26.5921584Z",
+    "IsLdapUser": true,
+    "PermissionType": "Sheflik",
+    "AllowedTopologyIds": []
   }
 ]
