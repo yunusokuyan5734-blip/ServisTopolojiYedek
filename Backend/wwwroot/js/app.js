@@ -4383,17 +4383,23 @@ async function loadUsers() {
             if (admins.length === 0) {
                 adminTable.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#94a3b8;">Henüz admin kullanıcı eklenmemiş</td></tr>';
             } else {
-                adminTable.innerHTML = admins.map(u => `
+                adminTable.innerHTML = admins.map(u => {
+                    const isLdap = (u.isLdapUser ?? u.IsLdapUser);
+                    const username = u.username || u.Username;
+                    const isAdminUser = username === 'admin';
+                    return `
                     <tr>
-                        <td><strong>${u.username || u.Username}</strong></td>
-                        <td><span style="padding:0.3rem 0.6rem;border-radius:0.3rem;background:${(u.isLdapUser ?? u.IsLdapUser) ? '#dbeafe' : '#fef3c7'};color:${(u.isLdapUser ?? u.IsLdapUser) ? '#1e40af' : '#92400e'};font-size:0.85rem;">${(u.isLdapUser ?? u.IsLdapUser) ? 'LDAP' : 'Lokal'}</span></td>
+                        <td><strong>${username}</strong></td>
+                        <td><span style="padding:0.3rem 0.6rem;border-radius:0.3rem;background:${isLdap ? '#dbeafe' : '#fef3c7'};color:${isLdap ? '#1e40af' : '#92400e'};font-size:0.85rem;">${isLdap ? 'LDAP' : 'Lokal'}</span></td>
                         <td>${new Date(u.createdAt || u.CreatedAt).toLocaleDateString('tr-TR')}</td>
                         <td>
-                            <button onclick="editUser('${u.username || u.Username}')" class="btn-edit" ${(u.username || u.Username) === 'admin' ? 'disabled' : ''}><i class="fa fa-edit"></i> Düzenle</button>
-                            <button onclick="deleteUser('${u.username || u.Username}')" class="btn-delete" ${(u.username || u.Username) === 'admin' ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''}><i class="fa fa-trash"></i> Sil</button>
+                            <button onclick="editUser('${username}')" class="btn-edit" ${isAdminUser ? 'disabled' : ''}><i class="fa fa-edit"></i> Düzenle</button>
+                            ${!isLdap ? `<button onclick="openChangePasswordModal('${username}')" class="btn-primary" style="padding:0.4rem 0.8rem;font-size:0.85rem;margin:0 0.3rem;"><i class="fa fa-key"></i> Şifre</button>` : ''}
+                            <button onclick="deleteUser('${username}')" class="btn-delete" ${isAdminUser ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''}><i class="fa fa-trash"></i> Sil</button>
                         </td>
                     </tr>
-                `).join('');
+                    `;
+                }).join('');
             }
         }
 
@@ -4903,3 +4909,88 @@ function updateTopologyCheckboxes() {
         </label>
     `).join('');
 }
+// Şifre değişimi fonksiyonları
+function openChangePasswordModal(username) {
+    document.getElementById('changePasswordUsername').value = username;
+    document.getElementById('changePasswordForm').reset();
+    document.getElementById('changePasswordMessage').innerHTML = '';
+    document.getElementById('changePasswordMessage').style.display = 'none';
+    document.getElementById('changePasswordModal').style.display = 'flex';
+}
+
+function closeChangePasswordModal() {
+    document.getElementById('changePasswordModal').style.display = 'none';
+    document.getElementById('changePasswordForm').reset();
+    document.getElementById('changePasswordMessage').innerHTML = '';
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const changePasswordForm = document.getElementById('changePasswordForm');
+    if (changePasswordForm) {
+        changePasswordForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('changePasswordUsername').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const messageDiv = document.getElementById('changePasswordMessage');
+            
+            // Doğrulama
+            if (!newPassword || !confirmPassword) {
+                messageDiv.innerHTML = '<p style="color:#dc2626;margin:0;"><i class="fa fa-exclamation-circle"></i> Lütfen tüm alanları doldurunuz</p>';
+                messageDiv.style.display = 'block';
+                return;
+            }
+            
+            if (newPassword.length < 6) {
+                messageDiv.innerHTML = '<p style="color:#dc2626;margin:0;"><i class="fa fa-exclamation-circle"></i> Şifre en az 6 karakter olmalıdır</p>';
+                messageDiv.style.display = 'block';
+                return;
+            }
+            
+            if (newPassword !== confirmPassword) {
+                messageDiv.innerHTML = '<p style="color:#dc2626;margin:0;"><i class="fa fa-exclamation-circle"></i> Şifreler eşleşmiyor</p>';
+                messageDiv.style.display = 'block';
+                return;
+            }
+            
+            try {
+                messageDiv.innerHTML = '<p style="color:#3b82f6;margin:0;"><i class="fa fa-spinner fa-spin"></i> Şifre değiştiriliyor...</p>';
+                messageDiv.style.display = 'block';
+                
+                const response = await fetch(`${API_BASE}/user/change-password`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, newPassword })
+                });
+                
+                const result = await readJsonSafe(response);
+                
+                if (response.ok) {
+                    messageDiv.innerHTML = '<p style="color:#10b981;margin:0;"><i class="fa fa-check-circle"></i> Şifre başarıyla değiştirildi!</p>';
+                    messageDiv.style.background = '#d1fae5';
+                    messageDiv.style.borderLeft = '3px solid #10b981';
+                    messageDiv.style.color = '#065f46';
+                    document.getElementById('changePasswordForm').reset();
+                    
+                    setTimeout(() => {
+                        closeChangePasswordModal();
+                        loadUsers();
+                    }, 1500);
+                } else {
+                    const errorMessage = result.data?.message || result.error || 'Şifre değiştirilemedi';
+                    messageDiv.innerHTML = `<p style="color:#dc2626;margin:0;"><i class="fa fa-exclamation-circle"></i> ${errorMessage}</p>`;
+                    messageDiv.style.background = '#fee2e2';
+                    messageDiv.style.borderLeft = '3px solid #dc2626';
+                    messageDiv.style.color = '#7f1d1d';
+                }
+            } catch (error) {
+                console.error('Şifre değişim hatası:', error);
+                messageDiv.innerHTML = `<p style="color:#dc2626;margin:0;"><i class="fa fa-exclamation-circle"></i> Hata: ${error.message}</p>`;
+                messageDiv.style.background = '#fee2e2';
+                messageDiv.style.borderLeft = '3px solid #dc2626';
+            }
+        });
+    }
+});

@@ -213,32 +213,7 @@ namespace Backend.Controllers
             return Ok(new { message = "Çıkış başarılı" });
         }
 
-        [HttpPost("change-password")]
-        public IActionResult ChangePassword([FromBody] ChangePasswordRequest request)
-        {
-            var username = User.FindFirst(ClaimTypes.Name)?.Value;
-            
-            if (string.IsNullOrEmpty(username))
-                return Unauthorized("Giriş yapmanız gerekli");
 
-            var user = _store.GetUser(username);
-            
-            if (user == null)
-                return Unauthorized("Kullanıcı bulunamadı");
-
-            if (string.IsNullOrEmpty(request.OldPassword) || string.IsNullOrEmpty(user.PasswordHash) || !_passwordService.VerifyPassword(request.OldPassword, user.PasswordHash))
-                return BadRequest("Eski şifre yanlış");
-
-            var newPassword = request.NewPassword ?? string.Empty;
-
-            if (string.IsNullOrEmpty(newPassword) || newPassword.Length < 3)
-                return BadRequest("Yeni şifre en az 3 karakter olmalı");
-
-            user.PasswordHash = _passwordService.HashPassword(newPassword);
-            _store.UpdateUser(user);
-
-            return Ok(new { message = "Şifre başarıyla değiştirildi" });
-        }
 
         [HttpGet("status")]
         public IActionResult GetStatus()

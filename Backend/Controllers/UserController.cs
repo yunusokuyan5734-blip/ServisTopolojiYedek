@@ -120,6 +120,34 @@ namespace Backend.Controllers
             return Ok(new { message = "Kullanıcı başarıyla güncellendi" });
         }
 
+        // Kullanıcı şifresi değiştir (Admin only, lokal kullanıcılar için)
+        [HttpPost("change-password")]
+        public IActionResult ChangePassword([FromBody] ChangePasswordRequest request)
+        {
+            var role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
+            if (role != "Admin")
+                return Forbid();
+
+            if (string.IsNullOrEmpty(request.Username))
+                return BadRequest("Kullanıcı adı gerekli");
+
+            if (string.IsNullOrEmpty(request.NewPassword))
+                return BadRequest("Yeni şifre gerekli");
+
+            var user = _store.GetUser(request.Username);
+            if (user == null)
+                return NotFound("Kullanıcı bulunamadı");
+
+            // LDAP kullanıcılar için şifre değiştirilemez
+            if (user.IsLdapUser)
+                return BadRequest("LDAP kullanıcılarının şifresi değiştirilemez");
+
+            user.PasswordHash = _passwordService.HashPassword(request.NewPassword);
+            _store.UpdateUser(user);
+
+            return Ok(new { message = "Şifre başarıyla değiştirildi" });
+        }
+
         // Kullanıcı sil (Admin only)
         [HttpDelete("delete/{username}")]
         public IActionResult DeleteUser(string username)
@@ -162,5 +190,11 @@ namespace Backend.Controllers
         public string? SeflikName { get; set; }
         public string? PermissionType { get; set; }
         public List<string>? AllowedTopologyIds { get; set; }
+    }
+
+    public class ChangePasswordRequest
+    {
+        public string Username { get; set; } = "";
+        public string NewPassword { get; set; } = "";
     }
 }
