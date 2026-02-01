@@ -37,6 +37,11 @@ public class SheflikController : ControllerBase
             var sheflikler = LoadSheflikler();
             sheflik.Date = DateTime.Now.ToString("dd.MM.yyyy HH:mm");
             sheflik.Status = "Aktif";
+            // ID oluştur - Name'den normalize et
+            if (string.IsNullOrWhiteSpace(sheflik.Id))
+            {
+                sheflik.Id = NormalizeSeflikId(sheflik.Name);
+            }
             sheflikler.Add(sheflik);
             SaveSheflikler(sheflikler);
             return Ok(sheflik);
@@ -120,7 +125,7 @@ public class SheflikController : ControllerBase
 
     private List<Sheflik> GetDefaultSheflikler()
     {
-        return new List<Sheflik>
+        var defaultList = new List<Sheflik>
         {
             new Sheflik { Name = "YAZILIM ŞEFLİĞİ", Status = "Aktif", Date = "07.05.2025 16:13" },
             new Sheflik { Name = "VERİ YÖNETİM ŞEFLİĞİ", Status = "Aktif", Date = "07.05.2025 16:13" },
@@ -135,11 +140,49 @@ public class SheflikController : ControllerBase
             new Sheflik { Name = "ULAŞIM PLANLAMA", Status = "Aktif", Date = "07.05.2025 16:13" },
             new Sheflik { Name = "İŞ ZEKASI ŞEFLİĞİ", Status = "Aktif", Date = "07.05.2025 16:13" }
         };
+        
+        // ID'leri oluştur
+        foreach (var item in defaultList)
+        {
+            item.Id = NormalizeSeflikId(item.Name);
+        }
+        
+        return defaultList;
+    }
+
+    private string NormalizeSeflikId(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            return "";
+        
+        // Türkçe karakterleri İngilizce'ye dönüştür
+        var normalized = name
+            .Replace("ç", "c").Replace("Ç", "C")
+            .Replace("ğ", "g").Replace("Ğ", "G")
+            .Replace("ı", "i").Replace("I", "I")
+            .Replace("ö", "o").Replace("Ö", "O")
+            .Replace("ş", "s").Replace("Ş", "S")
+            .Replace("ü", "u").Replace("Ü", "U")
+            .ToUpperInvariant()
+            .Replace(" ", "_")
+            .Replace("-", "_")
+            .Replace("&", "VE")
+            .Replace("(", "")
+            .Replace(")", "")
+            .Replace("/", "")
+            .Trim('_');
+        
+        // Birden fazla alt çizgiyi tek çizgiye dönüştür
+        while (normalized.Contains("__"))
+            normalized = normalized.Replace("__", "_");
+        
+        return normalized;
     }
 }
 
 public class Sheflik
 {
+    public string Id { get; set; } = "";
     public string Name { get; set; } = "";
     public string Status { get; set; } = "Aktif";
     public string Date { get; set; } = "";

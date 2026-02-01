@@ -3662,28 +3662,7 @@ function attachLdapIntegration() {
         });
     }
 
-    // Şeflikleri mapping için yükle
-    async function loadSefliklerForMapping() {
-        try {
-            const response = await fetch(`${API_BASE}/sheflik/list`, { credentials: 'include' });
-            if (response.ok) {
-                const sheflikler = await response.json();
-                const select = document.getElementById('mappingSeflikSelect');
-                if (select) {
-                    select.innerHTML = '<option value="">Şeflik seçiniz...</option>';
-                    sheflikler.forEach(s => {
-                        const opt = document.createElement('option');
-                        const name = s.name || s.Name || '';
-                        opt.value = name;
-                        opt.textContent = name;
-                        select.appendChild(opt);
-                    });
-                }
-            }
-        } catch (error) {
-            console.error('Şeflikler yüklenemedi:', error);
-        }
-    }
+
 
     function normalizeSeflikId(seflikName) {
         if (!seflikName) return '';
@@ -4160,6 +4139,31 @@ function escapeHtml(text) {
         "'": '&#039;'
     };
     return text.replace(/[&<>"']/g, m => map[m]);
+}
+
+// Global - Mapping formunda şeflikleri yükle
+async function loadSefliklerForMapping() {
+    try {
+        const response = await fetch(`${API_BASE}/sheflik/list`, { credentials: 'include' });
+        if (response.ok) {
+            const sheflikler = await response.json();
+            const select = document.getElementById('mappingSeflikSelect');
+            if (select) {
+                select.innerHTML = '<option value="">Şeflik seçiniz...</option>';
+                sheflikler.forEach(s => {
+                    const opt = document.createElement('option');
+                    const name = s.name || s.Name || '';
+                    opt.value = name;
+                    opt.textContent = name;
+                    select.appendChild(opt);
+                });
+            }
+        } else {
+            console.error('Şeflikler yüklenemedi: HTTP', response.status);
+        }
+    } catch (error) {
+        console.error('Şeflikler yüklenemedi:', error);
+    }
 }
 
 async function loadLdapMappings() {

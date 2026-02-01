@@ -12,18 +12,6 @@
     "AllowedTopologyIds": []
   },
   {
-    "Username": "dk_yokuyan",
-    "PasswordHash": null,
-    "Role": "Admin",
-    "SeflikId": null,
-    "SeflikName": null,
-    "LdapDistinguishedName": null,
-    "CreatedAt": "2026-02-01T17:08:00.8401453Z",
-    "IsLdapUser": true,
-    "PermissionType": "Sheflik",
-    "AllowedTopologyIds": []
-  },
-  {
     "Username": "sa_yokuyan",
     "PasswordHash": null,
     "Role": "Admin",

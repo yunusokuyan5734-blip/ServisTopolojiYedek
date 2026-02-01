@@ -1,1 +1,10 @@
-[]
+[
+  {
+    "Id": 1,
+    "LdapGroupName": "CN=dousunucusistemlerivpn",
+    "SeflikId": "SUNUCU_VE_NETWORK_S_STEMLER_EFL",
+    "SeflikName": "SUNUCU VE NETWORK S\u0130STEMLER \u015EEFL\u0130\u011E\u0130",
+    "AssignedRole": "SheflikYetkilisi",
+    "CreatedAt": "2026-02-01T18:34:22.5139419Z"
+  }
+]
