@@ -222,6 +222,9 @@ window.handleSvgDrawing = function(svgContent) {
 // API URL tanımı
 const API_BASE = '/api';
 
+// Source yönetimi
+let currentSource = null; // {type: 'server'|'internal-vip'|'wan-ip', name, ip, id?}
+
 let allTopologies = [];
 let allServers = [];
 let allPorts = [];
@@ -2532,6 +2535,108 @@ function attachTopologyBuilder() {
         }
     });
     
+    // ===== SOURCE YÖNETİMİ =====
+    const sourceDisplay = document.getElementById('sourceDisplay');
+    const sourceDisplayText = document.getElementById('sourceDisplayText');
+    const sourceForm = document.getElementById('sourceForm');
+    const switchSourceBtn = document.getElementById('switchSourceBtn');
+    const confirmSourceBtn = document.getElementById('confirmSourceBtn');
+    const cancelSourceBtn = document.getElementById('cancelSourceBtn');
+    
+    // Source gösterimini güncelle
+    window.updateSourceDisplay = function() {
+        if (currentSource) {
+            const sourceInfo = `${currentSource.name} (${currentSource.ip})`;
+            sourceDisplayText.textContent = sourceInfo;
+            sourceDisplay.style.display = 'block';
+            sourceForm.style.display = 'none';
+            switchSourceBtn.style.display = 'block';
+            confirmSourceBtn.style.display = 'none';
+            cancelSourceBtn.style.display = 'none';
+        } else {
+            sourceDisplay.style.display = 'none';
+            sourceForm.style.display = 'grid';
+            switchSourceBtn.style.display = 'none';
+            confirmSourceBtn.style.display = 'block';
+            cancelSourceBtn.style.display = 'block';
+        }
+    };
+    
+    // Farklı Kaynak butonu
+    if (switchSourceBtn) {
+        switchSourceBtn.addEventListener('click', () => {
+            // Form açısını göster, editin mode'a geç
+            sourceDisplay.style.display = 'none';
+            sourceForm.style.display = 'grid';
+            switchSourceBtn.style.display = 'none';
+            confirmSourceBtn.style.display = 'block';
+            cancelSourceBtn.style.display = 'block';
+            
+            // Form alanlarını temizle
+            document.getElementById('sourceServerId').value = '';
+            document.getElementById('sourceServerSearch').value = '';
+            document.getElementById('sourceIp').value = '';
+            document.getElementById('sourceName').value = '';
+            document.getElementById('sourceType').value = 'server';
+            sourceType.dispatchEvent(new Event('change'));
+        });
+    }
+    
+    // Kaynağı Seç butonu
+    if (confirmSourceBtn) {
+        confirmSourceBtn.addEventListener('click', () => {
+            let source = null;
+            
+            // Source bilgisi al
+            if (sourceType.value === 'server') {
+                const serverId = parseInt(document.getElementById('sourceServerId').value);
+                const server = allServers.find(s => s.id === serverId);
+                if (!server) {
+                    alert('❌ Lütfen kaynak sunucusu seçin');
+                    return;
+                }
+                source = {
+                    type: 'server',
+                    id: serverId,
+                    name: server.name,
+                    ip: server.ip
+                };
+            } else {
+                const sourceIp = document.getElementById('sourceIp').value.trim();
+                const sourceName = document.getElementById('sourceName').value.trim();
+                if (!sourceIp) {
+                    alert('❌ Lütfen kaynak IP adresini girin');
+                    return;
+                }
+                const typeLabel = sourceType.value === 'internal-vip' ? 'Internal VIP' : 'WAN IP';
+                source = {
+                    type: sourceType.value,
+                    name: sourceName || typeLabel,
+                    ip: sourceIp
+                };
+            }
+            
+            currentSource = source;
+            updateSourceDisplay();
+        });
+    }
+    
+    // İptal butonu
+    if (cancelSourceBtn) {
+        cancelSourceBtn.addEventListener('click', () => {
+            if (!currentSource) {
+                alert('⚠️ Lütfen bir kaynak seçin');
+                return;
+            }
+            // Form alanlarını temizle
+            document.getElementById('sourceServerId').value = '';
+            document.getElementById('sourceServerSearch').value = '';
+            document.getElementById('sourceIp').value = '';
+            document.getElementById('sourceName').value = '';
+            updateSourceDisplay();
+        });
+    }
+    
     // ===== SOURCE TÜRÜ DEĞIŞIMI =====
     sourceType.addEventListener('change', () => {
         const sourceServerField = document.getElementById('sourceServerField');
@@ -2607,6 +2712,15 @@ function attachTopologyBuilder() {
                                 sourceServerInput.value = matchingServer.name + ' (' + matchingServer.ip + ')';
                                 const serverList = document.getElementById('sourceServerList');
                                 if (serverList) serverList.style.display = 'none';
+                                
+                                // currentSource'u otomatik set et
+                                currentSource = {
+                                    type: 'server',
+                                    id: matchingServer.id,
+                                    name: matchingServer.name,
+                                    ip: matchingServer.ip
+                                };
+                                updateSourceDisplay();
                             }
                         }, 200);
                     }
@@ -2617,12 +2731,22 @@ function attachTopologyBuilder() {
     
     // ===== BAĞLANTI EKLE BUTONU =====
     addConnectionBtn.addEventListener('click', () => {
-        let source = null, destination = null;
+        // currentSource kullan
+        let source = currentSource;
         
         const topologyName = document.getElementById('topologyName')?.value.trim();
         const note = document.getElementById('connectionNote').value.trim();
         const includeFirewall = document.getElementById('includeFirewall').checked;
         const connectionMessage = document.getElementById('connectionMessage');
+        
+        // Source var mı kontrol et
+        if (!source) {
+            if (connectionMessage) connectionMessage.textContent = '❌ Lütfen kaynak sunucusunu seçin';
+            alert('❌ Lütfen topoloji adını girerek veya "Kaynağı Seç" butonunu kullanarak kaynak belirleyin');
+            return;
+        }
+        
+        let destination = null;
         
         // Mesajı temizle
         if (connectionMessage) connectionMessage.textContent = '';
@@ -2644,36 +2768,6 @@ function attachTopologyBuilder() {
             if (connectionMessage) connectionMessage.textContent = '⚠️ En az bir port seçiniz';
             console.warn('⚠️ Port seçilmedi!');
             return;
-        }
-        
-        // Source bilgisi al
-        if (sourceType.value === 'server') {
-            const serverId = parseInt(document.getElementById('sourceServerId').value);
-            const server = allServers.find(s => s.id === serverId);
-            if (!server) {
-                if (connectionMessage) connectionMessage.textContent = '❌ Lütfen kaynak sunucusu seçin';
-                return;
-            }
-            source = {
-                type: 'server',
-                id: serverId,
-                name: server.name,
-                ip: server.ip
-            };
-        } else {
-            // internal-vip veya wan-ip için
-            const sourceIp = document.getElementById('sourceIp').value.trim();
-            const sourceName = document.getElementById('sourceName').value.trim();
-            if (!sourceIp) {
-                if (connectionMessage) connectionMessage.textContent = '❌ Lütfen kaynak IP adresini girin';
-                return;
-            }
-            const typeLabel = sourceType.value === 'internal-vip' ? 'Internal VIP' : 'WAN IP';
-            source = {
-                type: sourceType.value,
-                name: sourceName || typeLabel,
-                ip: sourceIp
-            };
         }
         
         // Destination bilgisi al
