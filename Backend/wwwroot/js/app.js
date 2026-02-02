@@ -2568,6 +2568,53 @@ function attachTopologyBuilder() {
         }
     });
     
+    // ===== TOPOLOJI ADI DEĞİŞİMİ - SOURCE ADDRESSİ OTOMATIK ÇEKME =====
+    const topologyNameInput = document.getElementById('topologyName');
+    if (topologyNameInput) {
+        topologyNameInput.addEventListener('input', () => {
+            const topologyName = topologyNameInput.value.trim();
+            // Format: "SUNUCU_ADI(IP)" veya "SUNUCU_ADI(IP.IP.IP.IP)"
+            const match = topologyName.match(/^(.+?)\s*\(([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})\)$/);
+            
+            if (match) {
+                const serverName = match[1].trim();
+                const serverIp = match[2].trim();
+                
+                // Source otomatik doldur
+                const sourceTypeSelect = document.getElementById('sourceType');
+                if (sourceTypeSelect) {
+                    sourceTypeSelect.value = 'server';
+                    sourceTypeSelect.dispatchEvent(new Event('change'));
+                }
+                
+                // 100ms sonra (change event işlendikten sonra) kaynak sunucu ara
+                setTimeout(() => {
+                    const sourceServerInput = document.getElementById('sourceServerSearch');
+                    if (sourceServerInput) {
+                        sourceServerInput.value = serverName + ' ' + serverIp;
+                        sourceServerInput.dispatchEvent(new Event('input'));
+                        
+                        // Listeden otomatik seç
+                        setTimeout(() => {
+                            const matchingServer = allServers.find(s => 
+                                (s.name.toLowerCase().includes(serverName.toLowerCase()) || 
+                                 serverName.toLowerCase().includes(s.name.toLowerCase())) &&
+                                s.ip === serverIp
+                            );
+                            
+                            if (matchingServer) {
+                                document.getElementById('sourceServerId').value = matchingServer.id;
+                                sourceServerInput.value = matchingServer.name + ' (' + matchingServer.ip + ')';
+                                const serverList = document.getElementById('sourceServerList');
+                                if (serverList) serverList.style.display = 'none';
+                            }
+                        }, 200);
+                    }
+                }, 100);
+            }
+        });
+    }
+    
     // ===== BAĞLANTI EKLE BUTONU =====
     addConnectionBtn.addEventListener('click', () => {
         let source = null, destination = null;
@@ -2659,17 +2706,59 @@ function attachTopologyBuilder() {
             };
         }
         
-        // Bağlantı oluştur (firewall optional)
+        // Bağlantı oluştur
         console.log('Eklenecek portlar:', selectedPorts);
-        const connection = {
-            id: Date.now(),
-            topologyName: topologyName,
-            source: source,
-            destination: destination,
-            ports: selectedPorts.map(p => ({...p})), // Derin kopya
-            firewall: includeFirewall ? { name: 'Firewall', ip: null } : null,
-            note: note
-        };
+        
+        // FIREWALL MANTIGI: Aynı source ve firewall'ı kullanarak yeni destination ekle
+        // Veya farklı source ise yeni firewall oluştur
+        let connection = null;
+        
+        if (includeFirewall) {
+            // Mevcut bağlantılardan aynı source + firewall ile eşleşenini bul
+            const existingConnection = canvasData.connections.find(conn => 
+                conn.firewall &&
+                conn.source.name === source.name &&
+                conn.source.ip === source.ip
+            );
+            
+            if (existingConnection) {
+                // Mevcut bağlantının destination'una yeni bir tane ekle
+                // (aynı firewall'dan farklı destination çıkışı)
+                const newDestinationConnection = {
+                    id: Date.now(),
+                    topologyName: topologyName,
+                    source: source,
+                    destination: destination,
+                    ports: selectedPorts.map(p => ({...p})),
+                    firewall: existingConnection.firewall, // Mevcut firewall'ı kullan
+                    note: note
+                };
+                connection = newDestinationConnection;
+            } else {
+                // Yeni firewall oluştur (farklı source için)
+                connection = {
+                    id: Date.now(),
+                    topologyName: topologyName,
+                    source: source,
+                    destination: destination,
+                    ports: selectedPorts.map(p => ({...p})),
+                    firewall: { name: 'Firewall', ip: null },
+                    note: note
+                };
+            }
+        } else {
+            // Firewall olmadan
+            connection = {
+                id: Date.now(),
+                topologyName: topologyName,
+                source: source,
+                destination: destination,
+                ports: selectedPorts.map(p => ({...p})),
+                firewall: null,
+                note: note
+            };
+        }
+        
         console.log('Oluşturulan bağlantı:', connection);
         
         canvasData.connections.push(connection);
