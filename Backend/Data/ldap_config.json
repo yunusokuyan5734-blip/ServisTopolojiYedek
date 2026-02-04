@@ -7,7 +7,7 @@
     "BindDn": "srvtopology@iett.yerel",
     "BindPassword": "\u0130ett.1871!,",
     "EnableLdap": true,
-    "EnableJitProvisioning": false,
+    "EnableJitProvisioning": true,
     "UserSearchFilter": "(sAMAccountName={0})",
     "GroupMemberAttribute": "memberOf"
   }

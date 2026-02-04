@@ -152,22 +152,20 @@ namespace Backend.Services
                 var cnMatch = System.Text.RegularExpressions.Regex.Match(trimmed, @"CN=([^,]+)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
                 if (cnMatch.Success)
                 {
-                    return cnMatch.Groups[1].Value.Trim();
+                    return cnMatch.Groups[1].Value.Trim().ToLower();
                 }
 
-                return trimmed;
+                return trimmed.ToLower();
             }
             
             // Kullanıcının grupları ile eşleşen mapping'leri bul
             foreach (var group in userGroups)
             {
-                var groupName = NormalizeGroupName(group);
+                var normalizedUserGroup = NormalizeGroupName(group);
+                
                 var mapping = mappings.FirstOrDefault(m => 
                     !string.IsNullOrEmpty(m.LdapGroupName) && 
-                    (
-                        group.Contains(m.LdapGroupName, StringComparison.OrdinalIgnoreCase) ||
-                        groupName.Equals(NormalizeGroupName(m.LdapGroupName), StringComparison.OrdinalIgnoreCase)
-                    ));
+                    NormalizeGroupName(m.LdapGroupName).Equals(normalizedUserGroup, StringComparison.OrdinalIgnoreCase));
 
                 if (mapping != null)
                 {

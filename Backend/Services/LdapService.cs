@@ -55,7 +55,7 @@ namespace Backend.Services
                     config.BaseDn,
                     searchFilter,
                     SearchScope.Subtree,
-                    new[] { "distinguishedName", "cn", "memberOf", "mail", "displayName" }
+                    new[] { "distinguishedName", "cn", "memberOf", "mail", "displayName", "userPrincipalName" }
                 );
 
                 var searchResponse = (SearchResponse)connection.SendRequest(searchRequest);
@@ -70,6 +70,7 @@ namespace Backend.Services
 
                 var userEntry = searchResponse.Entries[0];
                 var userDn = userEntry.Attributes["distinguishedName"]?[0]?.ToString();
+                var userUpn = userEntry.Attributes["userPrincipalName"]?[0]?.ToString();
 
                 if (string.IsNullOrEmpty(userDn))
                 {
@@ -102,7 +103,30 @@ namespace Backend.Services
                 catch (Exception ex)
                 {
                     _logger.LogWarning($"LDAP bind failed for user: {userDn}, error: {ex.Message}");
-                    return new LdapAuthResult { Success = false, ErrorMessage = "Invalid credentials" };
+
+                    var fallbackUpn = !string.IsNullOrWhiteSpace(userUpn)
+                        ? userUpn
+                        : BuildUpnFromBaseDn(username, config.BaseDn);
+
+                    if (!string.IsNullOrWhiteSpace(fallbackUpn))
+                    {
+                        try
+                        {
+                            _logger.LogInformation($"LDAP bind fallback attempt for user: {fallbackUpn}");
+                            userConnection.Credential = new NetworkCredential(fallbackUpn, password);
+                            userConnection.Bind();
+                            _logger.LogInformation($"LDAP bind successful for user (fallback UPN): {fallbackUpn}");
+                        }
+                        catch (Exception ex2)
+                        {
+                            _logger.LogWarning($"LDAP bind failed for fallback UPN: {fallbackUpn}, error: {ex2.Message}");
+                            return new LdapAuthResult { Success = false, ErrorMessage = "Invalid credentials" };
+                        }
+                    }
+                    else
+                    {
+                        return new LdapAuthResult { Success = false, ErrorMessage = "Invalid credentials" };
+                    }
                 }
 
                 // Grup üyeliklerini al (memberOf)
@@ -119,6 +143,24 @@ namespace Backend.Services
                             groups.Add(group);
                         }
                     }
+                }
+
+                // Nested grupları da dahil etmek için LDAP_MATCHING_RULE_IN_CHAIN ile arama
+                try
+                {
+                    var nestedGroups = SearchGroupsByMemberDn(connection, config.BaseDn, userDn);
+                    if (nestedGroups.Count > 0)
+                    {
+                        foreach (var g in nestedGroups)
+                        {
+                            if (!string.IsNullOrWhiteSpace(g) && !groups.Contains(g))
+                                groups.Add(g);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Nested group search failed for user {Username}", username);
                 }
 
                 return new LdapAuthResult
@@ -200,6 +242,62 @@ namespace Backend.Services
                 _logger.LogError(ex, $"LDAP connection test failed for {config?.BindDn}");
                 return new LdapTestResult { Success = false, Message = $"Bağlantı hatası: {ex.Message}" };
             }
+        }
+
+        private List<string> SearchGroupsByMemberDn(LdapConnection connection, string baseDn, string userDn)
+        {
+            var results = new List<string>();
+            if (string.IsNullOrWhiteSpace(baseDn) || string.IsNullOrWhiteSpace(userDn))
+                return results;
+
+            // Kullanıcının üye olduğu (nested dahil) tüm grupları getir
+            var filter = $"(&(objectClass=group)(member:1.2.840.113556.1.4.1941:={userDn}))";
+            var request = new SearchRequest(
+                baseDn,
+                filter,
+                SearchScope.Subtree,
+                new[] { "distinguishedName", "cn" }
+            );
+
+            var response = (SearchResponse)connection.SendRequest(request);
+            if (response?.Entries == null || response.Entries.Count == 0)
+                return results;
+
+            for (int i = 0; i < response.Entries.Count; i++)
+            {
+                var entry = response.Entries[i];
+                var dn = entry.DistinguishedName;
+                if (!string.IsNullOrWhiteSpace(dn))
+                {
+                    results.Add(dn);
+                    continue;
+                }
+
+                var cn = entry.Attributes["cn"]?[0]?.ToString();
+                if (!string.IsNullOrWhiteSpace(cn))
+                    results.Add($"CN={cn}");
+            }
+
+            return results;
+        }
+
+        private static string? BuildUpnFromBaseDn(string username, string? baseDn)
+        {
+            if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(baseDn))
+                return null;
+
+            var parts = baseDn.Split(',')
+                .Select(p => p.Trim())
+                .Where(p => p.StartsWith("DC=", StringComparison.OrdinalIgnoreCase))
+                .Select(p => p.Substring(3))
+                .Where(p => !string.IsNullOrWhiteSpace(p))
+                .ToList();
+
+            if (parts.Count == 0)
+                return null;
+
+            var domain = string.Join('.', parts);
+            return $"{username}@{domain}";
         }
         public async Task<List<string>> SearchGroupsAsync(LdapConfig config, string searchTerm)
         {

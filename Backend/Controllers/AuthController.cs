@@ -100,6 +100,7 @@ namespace Backend.Controllers
                             SeflikName = seflikName,
                             LdapDistinguishedName = ldapResult.DistinguishedName,
                             IsLdapUser = true,
+                            PermissionType = "Sheflik", // LDAP kullanıcıları Şeflik bazlı izinle başlayır
                             CreatedAt = DateTime.UtcNow
                         };
                         _store.AddUser(user);

@@ -12,13 +12,13 @@
     "AllowedTopologyIds": []
   },
   {
-    "Username": "sa_yokuyan",
+    "Username": "dk_yokuyan",
     "PasswordHash": null,
-    "Role": "Admin",
-    "SeflikId": null,
-    "SeflikName": null,
-    "LdapDistinguishedName": null,
-    "CreatedAt": "2026-02-01T17:09:26.5921584Z",
+    "Role": "SheflikYetkilisi",
+    "SeflikId": "VER_Y_NET_M_EFL",
+    "SeflikName": "VER\u0130 Y\u00D6NET\u0130M \u015EEFL\u0130\u011E\u0130",
+    "LdapDistinguishedName": "CN=Yunus Okuyan,OU=Elektronik_Sistemler,OU=Bilgi_Islem,OU=Kullanicilar,DC=iett,DC=yerel",
+    "CreatedAt": "2026-02-03T09:00:29.5966887Z",
     "IsLdapUser": true,
     "PermissionType": "Sheflik",
     "AllowedTopologyIds": []

@@ -27,30 +27,53 @@ namespace Backend.Controllers
         [HttpPost("update")]
         public IActionResult UpdateTopology([FromBody] Topology updated)
         {
-            if (updated == null || string.IsNullOrEmpty(updated.Server) || string.IsNullOrEmpty(updated.Ip))
+            if (updated == null)
                 return BadRequest(new { message = "Geçersiz veri" });
 
             var topologies = _topoStore.LoadTopologies();
-            var idx = topologies.FindIndex(t =>
-                (t.Server ?? t.Name ?? "").Trim().ToLowerInvariant() == (updated.Server ?? updated.Name ?? "").Trim().ToLowerInvariant()
-                && (t.Ip ?? "").Trim() == (updated.Ip ?? "").Trim()
-                && (t.Version ?? "v1") == (updated.Version ?? "v1")
-            );
+            
+            // Id ile ara - Id yoksa Server+Ip+Version ile ara (eski yöntem)
+            int idx = -1;
+            if (!string.IsNullOrEmpty(updated.Id))
+            {
+                idx = topologies.FindIndex(t => (t.Id ?? "").Equals(updated.Id, StringComparison.OrdinalIgnoreCase));
+            }
+            
+            // Id ile bulunamazsa eski yöntemle ara
+            if (idx == -1)
+            {
+                idx = topologies.FindIndex(t =>
+                    (t.Server ?? t.Name ?? "").Trim().ToLowerInvariant() == (updated.Server ?? updated.Name ?? "").Trim().ToLowerInvariant()
+                    && (t.Ip ?? "").Trim() == (updated.Ip ?? "").Trim()
+                    && (t.Version ?? "v1") == (updated.Version ?? "v1")
+                );
+            }
+            
             if (idx == -1)
                 return NotFound(new { message = "Kayıt bulunamadı" });
 
-            // Güncelle
-            topologies[idx].Name = updated.Name;
-            topologies[idx].Server = updated.Server;
-            topologies[idx].Ip = updated.Ip;
-            topologies[idx].File = updated.File;
-            topologies[idx].Dept = updated.Dept;
-            topologies[idx].Platform = updated.Platform;
-            topologies[idx].Critical = updated.Critical;
-            topologies[idx].Note = updated.Note;
-            topologies[idx].Date = updated.Date;
-            topologies[idx].User = updated.User;
-            // Versiyon ve diğer alanlar değişmeden kalır
+            // Güncelle - tüm alanları kullanıcı değiştirebilir
+            if (!string.IsNullOrWhiteSpace(updated.Name))
+                topologies[idx].Name = updated.Name;
+            if (!string.IsNullOrWhiteSpace(updated.Server))
+                topologies[idx].Server = updated.Server;
+            if (!string.IsNullOrWhiteSpace(updated.Ip))
+                topologies[idx].Ip = updated.Ip;
+            if (!string.IsNullOrWhiteSpace(updated.File))
+                topologies[idx].File = updated.File;
+            if (!string.IsNullOrWhiteSpace(updated.Dept))
+                topologies[idx].Dept = updated.Dept;
+            if (!string.IsNullOrWhiteSpace(updated.Platform))
+                topologies[idx].Platform = updated.Platform;
+            if (!string.IsNullOrWhiteSpace(updated.Critical))
+                topologies[idx].Critical = updated.Critical;
+            if (updated.Note != null)
+                topologies[idx].Note = updated.Note;
+            if (!string.IsNullOrWhiteSpace(updated.Date))
+                topologies[idx].Date = updated.Date;
+            if (!string.IsNullOrWhiteSpace(updated.User))
+                topologies[idx].User = updated.User;
+            
             _topoStore.SaveTopologies(topologies);
             return Ok(new { message = "Güncellendi" });
         }
@@ -65,6 +88,7 @@ namespace Backend.Controllers
             var role = User.FindFirst(ClaimTypes.Role)?.Value;
             var username = User.Identity?.Name;
             var userSeflikId = User.FindFirst("SeflikId")?.Value;
+            var userSeflikName = User.FindFirst("SeflikName")?.Value;
 
             // Admin ise tüm topolojileri göster
             if (role == "Admin")
@@ -85,10 +109,37 @@ namespace Backend.Controllers
                 // Spesifik sunucular - sadece AllowedTopologyIds'deki topolojileri göster
                 topologies = topologies.Where(t => user.AllowedTopologyIds.Contains(t.Id)).ToList();
             }
-            else if (!string.IsNullOrEmpty(userSeflikId))
+            else if (!string.IsNullOrEmpty(userSeflikId) || !string.IsNullOrEmpty(userSeflikName) || !string.IsNullOrEmpty(user.SeflikName) || !string.IsNullOrEmpty(user.SeflikId))
             {
                 // Şeflik bazlı - şefliğin tüm topolojilerini göster
-                topologies = topologies.Where(t => t.Dept == userSeflikId).ToList();
+                var effectiveSeflikName = user.SeflikName ?? userSeflikName ?? string.Empty;
+                var effectiveSeflikId = user.SeflikId ?? userSeflikId ?? string.Empty;
+                var normalizedSeflikName = NormalizeSeflikId(effectiveSeflikName);
+                var normalizedSeflikId = NormalizeSeflikId(effectiveSeflikId);
+
+                topologies = topologies.Where(t =>
+                {
+                    var dept = t.Dept ?? string.Empty;
+                    var normalizedDept = NormalizeSeflikId(dept);
+
+                    if (!string.IsNullOrEmpty(effectiveSeflikName) &&
+                        dept.Equals(effectiveSeflikName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return true;
+                    }
+
+                    if (!string.IsNullOrEmpty(normalizedSeflikName) && normalizedDept.Equals(normalizedSeflikName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return true;
+                    }
+
+                    if (!string.IsNullOrEmpty(normalizedSeflikId) && normalizedDept.Equals(normalizedSeflikId, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return true;
+                    }
+
+                    return false;
+                }).ToList();
             }
             else
             {
@@ -97,6 +148,34 @@ namespace Backend.Controllers
             }
 
             return Ok(topologies);
+        }
+
+        private static string NormalizeSeflikId(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+                return string.Empty;
+
+            var normalized = name
+                .Replace("ç", "c").Replace("Ç", "c")
+                .Replace("ğ", "g").Replace("Ğ", "g")
+                .Replace("ı", "i").Replace("I", "i")
+                .Replace("i", "i").Replace("İ", "i")
+                .Replace("ö", "o").Replace("Ö", "o")
+                .Replace("ş", "s").Replace("Ş", "s")
+                .Replace("ü", "u").Replace("Ü", "u")
+                .ToUpperInvariant()
+                .Replace(" ", "_")
+                .Replace("-", "_")
+                .Replace("&", "VE")
+                .Replace("(", "")
+                .Replace(")", "")
+                .Replace("/", "")
+                .Trim('_');
+
+            while (normalized.Contains("__"))
+                normalized = normalized.Replace("__", "_");
+
+            return normalized;
         }
 
 

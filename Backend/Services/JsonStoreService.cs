@@ -35,7 +35,9 @@ namespace Backend.Services
         public User? GetUser(string username)
         {
             var users = LoadUsers();
-            return users.FirstOrDefault(u => u.Username == username);
+            return users.FirstOrDefault(u =>
+                !string.IsNullOrEmpty(u.Username) &&
+                string.Equals(u.Username.Trim(), username?.Trim(), StringComparison.OrdinalIgnoreCase));
         }
 
         public void EnsureDefaultAdmin(PasswordService passwordService)
@@ -109,7 +111,9 @@ namespace Backend.Services
         public void DeleteUser(string username)
         {
             var users = LoadUsers();
-            users.RemoveAll(u => u.Username == username);
+            users.RemoveAll(u =>
+                !string.IsNullOrEmpty(u.Username) &&
+                string.Equals(u.Username.Trim(), username?.Trim(), StringComparison.OrdinalIgnoreCase));
             SaveUsers(users);
         }
     }

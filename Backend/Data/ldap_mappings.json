@@ -1,10 +1,10 @@
 [
   {
     "Id": 1,
-    "LdapGroupName": "CN=dousunucusistemlerivpn",
-    "SeflikId": "SUNUCU_VE_NETWORK_S_STEMLER_EFL",
-    "SeflikName": "SUNUCU VE NETWORK S\u0130STEMLER \u015EEFL\u0130\u011E\u0130",
+    "LdapGroupName": "CN=sistem,OU=mailgrup,OU=iett.gov.tr,DC=iett,DC=yerel",
+    "SeflikId": "VER_Y_NET_M_EFL",
+    "SeflikName": "VER\u0130 Y\u00D6NET\u0130M \u015EEFL\u0130\u011E\u0130",
     "AssignedRole": "SheflikYetkilisi",
-    "CreatedAt": "2026-02-01T18:34:22.5139419Z"
+    "CreatedAt": "2026-02-03T09:00:08.8110575Z"
   }
 ]

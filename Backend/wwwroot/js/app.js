@@ -794,9 +794,13 @@ function editTopology(server, ip) {
         const i = (t.ip || t.Ip || '').trim();
         return s === server.trim().toLowerCase() && i === ip.trim();
     });
-    if (!topo) return;
+    if (!topo) {
+        alert('❌ Topoloji bulunamadı!');
+        return;
+    }
     window.currentEditTopology = topo;
-    // Modalı doldur
+    
+    // Modalı doldur - tüm alanları normalize et
     document.getElementById('editTopologyName').value = topo.name || topo.Name || '';
     document.getElementById('editServerName').value = topo.server || topo.Server || '';
     document.getElementById('editServerIp').value = topo.ip || topo.Ip || '';
@@ -805,7 +809,36 @@ function editTopology(server, ip) {
     document.getElementById('editPlatform').value = topo.platform || topo.Platform || '';
     document.getElementById('editCritical').value = topo.critical || topo.Critical || '';
     document.getElementById('editNote').value = topo.note || topo.Note || '';
+    
     document.getElementById('editTopologyModal').style.display = 'flex';
+    
+    // Topoloji Adı alanına değişiklik listener'ı ekle
+    const editTopologyNameInput = document.getElementById('editTopologyName');
+    const editServerNameInput = document.getElementById('editServerName');
+    const editServerIpInput = document.getElementById('editServerIp');
+    
+    // Event listener'ı yalnızca bir kez ekle
+    if (!editTopologyNameInput.dataset.listenerAdded) {
+        editTopologyNameInput.addEventListener('input', function() {
+            const value = this.value.trim();
+            // Format: "Sunucu Adı(IP Adresi)" veya "Sunucu Adı (IP Adresi)"
+            const match = value.match(/^(.+?)\s*\(([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})\)$/);
+            
+            if (match) {
+                const serverName = match[1].trim();
+                const serverIp = match[2].trim();
+                
+                // Sunucu adı ve IP'yi otomatik doldur
+                if (serverName && !editServerNameInput.value) {
+                    editServerNameInput.value = serverName;
+                }
+                if (serverIp && !editServerIpInput.value) {
+                    editServerIpInput.value = serverIp;
+                }
+            }
+        });
+        editTopologyNameInput.dataset.listenerAdded = 'true';
+    }
 }
 
 // Modal kaydetme işlemi
@@ -815,21 +848,55 @@ document.addEventListener('DOMContentLoaded', function() {
         form.onsubmit = async function(e) {
             e.preventDefault();
             const topo = window.currentEditTopology;
-            if (!topo) return;
-            // Yeni değerleri al
+            if (!topo) {
+                alert('❌ Düzenlenecek topoloji bulunamadı!');
+                return;
+            }
+            
+            // Form değerlerini al - tüm alanlar kullanıcı tarafından düzenlenebilir
+            const topologyName = document.getElementById('editTopologyName').value.trim();
+            const serverName = document.getElementById('editServerName').value.trim();
+            const serverIp = document.getElementById('editServerIp').value.trim();
+            const fileName = document.getElementById('editFileName').value.trim();
+            const dept = document.getElementById('editDept').value.trim();
+            const platform = document.getElementById('editPlatform').value.trim();
+            const critical = document.getElementById('editCritical').value.trim();
+            const note = document.getElementById('editNote').value.trim();
+            
+            // Minimal validation - sadece zorunlu alanlar boş olmasın
+            if (!topologyName) {
+                alert('❌ Topoloji Adı boş bırakılamaz!');
+                return;
+            }
+            if (!serverName) {
+                alert('❌ Sunucu Adı boş bırakılamaz!');
+                return;
+            }
+            if (!serverIp) {
+                alert('❌ IP Adresi boş bırakılamaz!');
+                return;
+            }
+            
+            // Not: Kullanıcı istediği formatı kullanabilir - underscore, N/A, vb. her şey kabul edilir
+            
+            // Yeni değerleri backend formatında hazırla
             const updated = {
-                name: document.getElementById('editTopologyName').value,
-                server: document.getElementById('editServerName').value,
-                ip: document.getElementById('editServerIp').value,
-                file: document.getElementById('editFileName').value,
-                dept: document.getElementById('editDept').value,
-                platform: document.getElementById('editPlatform').value,
-                critical: document.getElementById('editCritical').value,
-                note: document.getElementById('editNote').value,
-                version: topo.version || topo.Version || 'v1',
-                date: topo.date || topo.Date || new Date().toISOString().slice(0,10),
-                user: topo.user || topo.User || 'admin'
+                Id: topo.id || topo.Id,
+                Name: topologyName,
+                Server: serverName,
+                Ip: serverIp,
+                File: fileName,
+                Dept: dept,
+                Platform: platform,
+                Critical: critical,
+                Note: note,
+                Version: topo.version || topo.Version || 'v1',
+                Date: topo.date || topo.Date || new Date().toISOString().slice(0,10),
+                User: topo.user || topo.User || 'admin'
             };
+            
+            console.log('Güncelleme gönderiliyor:', updated);
+            
             // Backend'e güncelleme isteği gönder
             try {
                 const res = await fetch(`/api/topology/update`, {
@@ -838,14 +905,20 @@ document.addEventListener('DOMContentLoaded', function() {
                     credentials: 'include',
                     body: JSON.stringify(updated)
                 });
+                
+                const data = await res.json();
+                
                 if (res.ok) {
+                    alert('✅ Topoloji başarıyla güncellendi!');
                     document.getElementById('editTopologyModal').style.display = 'none';
                     await loadAndDisplayTopologies();
                 } else {
-                    alert('Güncelleme başarısız!');
+                    console.error('Güncelleme hatası:', data);
+                    alert('❌ Güncelleme başarısız! ' + (data.message || 'Bilinmeyen hata'));
                 }
             } catch (err) {
-                alert('Sunucuya ulaşılamadı!');
+                console.error('Sunucu hatası:', err);
+                alert('❌ Sunucuya ulaşılamadı! Lütfen internet bağlantınızı kontrol edin.');
             }
         }
     }
@@ -1728,7 +1801,7 @@ function renderPortReference() {
     
     const uniquePorts = uniquePortsByNumber(allPorts);
     container.innerHTML = uniquePorts.map(p => `
-        <div draggable="true" data-port-id="${p.id}" class="port-library-item"
+        <div draggable="true" data-port-id="${p.id}" data-port-item class="port-library-item"
              style="display:flex;align-items:center;gap:0.6rem;padding:0.6rem;border-radius:5px;background:rgba(${p.color === '#4CAF50' ? '76,175,80' : p.color === '#2196F3' ? '33,150,243' : p.color === '#FF9800' ? '255,152,0' : p.color === '#FF5722' ? '255,87,34' : p.color === '#9C27B0' ? '156,39,176' : p.color === '#3F51B5' ? '63,81,181' : p.color === '#00BCD4' ? '0,188,212' : p.color === '#607D8B' ? '96,125,139' : p.color === '#795548' ? '121,85,72' : p.color === '#E91E63' ? '233,30,99' : p.color === '#8BC34A' ? '139,195,74' : p.color === '#009688' ? '0,150,136' : p.color === '#FF6F00' ? '255,111,0' : p.color === '#0277BD' ? '2,119,189' : p.color === '#D32F2F' ? '211,47,47' : p.color === '#C62828' ? '198,40,40' : p.color === '#D50000' ? '213,0,0' : p.color === '#EF5350' ? '239,83,80' : p.color === '#AB47BC' ? '171,71,188' : p.color === '#42A5F5' ? '66,165,245' : p.color === '#5C6BC0' ? '92,107,192' : p.color === '#7E57C2' ? '126,87,194' : p.color === '#26A69A' ? '38,166,154' : p.color === '#66BB6A' ? '102,187,106' : '33,150,243'},0.15);border:1.5px solid ${p.color};cursor:grab;transition:all 0.2s;user-select:none;"
              onmouseover="this.style.background='${p.color}30';this.style.boxShadow='0 2px 8px ${p.color}55';"
              onmouseout="this.style.background='rgba(33,150,243,0.15)';this.style.boxShadow='none';">
@@ -1762,7 +1835,7 @@ function renderServerLibrary() {
     container.innerHTML = allServers.map(s => {
         const critColor = criticalityColors[s.critical] || '#ccc';
         return `
-            <div draggable="true" data-server-id="${s.id}" class="server-library-item"
+            <div draggable="true" data-server-id="${s.id}" data-server-item class="server-library-item"
                  style="display:flex;align-items:center;gap:0.6rem;padding:0.6rem;border-radius:5px;background:rgba(102,126,234,0.1);border:1.5px solid rgba(102,126,234,0.3);cursor:grab;transition:all 0.2s;user-select:none;"
                  onmouseover="this.style.background='rgba(102,126,234,0.2)';this.style.boxShadow='0 2px 8px rgba(102,126,234,0.4)';"
                  onmouseout="this.style.background='rgba(102,126,234,0.1)';this.style.boxShadow='none';">
@@ -2617,6 +2690,35 @@ function attachTopologyBuilder() {
             }
             
             currentSource = source;
+            
+            // Kaynak seçilince, destination sunucusunu topoloji adından doldur
+            const topologyName = document.getElementById('topologyName')?.value.trim();
+            if (topologyName) {
+                // Destination türü "server" olarak ayarla
+                document.getElementById('destType').value = 'server';
+                document.getElementById('destType').dispatchEvent(new Event('change'));
+                
+                // Destination sunucu alanına topoloji adını yaz
+                const destServerSearch = document.getElementById('destServerSearch');
+                destServerSearch.value = topologyName;
+                destServerSearch.dispatchEvent(new Event('input'));
+                
+                // Topoloji adından eşleşen sunucuyu bul ve otomatik seç
+                setTimeout(() => {
+                    const matchingServer = allServers.find(s =>
+                        s.name.toLowerCase().includes(topologyName.toLowerCase()) ||
+                        topologyName.toLowerCase().includes(s.name.toLowerCase())
+                    );
+                    
+                    if (matchingServer) {
+                        document.getElementById('destServerId').value = matchingServer.id;
+                        destServerSearch.value = matchingServer.name + ' (' + matchingServer.ip + ')';
+                        const destServerList = document.getElementById('destServerList');
+                        if (destServerList) destServerList.style.display = 'none';
+                    }
+                }, 200);
+            }
+            
             updateSourceDisplay();
         });
     }
@@ -2664,7 +2766,7 @@ function attachTopologyBuilder() {
         if (destType.value === 'server') {
             destServerField.style.display = 'block';
             destExternalField.style.display = 'none';
-            destNameField.style.display = 'none';
+            destNameField.style.display = 'block'; // Topoloji adını gösterebilmek için always visible
         } else {
             // internal-vip veya wan-ip için
             destServerField.style.display = 'none';
@@ -3089,56 +3191,70 @@ function renderNetworkDiagram() {
         
         // Firewall node (eğer varsa)
         if (conn.firewall) {
-            const fwId = `firewall-${idx}`;
+            // Aynı kaynak için aynı firewall ID'sini kullan
+            const fwId = `firewall-${conn.source.ip || conn.source.id}`;
             
-            // SVG tuğla duvar görseli oluştur
-            const brickWallSvg = `data:image/svg+xml,${encodeURIComponent(`
-                <svg xmlns="http://www.w3.org/2000/svg" width="140" height="100" viewBox="0 0 140 100">
-                    <defs>
-                        <pattern id="bricks" x="0" y="0" width="35" height="20" patternUnits="userSpaceOnUse">
-                            <rect x="0" y="0" width="35" height="10" fill="#dc2626" stroke="#fff" stroke-width="1.5"/>
-                            <rect x="0" y="10" width="17.5" height="10" fill="#b91c1c" stroke="#fff" stroke-width="1.5"/>
-                            <rect x="17.5" y="10" width="17.5" height="10" fill="#dc2626" stroke="#fff" stroke-width="1.5"/>
-                        </pattern>
-                        <linearGradient id="fireGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                            <stop offset="0%" style="stop-color:#ff6b00;stop-opacity:1" />
-                            <stop offset="50%" style="stop-color:#ff8800;stop-opacity:1" />
-                            <stop offset="100%" style="stop-color:#ff6b00;stop-opacity:1" />
-                        </linearGradient>
-                    </defs>
-                    <rect width="140" height="100" fill="url(#bricks)" rx="4"/>
-                    <rect x="15" y="35" width="110" height="30" fill="rgba(139,0,0,0.7)" rx="3" stroke="#fff" stroke-width="2"/>
-                    <text x="70" y="55" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#fff" text-anchor="middle">FW</text>
-                    <circle cx="25" cy="15" r="4" fill="url(#fireGradient)">
-                        <animate attributeName="opacity" values="1;0.6;1" dur="1.5s" repeatCount="indefinite"/>
-                    </circle>
-                    <circle cx="115" cy="15" r="4" fill="url(#fireGradient)">
-                        <animate attributeName="opacity" values="0.6;1;0.6" dur="1.5s" repeatCount="indefinite"/>
-                    </circle>
-                </svg>
-            `)}`;
+            // Firewall node'u sadece ilk defa ekle (duplicate'leri önle)
+            if (!nodeIds.has(fwId)) {
+                // SVG tuğla duvar görseli oluştur
+                const brickWallSvg = `data:image/svg+xml,${encodeURIComponent(`
+                    <svg xmlns="http://www.w3.org/2000/svg" width="140" height="100" viewBox="0 0 140 100">
+                        <defs>
+                            <pattern id="bricks" x="0" y="0" width="35" height="20" patternUnits="userSpaceOnUse">
+                                <rect x="0" y="0" width="35" height="10" fill="#dc2626" stroke="#fff" stroke-width="1.5"/>
+                                <rect x="0" y="10" width="17.5" height="10" fill="#b91c1c" stroke="#fff" stroke-width="1.5"/>
+                                <rect x="17.5" y="10" width="17.5" height="10" fill="#dc2626" stroke="#fff" stroke-width="1.5"/>
+                            </pattern>
+                            <linearGradient id="fireGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" style="stop-color:#ff6b00;stop-opacity:1" />
+                                <stop offset="50%" style="stop-color:#ff8800;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#ff6b00;stop-opacity:1" />
+                            </linearGradient>
+                        </defs>
+                        <rect width="140" height="100" fill="url(#bricks)" rx="4"/>
+                        <rect x="15" y="35" width="110" height="30" fill="rgba(139,0,0,0.7)" rx="3" stroke="#fff" stroke-width="2"/>
+                        <text x="70" y="55" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#fff" text-anchor="middle">FW</text>
+                        <circle cx="25" cy="15" r="4" fill="url(#fireGradient)">
+                            <animate attributeName="opacity" values="1;0.6;1" dur="1.5s" repeatCount="indefinite"/>
+                        </circle>
+                        <circle cx="115" cy="15" r="4" fill="url(#fireGradient)">
+                            <animate attributeName="opacity" values="0.6;1;0.6" dur="1.5s" repeatCount="indefinite"/>
+                        </circle>
+                    </svg>
+                `)}`;
+                
+                nodes.add({
+                    id: fwId,
+                    label: 'FIREWALL',
+                    title: 'Firewall',
+                    shape: 'image',
+                    image: brickWallSvg,
+                    size: 50,
+                    font: { size: 0 },
+                    shadow: { enabled: true, color: 'rgba(0,0,0,0.5)', size: 12, x: 0, y: 4 }
+                });
+                nodeIds.add(fwId);
+            }
             
-            nodes.add({
-                id: fwId,
-                label: 'FIREWALL',
-                title: 'Firewall',
-                shape: 'image',
-                image: brickWallSvg,
-                size: 50,
-                font: { size: 0 },
-                shadow: { enabled: true, color: 'rgba(0,0,0,0.5)', size: 12, x: 0, y: 4 }
-            });
-            
-            // Source -> Firewall (port etiketi YOK)
+            // Source -> Firewall (port etiketli)
+            let portLabel = '';
+            if (conn.ports && conn.ports.length > 0) {
+                portLabel = conn.ports.map(p => `${p.number}`).join(', ');
+            }
             edges.add({
                 from: sourceId,
                 to: fwId,
                 arrows: 'to',
                 color: { color: '#3b82f6', highlight: '#1e40af' },
-                width: 3
+                width: 3,
+                label: portLabel,
+                font: {
+                    size: 13,
+                    color: '#1e40af',
+                    background: '#ffffff',
+                    bold: true
+                }
             });
-            
-            // Firewall -> Destination (port etiketi YOK)
             edges.add({
                 from: fwId,
                 to: destId,
@@ -5181,3 +5297,131 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+// Sunucu ve Port Arama İşlevleri
+function initServerSearch() {
+    const searchInput = document.getElementById('serverSearchInput');
+    if (!searchInput) return;
+    
+    searchInput.addEventListener('input', function(e) {
+        const searchTerm = e.target.value.toLowerCase().trim();
+        const serverList = document.getElementById('serverLibraryList');
+        const items = serverList.querySelectorAll('[data-server-item]');
+        
+        items.forEach(item => {
+            const text = item.textContent.toLowerCase();
+            item.style.display = text.includes(searchTerm) ? 'block' : 'none';
+        });
+    });
+}
+
+function initPortSearch() {
+    const searchInput = document.getElementById('portSearchInput');
+    if (!searchInput) return;
+    
+    searchInput.addEventListener('input', function(e) {
+        const searchTerm = e.target.value.toLowerCase().trim();
+        const portList = document.getElementById('portReferenceList');
+        const items = portList.querySelectorAll('[data-port-item]');
+        
+        items.forEach(item => {
+            const text = item.textContent.toLowerCase();
+            item.style.display = text.includes(searchTerm) ? 'block' : 'none';
+        });
+    });
+}
+
+// Sürükle-Bırak İşlevleri
+function makeServerItemDraggable() {
+    const serverItems = document.querySelectorAll('[data-server-item]');
+    serverItems.forEach(item => {
+        item.draggable = true;
+        item.style.cursor = 'grab';
+        item.addEventListener('dragstart', function(e) {
+            const text = this.textContent.trim();
+            e.dataTransfer.effectAllowed = 'copy';
+            e.dataTransfer.setData('text/plain', `SERVER:${text}`);
+        });
+    });
+}
+
+function makePortItemDraggable() {
+    const portItems = document.querySelectorAll('[data-port-item]');
+    portItems.forEach(item => {
+        item.draggable = true;
+        item.style.cursor = 'grab';
+        item.addEventListener('dragstart', function(e) {
+            const text = this.textContent.trim();
+            const portNumber = text.match(/\d+/)?.[0];
+            e.dataTransfer.effectAllowed = 'copy';
+            e.dataTransfer.setData('text/plain', `PORT:${portNumber}`);
+        });
+    });
+}
+
+// Diyagram alanında drop event'i ekle
+function makeDiagramDropZone() {
+    const container = document.getElementById('networkContainer');
+    if (!container) return;
+    
+    container.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'copy';
+        container.style.backgroundColor = 'rgba(99, 102, 241, 0.05)';
+    });
+    
+    container.addEventListener('dragleave', function(e) {
+        if (e.target === container) {
+            container.style.backgroundColor = '';
+        }
+    });
+    
+    container.addEventListener('drop', function(e) {
+        e.preventDefault();
+        container.style.backgroundColor = '';
+        
+        const data = e.dataTransfer.getData('text/plain');
+        if (data.startsWith('SERVER:')) {
+            const serverName = data.substring(7);
+            const rect = container.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            // Not: Sunucu eklemek istersen buraya kod ekle
+            alert(`Sunucu '${serverName}' konumda (${x.toFixed(0)}, ${y.toFixed(0)}) eklenecek`);
+        } else if (data.startsWith('PORT:')) {
+            const portNumber = data.substring(5);
+            alert(`Port ${portNumber} eklenecek`);
+        }
+    });
+}
+
+// Başlat
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(() => {
+        initServerSearch();
+        initPortSearch();
+        makeServerItemDraggable();
+        makePortItemDraggable();
+        makeDiagramDropZone();
+    }, 500);
+});
+
+// Sunucu/Port listesi güncellendiğinde sürükleme yeniden etkinleştir
+const originalRenderServerLibrary = window.renderServerLibrary;
+window.renderServerLibrary = function() {
+    if (originalRenderServerLibrary) {
+        originalRenderServerLibrary.apply(this, arguments);
+    }
+    makeServerItemDraggable();
+};
+
+const originalRenderPortLibrary = window.renderPortLibrary;
+window.renderPortLibrary = function() {
+    if (originalRenderPortLibrary) {
+        originalRenderPortLibrary.apply(this, arguments);
+    }
+    makePortItemDraggable();
+};
+
+
+

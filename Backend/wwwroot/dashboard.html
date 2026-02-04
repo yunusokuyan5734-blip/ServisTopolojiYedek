@@ -600,38 +600,65 @@
                                 <div id="topologyConnectionsList" style="display:flex;flex-direction:column;gap:0.8rem;max-height:400px;overflow-y:auto;">
                                     <p style="color:var(--muted);font-size:0.9rem;text-align:center;padding:1rem;">Henüz bağlantı yok</p>
                                 </div>
+                                
+                                <!-- Metin Ekleme Butonu (Liste Altında) -->
+                                <div style="margin-top:1rem;display:flex;gap:0.5rem;flex-wrap:wrap;">
+                                    <button type="button" id="addTextToListBtn" class="btn primary" style="padding:0.5rem 1rem;font-size:0.9rem;">
+                                        <i class="fa fa-plus"></i> Metin Ekle
+                                    </button>
+                                </div>
                             </div>
                             
                             <!-- Görsel Diyagram -->
                             <div id="diagramView" style="display:none;">
-                                <div id="topologyNetwork" style="width:100%;height:500px;border:1px solid var(--border);border-radius:0.5rem;background:#fafafa;"></div>
+                                <!-- Metin Ekleme Kontrol Paneli -->
+                                <div style="margin-bottom:0.8rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem;">
+                                    <button type="button" id="addTextToDiagramBtn" class="btn primary" style="padding:0.5rem 1rem;font-size:0.9rem;">
+                                        <i class="fa fa-plus"></i> Metin Ekle
+                                    </button>
+                                </div>
+                                
+                                <div id="topologyNetwork" style="width:100%;height:500px;border:1px solid var(--border);border-radius:0.5rem;background:#ffffff;position:relative;"></div>
+                                
                                 <div style="margin-top:0.5rem;padding:0.5rem;background:rgba(61,184,255,0.05);border-radius:0.3rem;font-size:0.75rem;color:var(--muted);">
-                                    <strong>💡 İpucu:</strong> Düğümleri sürükleyebilir, yakınlaştırabilir ve döndürebilirsiniz
+                                    <strong>💡 İpucu:</strong> Düğümleri sürükleyebilir, yakınlaştırabilir ve döndürebilirsiniz. Metin kutularını çiftli tıkla ile düzenleyebilirsiniz.
                                 </div>
                             </div>
                         </div>
                     </div>
                     
-                    <!-- Sağ Panel - Kütüphaneler -->
-                    <div style="display:flex;flex-direction:column;gap:0.8rem;max-height:600px;overflow-y:auto;">
+                    <!-- Sağ Panel - Kütüphaneler (Dropdown) -->
+                    <div style="display:flex;flex-direction:column;gap:0.5rem;min-width:280px;">
                         <!-- Sunucu Kütüphanesi -->
-                        <div style="border:1px solid var(--border);border-radius:0.5rem;padding:1rem;background:var(--card);">
-                            <h4 style="margin-bottom:0.5rem;display:flex;align-items:center;gap:0.5rem;font-size:0.95rem;">
-                                <i class="fa fa-server" style="color:#667eea;font-size:1.2em;"></i>
-                                Sunucular
-                            </h4>
-                            <p style="font-size:0.75rem;color:var(--muted);margin-bottom:0.8rem;">Tanımlanan sunucular</p>
-                            <div id="serverLibraryList" style="display:flex;flex-direction:column;gap:0.4rem;"></div>
+                        <div style="border:1px solid var(--border);border-radius:0.5rem;background:var(--card);overflow:hidden;">
+                            <div id="serverPanelToggle" style="padding:0.8rem;display:flex;align-items:center;justify-content:space-between;cursor:pointer;background:rgba(102,126,234,0.08);border-bottom:1px solid var(--border);user-select:none;" onclick="document.getElementById('serverLibraryPanel').style.display = document.getElementById('serverLibraryPanel').style.display === 'none' ? 'flex' : 'none'; this.querySelector('i').style.transform = document.getElementById('serverLibraryPanel').style.display === 'flex' ? 'rotate(180deg)' : 'rotate(0deg)';">
+                                <div style="display:flex;align-items:center;gap:0.5rem;font-weight:600;font-size:0.95rem;">
+                                    <i class="fa fa-server" style="color:#667eea;font-size:1.2em;"></i>
+                                    Sunucular
+                                </div>
+                                <i class="fa fa-chevron-down" style="transition:transform 0.3s;color:var(--muted);"></i>
+                            </div>
+                            <div id="serverLibraryPanel" style="padding:0.8rem;display:flex;flex-direction:column;gap:0.5rem;max-height:250px;overflow-y:auto;">
+                                <input type="text" id="serverSearchInput" placeholder="Sunucu ara..." style="padding:0.5rem;border:1px solid var(--border);border-radius:0.3rem;background:var(--bg);color:var(--text);font-size:0.85rem;">
+                                <p style="font-size:0.7rem;color:var(--muted);margin:0;">Sürükle-bırak ile diyagrama ekle</p>
+                                <div id="serverLibraryList" style="display:flex;flex-direction:column;gap:0.3rem;"></div>
+                            </div>
                         </div>
                         
                         <!-- Port Kütüphanesi -->
-                        <div id="portReferencePanel" style="border:1px solid var(--border);border-radius:0.5rem;padding:1rem;background:var(--card);flex:1;overflow-y:auto;min-height:200px;">
-                            <h4 style="margin-bottom:0.5rem;display:flex;align-items:center;gap:0.5rem;font-size:0.95rem;">
-                                <i class="fa fa-plug" style="color:var(--accent);font-size:1.2em;"></i>
-                                Portlar
-                            </h4>
-                            <p style="font-size:0.75rem;color:var(--muted);margin-bottom:0.8rem;">Tanımlanan portlar</p>
-                            <div id="portReferenceList" style="display:flex;flex-direction:column;gap:0.4rem;"></div>
+                        <div style="border:1px solid var(--border);border-radius:0.5rem;background:var(--card);overflow:hidden;">
+                            <div id="portPanelToggle" style="padding:0.8rem;display:flex;align-items:center;justify-content:space-between;cursor:pointer;background:rgba(var(--accent-rgb,255,152,0),0.08);border-bottom:1px solid var(--border);user-select:none;" onclick="document.getElementById('portLibraryPanel').style.display = document.getElementById('portLibraryPanel').style.display === 'none' ? 'flex' : 'none'; this.querySelector('i').style.transform = document.getElementById('portLibraryPanel').style.display === 'flex' ? 'rotate(180deg)' : 'rotate(0deg)';">
+                                <div style="display:flex;align-items:center;gap:0.5rem;font-weight:600;font-size:0.95rem;">
+                                    <i class="fa fa-plug" style="color:var(--accent);font-size:1.2em;"></i>
+                                    Portlar
+                                </div>
+                                <i class="fa fa-chevron-down" style="transition:transform 0.3s;color:var(--muted);"></i>
+                            </div>
+                            <div id="portLibraryPanel" style="padding:0.8rem;display:none;flex-direction:column;gap:0.5rem;max-height:250px;overflow-y:auto;">
+                                <input type="text" id="portSearchInput" placeholder="Port ara..." style="padding:0.5rem;border:1px solid var(--border);border-radius:0.3rem;background:var(--bg);color:var(--text);font-size:0.85rem;">
+                                <p style="font-size:0.7rem;color:var(--muted);margin:0;">Sürükle-bırak ile diyagrama ekle</p>
+                                <div id="portReferenceList" style="display:flex;flex-direction:column;gap:0.3rem;"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -745,11 +772,17 @@
             <div class="section-header">
                 <div>
                     <p class="eyebrow">Giriş Yetkililer</p>
-                    <h1>Yetkili Kullanıcılar</h1>
+                    <h1 id="accessListTitle">Yetkili Kullanıcılar</h1>
                 </div>
-                <button id="addUserBtn" class="btn primary"><i class="fa fa-user-plus"></i> Yeni Kullanıcı Ekle</button>
+                <div style="display:flex;gap:0.75rem;">
+                    <button id="showUsersViewBtn" class="btn primary" style="display:none;"><i class="fa fa-users"></i> Kullanıcı Listesi</button>
+                    <button id="showMappingsViewBtn" class="btn" style="background:#6366f1;color:#fff;border:none;"><i class="fa fa-link"></i> AD Grup Eşleştirmeleri</button>
+                    <button id="addUserBtn" class="btn primary"><i class="fa fa-user-plus"></i> Yeni Kullanıcı Ekle</button>
+                </div>
             </div>
-            <div class="panel">
+
+            <!-- Kullanıcı Listesi Görünümü -->
+            <div id="usersListView" class="panel">
                 <div class="table-wrap">
                     <table class="table">
                         <thead>
@@ -769,6 +802,41 @@
                     </table>
                 </div>
             </div>
+
+            <!-- AD Grup Eşleştirmeleri Görünümü -->
+            <div id="mappingsListView" class="panel" style="display:none;">
+                <div style="background:#f8fafc;padding:1.5rem;border-radius:0.75rem;border:1px solid #e2e8f0;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+                        <div>
+                            <h3 style="color:#1e293b;font-size:1.1rem;margin:0 0 0.25rem 0;"><i class="fa fa-link"></i> AD Grup ↔ Şeflik Eşleştirmeleri</h3>
+                            <p style="color:#64748b;font-size:0.9rem;margin:0;">Active Directory gruplarını şefliklerle eşleştirin</p>
+                        </div>
+                        <button id="addMappingBtn" class="btn primary"><i class="fa fa-plus"></i> Yeni Eşleştirme Ekle</button>
+                    </div>
+
+                    <div style="overflow-x:auto;">
+                        <table class="table" id="ldapMappingsTable" style="min-width:100%;">
+                            <thead style="background:#e2e8f0;">
+                                <tr>
+                                    <th style="padding:0.75rem;color:#1e293b;font-weight:600;">LDAP Grup Adı (CN)</th>
+                                    <th style="padding:0.75rem;color:#1e293b;font-weight:600;">Şeflik ID</th>
+                                    <th style="padding:0.75rem;color:#1e293b;font-weight:600;">Şeflik Adı</th>
+                                    <th style="padding:0.75rem;color:#1e293b;font-weight:600;">Atanan Rol</th>
+                                    <th style="padding:0.75rem;color:#1e293b;font-weight:600;text-align:center;">İşlemler</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ldapMappingsBody">
+                                <tr>
+                                    <td colspan="5" style="text-align:center;padding:2rem;color:#94a3b8;">
+                                        <i class="fa fa-inbox" style="font-size:2rem;margin-bottom:0.5rem;display:block;"></i>
+                                        Henüz eşleştirme eklenmemiş. "Yeni Eşleştirme Ekle" butonuna tıklayın.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </section>
 
         <!-- ENTEGRASYON SEKSİYONU -->
@@ -784,7 +852,7 @@
             <div class="panel">
                 <div class="panel-header">
                     <h2><i class="fa fa-network-wired"></i> LDAP / Active Directory Entegrasyonu</h2>
-                    <p class="muted">LDAP sunucusu ayarlarını yapılandırın ve grup eşleştirmelerini yönetin</p>
+                    <p class="muted">LDAP sunucusu bağlantı ayarlarını yapılandırın</p>
                 </div>
 
                 <!-- LDAP Yapılandırmaları Listesi -->
@@ -881,36 +949,6 @@
 
                     <div id="ldapConfigMessage" style="margin-top:1rem;padding:0.75rem;border-radius:0.5rem;display:none;"></div>
                 </div>
-
-                <!-- LDAP Grup Eşleştirmeleri -->
-                <div style="background:#f8fafc;padding:1.5rem;border-radius:0.75rem;border:1px solid #e2e8f0;">
-                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
-                        <h3 style="color:#1e293b;font-size:1.1rem;"><i class="fa fa-link"></i> AD Grup ↔ Şeflik Eşleştirmeleri</h3>
-                        <button id="addMappingBtn" class="btn primary"><i class="fa fa-plus"></i> Yeni Eşleştirme Ekle</button>
-                    </div>
-
-                    <div style="overflow-x:auto;">
-                        <table class="table" id="ldapMappingsTable" style="min-width:100%;">
-                            <thead style="background:#e2e8f0;">
-                                <tr>
-                                    <th style="padding:0.75rem;color:#1e293b;font-weight:600;">LDAP Grup Adı (CN)</th>
-                                    <th style="padding:0.75rem;color:#1e293b;font-weight:600;">Şeflik ID</th>
-                                    <th style="padding:0.75rem;color:#1e293b;font-weight:600;">Şeflik Adı</th>
-                                    <th style="padding:0.75rem;color:#1e293b;font-weight:600;">Atanan Rol</th>
-                                    <th style="padding:0.75rem;color:#1e293b;font-weight:600;text-align:center;">İşlemler</th>
-                                </tr>
-                            </thead>
-                            <tbody id="ldapMappingsBody">
-                                <tr>
-                                    <td colspan="5" style="text-align:center;padding:2rem;color:#94a3b8;">
-                                        <i class="fa fa-inbox" style="font-size:2rem;margin-bottom:0.5rem;display:block;"></i>
-                                        Henüz eşleştirme eklenmemiş. "Yeni Eşleştirme Ekle" butonuna tıklayın.
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
             </div>
         </section>
     </main>
@@ -944,7 +982,6 @@
                     <option value="">Rol seçiniz...</option>
                     <option value="Admin">Admin (Tüm Yetkilere Sahip)</option>
                     <option value="SheflikYetkilisi">Şeflik Yetkilisi (Sadece Kendi Şefliği)</option>
-                    <option value="User">Kullanıcı (Sadece Görüntüleme)</option>
                 </select>
             </div>
 
@@ -1086,7 +1123,7 @@
             <!-- Şeflik Seçimi -->
             <div class="form-field" style="margin-bottom:1rem;">
                 <label style="display:block;font-weight:600;margin-bottom:0.4rem;color:#334155;">Şeflik *</label>
-                <select id="userSeflik" required style="width:100%;padding:0.6rem;border:1px solid #cbd5e1;border-radius:0.5rem;">
+                <select id="userSeflik" required style="width:100%;padding:0.6rem;border:1px solid #cbd5e1;border-radius:0.5rem;background:#fff;color:#1e293b;">
                     <option value="">Seçiniz...</option>
                 </select>
             </div>
@@ -1133,6 +1170,62 @@
     <button class="fab danger" id="fabLogout"><i class="fa fa-right-from-bracket"></i></button>
 </div>
 
+<!-- Topoloji Listesi Metin Ekleme Modalı -->
+<div id="addTextToTopologyModal" style="display:none;position:fixed;z-index:99999;left:0;top:0;width:100vw;height:100vh;background:rgba(0,0,0,0.4);align-items:center;justify-content:center;">
+    <div style="background:#ffffff;padding:2rem 2.5rem;border-radius:1rem;max-width:600px;width:90%;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.15);position:relative;">
+        <button onclick="closeTextToTopologyModal()" style="position:absolute;top:1rem;right:1rem;font-size:1.2rem;background:none;border:none;cursor:pointer;color:#64748b;"><i class="fa fa-times"></i></button>
+        <h2 style="margin-bottom:1.5rem;color:#1e293b;display:flex;align-items:center;gap:0.5rem;">
+            <i class="fa fa-plus-circle" style="color:var(--accent);"></i>
+            Metin Ekle
+        </h2>
+        
+        <form id="addTextToTopologyForm">
+            <div class="form-field" style="margin-bottom:1rem;">
+                <label style="display:block;font-weight:600;margin-bottom:0.4rem;color:#334155;">Metin İçeriği</label>
+                <textarea id="topologyTextContent" required placeholder="Eklemek istediğiniz metni yazın..." rows="5" style="width:100%;padding:0.6rem;border:1px solid #cbd5e1;border-radius:0.5rem;resize:vertical;font-family:inherit;"></textarea>
+            </div>
+            
+            <div style="display:flex;gap:1rem;">
+                <button type="submit" class="btn primary" style="flex:1;"><i class="fa fa-save"></i> Kaydet</button>
+                <button type="button" onclick="closeTextToTopologyModal()" class="btn ghost" style="flex:0.5;">İptal</button>
+            </div>
+        </form>
+        
+        <div id="addTextToTopologyMessage" style="margin-top:1rem;padding:0.75rem;border-radius:0.5rem;display:none;"></div>
+    </div>
+</div>
+
+<!-- Diyagram Metin Ekleme Modalı -->
+<div id="addTextToDiagramModal" style="display:none;position:fixed;z-index:99999;left:0;top:0;width:100vw;height:100vh;background:rgba(0,0,0,0.4);align-items:center;justify-content:center;">
+    <div style="background:#ffffff;padding:2rem 2.5rem;border-radius:1rem;max-width:600px;width:90%;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.15);position:relative;">
+        <button onclick="closeTextToDiagramModal()" style="position:absolute;top:1rem;right:1rem;font-size:1.2rem;background:none;border:none;cursor:pointer;color:#64748b;"><i class="fa fa-times"></i></button>
+        <h2 style="margin-bottom:1.5rem;color:#1e293b;display:flex;align-items:center;gap:0.5rem;">
+            <i class="fa fa-plus-circle" style="color:var(--accent);"></i>
+            Diyagram Notu Ekle
+        </h2>
+        
+        <form id="addTextToDiagramForm">
+            <div class="form-field" style="margin-bottom:1rem;">
+                <label style="display:block;font-weight:600;margin-bottom:0.4rem;color:#334155;">Başlık</label>
+                <input type="text" id="diagramTextTitle" required placeholder="Örn: Önemli Bilgi" style="width:100%;padding:0.6rem;border:1px solid #cbd5e1;border-radius:0.5rem;">
+            </div>
+            
+            <div class="form-field" style="margin-bottom:1rem;">
+                <label style="display:block;font-weight:600;margin-bottom:0.4rem;color:#334155;">İçerik</label>
+                <textarea id="diagramTextContent" required placeholder="Diyagram için not veya açıklama ekleyin..." rows="5" style="width:100%;padding:0.6rem;border:1px solid #cbd5e1;border-radius:0.5rem;resize:vertical;font-family:inherit;"></textarea>
+            </div>
+            
+            <div style="display:flex;gap:1rem;">
+                <button type="submit" class="btn primary" style="flex:1;"><i class="fa fa-save"></i> Kaydet</button>
+                <button type="button" onclick="closeTextToDiagramModal()" class="btn ghost" style="flex:0.5;">İptal</button>
+            </div>
+        </form>
+        
+        <div id="addTextToDiagramMessage" style="margin-top:1rem;padding:0.75rem;border-radius:0.5rem;display:none;"></div>
+    </div>
+</div>
+
 <script src="js/app.js?v=20260131-7"></script>
+<script src="js/access-list-views.js?v=20260202"></script>
 </body>
 </html>
