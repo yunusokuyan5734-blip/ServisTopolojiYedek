@@ -122,25 +122,25 @@ namespace Backend.Controllers
 
         // Kullanıcı şifresi değiştir (Admin only, lokal kullanıcılar için)
         [HttpPost("change-password")]
-        public IActionResult ChangePassword([FromBody] ChangePasswordRequest request)
+        public IActionResult ChangePassword([FromBody] AdminChangePasswordRequest request)
         {
             var role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
             if (role != "Admin")
                 return Forbid();
 
             if (string.IsNullOrEmpty(request.Username))
-                return BadRequest("Kullanıcı adı gerekli");
+                return BadRequest(new { message = "Kullanıcı adı gerekli" });
 
             if (string.IsNullOrEmpty(request.NewPassword))
-                return BadRequest("Yeni şifre gerekli");
+                return BadRequest(new { message = "Yeni şifre gerekli" });
 
             var user = _store.GetUser(request.Username);
             if (user == null)
-                return NotFound("Kullanıcı bulunamadı");
+                return NotFound(new { message = "Kullanıcı bulunamadı" });
 
             // LDAP kullanıcılar için şifre değiştirilemez
             if (user.IsLdapUser)
-                return BadRequest("LDAP kullanıcılarının şifresi değiştirilemez");
+                return BadRequest(new { message = "LDAP kullanıcılarının şifresi değiştirilemez" });
 
             user.PasswordHash = _passwordService.HashPassword(request.NewPassword);
             _store.UpdateUser(user);
@@ -192,7 +192,7 @@ namespace Backend.Controllers
         public List<string>? AllowedTopologyIds { get; set; }
     }
 
-    public class ChangePasswordRequest
+    public class AdminChangePasswordRequest
     {
         public string Username { get; set; } = "";
         public string NewPassword { get; set; } = "";

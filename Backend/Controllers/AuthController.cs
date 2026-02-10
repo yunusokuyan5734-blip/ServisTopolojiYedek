@@ -4,6 +4,7 @@ using Backend.Services;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Backend.Controllers
 {
@@ -212,6 +213,44 @@ namespace Backend.Controllers
         {
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             return Ok(new { message = "Çıkış başarılı" });
+        }
+
+        [Authorize]
+        [HttpPost("change-password")]
+        public IActionResult ChangePassword([FromBody] ChangePasswordRequest request)
+        {
+            var username = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                ?? User.FindFirst(ClaimTypes.Name)?.Value;
+
+            if (string.IsNullOrWhiteSpace(username))
+                return Unauthorized(new { message = "Oturum bulunamadı" });
+
+            if (string.IsNullOrWhiteSpace(request?.OldPassword))
+                return BadRequest(new { message = "Eski şifre gerekli" });
+
+            if (string.IsNullOrWhiteSpace(request.NewPassword))
+                return BadRequest(new { message = "Yeni şifre gerekli" });
+
+            if (request.NewPassword.Length < 3)
+                return BadRequest(new { message = "Yeni şifre en az 3 karakter olmalı" });
+
+            var user = _store.GetUser(username);
+            if (user == null)
+                return NotFound(new { message = "Kullanıcı bulunamadı" });
+
+            if (user.IsLdapUser)
+                return BadRequest(new { message = "LDAP kullanıcılarının şifresi değiştirilemez" });
+
+            if (string.IsNullOrEmpty(user.PasswordHash) ||
+                !_passwordService.VerifyPassword(request.OldPassword, user.PasswordHash))
+            {
+                return BadRequest(new { message = "Eski şifre hatalı" });
+            }
+
+            user.PasswordHash = _passwordService.HashPassword(request.NewPassword);
+            _store.UpdateUser(user);
+
+            return Ok(new { message = "Şifre başarıyla değiştirildi" });
         }
 
 

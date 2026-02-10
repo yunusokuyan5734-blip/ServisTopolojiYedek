@@ -4,8 +4,12 @@
 
 # User data / runtime data
 Backend/wwwroot/uploads/
+Backend/Data/*.json
 Backend/Data/topologies.json
 Data/*.json
+
+# VS Code workspace files
+*.code-workspace
 
 # OS
 .DS_Store

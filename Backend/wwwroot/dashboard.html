@@ -1052,7 +1052,7 @@
         <button onclick="closeChangePasswordModal()" style="position:absolute;top:1rem;right:1rem;font-size:1.2rem;background:none;border:none;cursor:pointer;color:#64748b;"><i class="fa fa-times"></i></button>
         <h2 style="margin-bottom:1.5rem;color:#1e293b;"><i class="fa fa-key"></i> Şifre Değiştir</h2>
         
-        <form id="changePasswordForm">
+        <form id="adminChangePasswordForm">
             <div class="form-field" style="margin-bottom:1rem;">
                 <label style="display:block;font-weight:600;margin-bottom:0.4rem;color:#334155;">Kullanıcı</label>
                 <input type="text" id="changePasswordUsername" readonly style="width:100%;padding:0.6rem;border:1px solid #cbd5e1;border-radius:0.5rem;background:#f1f5f9;color:#64748b;">
@@ -1060,12 +1060,12 @@
 
             <div class="form-field" style="margin-bottom:1rem;">
                 <label style="display:block;font-weight:600;margin-bottom:0.4rem;color:#334155;">Yeni Şifre *</label>
-                <input type="password" id="newPassword" required style="width:100%;padding:0.6rem;border:1px solid #cbd5e1;border-radius:0.5rem;background:#fff;color:#1e293b;">
+                <input type="password" id="adminNewPassword" required style="width:100%;padding:0.6rem;border:1px solid #cbd5e1;border-radius:0.5rem;background:#fff;color:#1e293b;">
             </div>
 
             <div class="form-field" style="margin-bottom:1.5rem;">
                 <label style="display:block;font-weight:600;margin-bottom:0.4rem;color:#334155;">Şifre Tekrar *</label>
-                <input type="password" id="confirmPassword" required style="width:100%;padding:0.6rem;border:1px solid #cbd5e1;border-radius:0.5rem;background:#fff;color:#1e293b;">
+                <input type="password" id="adminConfirmPassword" required style="width:100%;padding:0.6rem;border:1px solid #cbd5e1;border-radius:0.5rem;background:#fff;color:#1e293b;">
             </div>
 
             <div style="padding:1rem;background:#fef2f2;border-left:3px solid #ef4444;border-radius:0.5rem;margin-bottom:1rem;">
@@ -1078,7 +1078,20 @@
             </div>
         </form>
 
-        <div id="changePasswordMessage" style="margin-top:1rem;padding:0.75rem;border-radius:0.5rem;display:none;"></div>
+        <div id="adminChangePasswordMessage" style="margin-top:1rem;padding:0.75rem;border-radius:0.5rem;display:none;"></div>
+    </div>
+</div>
+
+<!-- Not Görüntüleme Modalı -->
+<div id="noteModal" style="display:none;position:fixed;z-index:99999;left:0;top:0;width:100vw;height:100vh;background:rgba(0,0,0,0.4);align-items:center;justify-content:center;">
+    <div style="background:#fff;padding:2rem 2.5rem;border-radius:1rem;max-width:600px;width:90%;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.15);position:relative;">
+        <button onclick="closeNoteModal()" style="position:absolute;top:1rem;right:1rem;font-size:1.2rem;background:none;border:none;cursor:pointer;color:#64748b;"><i class="fa fa-times"></i></button>
+        <h2 style="margin-bottom:0.4rem;color:#1e293b;"><i class="fa fa-note-sticky"></i> Not</h2>
+        <div id="noteModalTitle" style="margin-bottom:1rem;color:#64748b;font-size:0.9rem;"></div>
+        <div id="noteModalBody" style="white-space:normal;color:#0f172a;line-height:1.5;"></div>
+        <div style="margin-top:1.5rem;display:flex;gap:1rem;">
+            <button type="button" onclick="closeNoteModal()" class="btn ghost" style="flex:0.5;">Kapat</button>
+        </div>
     </div>
 </div>
 

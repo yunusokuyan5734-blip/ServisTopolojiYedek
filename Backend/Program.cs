@@ -14,6 +14,8 @@ builder.Services.AddScoped<PasswordService>();
 builder.Services.AddScoped<TopologyStoreService>();
 builder.Services.AddScoped<LdapService>();
 builder.Services.AddScoped<LdapConfigService>();
+builder.Services.AddScoped<VcenterNotesUpdater>();
+builder.Services.AddHostedService<VcenterNotesSyncService>();
 builder.Services.AddLogging();
 builder.Services.AddCors(options =>
 {

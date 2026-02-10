@@ -63,6 +63,168 @@ function showDiagramModal(connections, filename) {
     });
 }
 
+function attachTextNotes() {
+    const listBtn = document.getElementById('addTextToListBtn');
+    const diagramBtn = document.getElementById('addTextToDiagramBtn');
+    const listForm = document.getElementById('addTextToTopologyForm');
+    const diagramForm = document.getElementById('addTextToDiagramForm');
+
+    if (listBtn) {
+        listBtn.addEventListener('click', () => {
+            openTextToTopologyModal();
+        });
+    }
+
+    if (diagramBtn) {
+        diagramBtn.addEventListener('click', () => {
+            openTextToDiagramModal();
+        });
+    }
+
+    if (listForm) {
+        listForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const content = document.getElementById('topologyTextContent').value.trim();
+            if (!content) {
+                showTextNoteMessage('addTextToTopologyMessage', 'Lutfen metin giriniz', 'error');
+                return;
+            }
+
+            canvasData.listNotes.push({
+                id: Date.now(),
+                content: content
+            });
+
+            renderTopologyConnections();
+            showTextNoteMessage('addTextToTopologyMessage', 'Metin listeye eklendi', 'success');
+            setTimeout(() => {
+                closeTextToTopologyModal();
+            }, 800);
+        });
+    }
+
+    if (diagramForm) {
+        diagramForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const title = document.getElementById('diagramTextTitle').value.trim();
+            const content = document.getElementById('diagramTextContent').value.trim();
+            if (!title || !content) {
+                showTextNoteMessage('addTextToDiagramMessage', 'Lutfen baslik ve icerik giriniz', 'error');
+                return;
+            }
+
+            canvasData.diagramNotes.push({
+                id: Date.now(),
+                title: title,
+                content: content
+            });
+
+            renderDiagramNotes();
+            showTextNoteMessage('addTextToDiagramMessage', 'Diyagram notu eklendi', 'success');
+            setTimeout(() => {
+                closeTextToDiagramModal();
+            }, 800);
+        });
+    }
+}
+
+function openTextToTopologyModal() {
+    const modal = document.getElementById('addTextToTopologyModal');
+    if (!modal) return;
+    document.getElementById('addTextToTopologyForm')?.reset();
+    clearTextNoteMessage('addTextToTopologyMessage');
+    modal.style.display = 'flex';
+}
+
+function closeTextToTopologyModal() {
+    const modal = document.getElementById('addTextToTopologyModal');
+    if (!modal) return;
+    modal.style.display = 'none';
+    document.getElementById('addTextToTopologyForm')?.reset();
+    clearTextNoteMessage('addTextToTopologyMessage');
+}
+
+function openTextToDiagramModal() {
+    const modal = document.getElementById('addTextToDiagramModal');
+    if (!modal) return;
+    document.getElementById('addTextToDiagramForm')?.reset();
+    clearTextNoteMessage('addTextToDiagramMessage');
+    modal.style.display = 'flex';
+}
+
+function closeTextToDiagramModal() {
+    const modal = document.getElementById('addTextToDiagramModal');
+    if (!modal) return;
+    modal.style.display = 'none';
+    document.getElementById('addTextToDiagramForm')?.reset();
+    clearTextNoteMessage('addTextToDiagramMessage');
+}
+
+function showTextNoteMessage(elementId, text, type) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    el.textContent = text;
+    el.style.display = 'block';
+    el.style.background = type === 'success' ? '#d1fae5' : '#fee2e2';
+    el.style.color = type === 'success' ? '#065f46' : '#991b1b';
+    el.style.border = type === 'success' ? '1px solid #10b981' : '1px solid #ef4444';
+}
+
+function clearTextNoteMessage(elementId) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    el.textContent = '';
+    el.style.display = 'none';
+    el.style.background = '';
+    el.style.color = '';
+    el.style.border = '';
+}
+
+function removeListNote(noteId) {
+    canvasData.listNotes = (canvasData.listNotes || []).filter(n => n.id !== noteId);
+    renderTopologyConnections();
+}
+
+function renderDiagramNotes() {
+    const host = document.getElementById('topologyNetwork');
+    if (!host) return;
+
+    let notesContainer = document.getElementById('diagramNotesContainer');
+    if (!notesContainer) {
+        notesContainer = document.createElement('div');
+        notesContainer.id = 'diagramNotesContainer';
+        notesContainer.style.cssText = 'margin-top:0.6rem;display:flex;flex-direction:column;gap:0.5rem;';
+        host.parentElement?.appendChild(notesContainer);
+    }
+
+    const notes = canvasData.diagramNotes || [];
+    if (notes.length === 0) {
+        notesContainer.style.display = 'none';
+        notesContainer.innerHTML = '';
+        return;
+    }
+
+    notesContainer.style.display = 'flex';
+    notesContainer.innerHTML = notes.map(note => `
+        <div style="padding:0.6rem 0.7rem;background:#f8fafc;border-radius:0.3rem;border:1px solid var(--border);">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:0.6rem;">
+                <div style="flex:1;">
+                    <div style="font-weight:700;color:var(--accent);margin-bottom:0.2rem;">${escapeHtml(note.title)}</div>
+                    <div style="font-size:0.85rem;color:var(--text);white-space:pre-wrap;">${escapeHtml(note.content)}</div>
+                </div>
+                <button type="button" onclick="removeDiagramNote(${note.id})" style="font-size:0.75rem;background:none;border:none;color:var(--error);cursor:pointer;padding:0.3rem 0.5rem;opacity:0.6;transition:opacity 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'" title="Sil">
+                    <i class="fa fa-trash"></i>
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function removeDiagramNote(noteId) {
+    canvasData.diagramNotes = (canvasData.diagramNotes || []).filter(n => n.id !== noteId);
+    renderDiagramNotes();
+}
+
 function renderModalListView(connections) {
     const container = document.getElementById('modalListViewContent');
     if (!container) return;
@@ -228,7 +390,7 @@ let currentSource = null; // {type: 'server'|'internal-vip'|'wan-ip', name, ip, 
 let allTopologies = [];
 let allServers = [];
 let allPorts = [];
-let canvasData = { shapes: [], connections: [] };
+let canvasData = { shapes: [], connections: [], listNotes: [], diagramNotes: [] };
 let currentPage = 1;
 let pageSize = 10;
 let lastFilteredRaw = [];
@@ -298,6 +460,7 @@ const uniquePortsByNumber = (ports) => {
 document.addEventListener('DOMContentLoaded', () => {
     attachNav();
     attachChangePassword();
+    attachTextNotes();
     loadAndDisplayTopologies();
     loadShefliklerFromBackend();
     attachTopologyFilters();
@@ -397,18 +560,7 @@ function attachNav() {
 }
 
 function showSection(id) {
-    document.querySelectorAll('.section').forEach(sec => {
-        sec.classList.toggle('active', sec.id === id);
-    });
-
-    if (id === 'integration') {
-        if (typeof loadLdapConfig === 'function') loadLdapConfig();
-        if (typeof loadLdapMappings === 'function') loadLdapMappings();
-    }
-
-    if (id === 'admin-list' || id === 'access-list') {
-        if (typeof loadUsers === 'function') loadUsers();
-    }
+    switchSection(id);
 }
 
 // ======== ŞIFRE DEĞIŞTIR ========
@@ -699,6 +851,8 @@ function renderTable(rows) {
         const user = r.user || r.User || '-';
         const platform = r.platform || r.Platform || '-';
         const critical = r.critical || r.Critical || '-';
+        const note = r.note || r.Note || '';
+        const noteEncoded = encodeURIComponent(note).replace(/'/g, "\\'");
         const versionBadge = `<span class="badge lilac" style="background:linear-gradient(90deg,#a084ee,#7c5dff);color:#fff;">${version}</span>`;
         const serverCell = `
             <div style="display:flex;align-items:center;gap:0.5rem;">
@@ -723,6 +877,7 @@ function renderTable(rows) {
             <td class="actions">
                 <button class="btn primary" onclick="downloadTopology('${file}')"><i class="fa fa-download"></i> İndir</button>
                 <button class="btn" style="color:#64748b;border:1.5px solid #64748b;background:#fff;" onclick="viewTopology('${file}')"><i class="fa fa-eye"></i> Görüntüle</button>
+                <button class="btn" style="color:#0f172a;border:1.5px solid #0f172a;background:#fff;" onclick="openNoteModal(decodeURIComponent('${noteEncoded}'), '${server}', '${ip}')"><i class="fa fa-note-sticky"></i> Not</button>
                 <button class="btn lilac" onclick="showVersionHistory('${server}','${ip}')"><i class="fa fa-history"></i> Geçmiş</button>
                 <button class="btn warning" onclick="editTopology('${server}','${ip}')"><i class="fa fa-pen"></i> Düzenle</button>
                 <button class="btn danger" onclick="deleteTopology('${server}','${ip}')"><i class="fa fa-trash"></i> Sil</button>
@@ -986,6 +1141,49 @@ function showNotification(message, type = 'info') {
     }, 3000);
 }
 
+async function openNoteModal(nameEncoded, serverEncoded, ipEncoded) {
+    const modal = document.getElementById('noteModal');
+    const title = document.getElementById('noteModalTitle');
+    const body = document.getElementById('noteModalBody');
+    if (!modal || !title || !body) return;
+
+    const name = decodeURIComponent(nameEncoded || '').trim();
+    const server = decodeURIComponent(serverEncoded || '').trim();
+    const ip = decodeURIComponent(ipEncoded || '').trim();
+    const safeServer = server || '-';
+    const safeIp = ip || '-';
+
+    title.textContent = `${safeServer} (${safeIp})`;
+    body.innerHTML = '<span style="color:#64748b;">Yukleniyor...</span>';
+    modal.style.display = 'flex';
+
+    try {
+        const query = new URLSearchParams({
+            server: server,
+            ip: ip,
+            name: name
+        });
+        const response = await fetch(`${API_BASE}/topology/vcenter-note?${query.toString()}`, { credentials: 'include' });
+        const result = await readJsonSafe(response);
+        if (result.ok && result.data?.success) {
+            const note = result.data.note || '';
+            const noteHtml = escapeHtml(note).replace(/\n/g, '<br>');
+            body.innerHTML = noteHtml || 'Not bulunamadi.';
+        } else {
+            const message = result.data?.message || result.error || 'Not bulunamadi.';
+            body.innerHTML = escapeHtml(message);
+        }
+    } catch (error) {
+        body.innerHTML = escapeHtml('Not alinirken hata olustu.');
+    }
+}
+
+function closeNoteModal() {
+    const modal = document.getElementById('noteModal');
+    if (!modal) return;
+    modal.style.display = 'none';
+}
+
 async function loadShefliklerFromBackend() {
     try {
         const response = await fetch('/api/sheflik/list');
@@ -1003,8 +1201,11 @@ async function loadShefliklerFromBackend() {
             sampleSheflikler.length = 0;
             sampleSheflikler.push(...data.map(s => {
                 console.log('Mapping:', s);
+                const name = s.Name || s.name;
+                const id = s.Id || s.id || normalizeSeflikIdLocal(name);
                 return {
-                    name: s.Name || s.name,
+                    id: id,
+                    name: name,
                     status: s.Status || s.status,
                     date: s.Date || s.date
                 };
@@ -1018,6 +1219,22 @@ async function loadShefliklerFromBackend() {
     } catch (error) {
         console.error('Şeflikler yüklenirken hata:', error);
     }
+}
+
+function normalizeSeflikIdLocal(name) {
+    if (!name) return '';
+    return String(name)
+        .replace(/ç/gi, 'c')
+        .replace(/ğ/gi, 'g')
+        .replace(/ı/g, 'i')
+        .replace(/İ/g, 'i')
+        .replace(/ö/gi, 'o')
+        .replace(/ş/gi, 's')
+        .replace(/ü/gi, 'u')
+        .toUpperCase()
+        .replace(/[^A-Z0-9]+/g, '_')
+        .replace(/^_+|_+$/g, '')
+        .replace(/_+/g, '_');
 }
 
 function attachSheflikler() {
@@ -1469,6 +1686,7 @@ async function ensureAuth() {
         const seflikName = data.seflikName || null;
 
         window.currentUserRole = role;
+        window.currentUsername = user;
         
         const tag = document.getElementById('usernameTag');
         if (tag) {
@@ -1493,7 +1711,7 @@ async function ensureAuth() {
         // *** ROL BAZLI UI KISITLAMASI ***
         // Şeflik Yetkilisi için sidebar'daki belirli menüleri gizle
         if (role === 'SheflikYetkilisi') {
-            const restrictedTargets = ['servers', 'ports', 'canvas', 'admin'];
+            const restrictedTargets = ['servers', 'ports', 'canvas', 'admin-list', 'access-list', 'integration'];
             restrictedTargets.forEach(target => {
                 const navItem = document.querySelector(`.nav-item[data-target="${target}"]`);
                 if (navItem) {
@@ -1505,10 +1723,11 @@ async function ensureAuth() {
         
         // Admin değilse admin panelini gizle
         if (role !== 'Admin') {
-            const adminNavItem = document.querySelector('.nav-item[data-target="admin"]');
-            if (adminNavItem) {
-                adminNavItem.style.display = 'none';
-            }
+            const restricted = ['admin-list', 'access-list', 'integration'];
+            restricted.forEach(target => {
+                const item = document.querySelector(`.nav-item[data-target="${target}"]`);
+                if (item) item.style.display = 'none';
+            });
         }
         
         const adminBtn = document.getElementById('adminTopBtn');
@@ -1518,9 +1737,9 @@ async function ensureAuth() {
                 adminBtn.style.display = 'none';
             } else {
                 adminBtn.addEventListener('click', () => {
-                    showSection('admin');
+                    showSection('admin-list');
                     document.querySelectorAll('.nav-item[data-target]').forEach(btn => {
-                        btn.classList.toggle('active', btn.getAttribute('data-target') === 'admin');
+                        btn.classList.toggle('active', btn.getAttribute('data-target') === 'admin-list');
                     });
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                 });
@@ -2990,12 +3209,28 @@ function renderTopologyConnections() {
     const container = document.getElementById('topologyConnectionsList');
     if (!container) return;
     
-    if (canvasData.connections.length === 0) {
+    const notes = canvasData.listNotes || [];
+    const connections = canvasData.connections || [];
+
+    if (notes.length === 0 && connections.length === 0) {
         container.innerHTML = '<p style="color:var(--muted);font-size:0.9rem;text-align:center;padding:1rem;">Henüz bağlantı yok</p>';
         return;
     }
-    
-    container.innerHTML = canvasData.connections.map((conn, idx) => {
+
+    const notesHtml = notes.map(note => `
+        <div style="padding:0.6rem 0.7rem;background:#f8fafc;border-radius:0.3rem;border:1px solid var(--border);margin-bottom:0.4rem;">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:0.6rem;">
+                <div style="flex:1;font-size:0.85rem;color:var(--text);white-space:pre-wrap;">
+                    <strong style="color:var(--accent);">📝 Not:</strong> ${escapeHtml(note.content)}
+                </div>
+                <button type="button" onclick="removeListNote(${note.id})" style="font-size:0.75rem;background:none;border:none;color:var(--error);cursor:pointer;padding:0.3rem 0.5rem;opacity:0.6;transition:opacity 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'" title="Sil">
+                    <i class="fa fa-trash"></i>
+                </button>
+            </div>
+        </div>
+    `).join('');
+
+    const connectionsHtml = connections.map((conn, idx) => {
         const getSourceIcon = () => conn.source.type === 'server' ? '🖥️' : '🌐';
         const getDestIcon = () => conn.destination.type === 'server' ? '🖥️' : '🌐';
         
@@ -3053,6 +3288,8 @@ function renderTopologyConnections() {
             </div>
         `;
     }).join('');
+
+    container.innerHTML = notesHtml + connectionsHtml;
 }
 
 function removeConnection(connId) {
@@ -3105,6 +3342,7 @@ function renderNetworkDiagram() {
     
     if (canvasData.connections.length === 0) {
         container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--muted);font-size:0.9rem;">Henüz bağlantı yok</div>';
+        renderDiagramNotes();
         return;
     }
     
@@ -3344,6 +3582,7 @@ function renderNetworkDiagram() {
     }
     
     networkInstance = new vis.Network(container, data, options);
+    renderDiagramNotes();
 }
 
 // Global fonksiyon olarak dışa aktar
@@ -3366,26 +3605,28 @@ function switchSection(targetId) {
             renderOverview();
         } else if (targetId === 'canvas') {
             attachTopologyBuilder();
+            renderTopologyConnections();
+            renderNetworkDiagram();
         } else if (targetId === 'servers') {
             if (!preserveServerFilterOnce) {
                 serverCriticalFilter = null;
             }
             preserveServerFilterOnce = false;
-            renderServers();
+            renderServersTable();
+            if (typeof renderServerLibrary === 'function') renderServerLibrary();
         } else if (targetId === 'ports') {
-            renderPorts();
+            renderPortsTable(uniquePortsByNumber(allPorts));
+            renderPortReference();
         } else if (targetId === 'topologies') {
             loadAndDisplayTopologies();
         } else if (targetId === 'sheflikler') {
             loadShefliklerFromBackend();
-        } else if (targetId === 'admin-list') {
-            renderAdminList();
-        } else if (targetId === 'access-list') {
-            renderAccessList();
-        } else if (targetId === 'admin') {
-            // LDAP konfigürasyonlarını ve mappings'i yükle
-            loadLdapConfigsList();
-            loadLdapMappings();
+        } else if (targetId === 'admin-list' || targetId === 'access-list') {
+            if (typeof loadUsers === 'function') loadUsers();
+        } else if (targetId === 'integration') {
+            if (typeof loadLdapConfig === 'function') loadLdapConfig();
+            if (typeof loadLdapConfigsList === 'function') loadLdapConfigsList();
+            if (typeof loadLdapMappings === 'function') loadLdapMappings();
         }
     }
 }
@@ -3674,93 +3915,16 @@ function renderSheflikler() {
 }
 
 function renderAdminList() {
-    // Admin listesi şu anda basit görüntüleme
-    return;
+    if (typeof loadUsers === 'function') loadUsers();
 }
 
 function renderAccessList() {
-    // Access listesi şu anda basit görüntüleme
-    return;
-}
-
-function deleteServer(id) {
-    if (confirm('Sunucuyu silmek istediğinize emin misiniz?')) {
-        allServers = allServers.filter(s => s.id != id);
-        renderServers();
-    }
+    if (typeof loadUsers === 'function') loadUsers();
 }
 
 function loadTopology(id) {
     alert('Topoloji yükleme özelliği yakında gelecek');
 }
-
-function editPort(number) {
-    alert('Port düzenleme özelliği yakında gelecek');
-}
-
-// Sayfa yüklendiğinde
-document.addEventListener('DOMContentLoaded', () => {
-    // Nav butonlarına event listener ekle
-    document.querySelectorAll('.nav-item[data-target]').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const targetId = this.getAttribute('data-target');
-            switchSection(targetId);
-            
-            // Aktif nav item'ı güncelle
-            document.querySelectorAll('.nav-item[data-target]').forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-        });
-    });
-    
-    // Server ekle butonu
-    const addServerBtn = document.getElementById('addServerBtn');
-    if (addServerBtn) {
-        addServerBtn.addEventListener('click', function() {
-            const name = document.getElementById('serverNameInput')?.value.trim();
-            const ip = document.getElementById('serverIpInput')?.value.trim();
-            
-            if (name && ip) {
-                allServers.push({
-                    id: `server-${Date.now()}`,
-                    name: name,
-                    ip: ip,
-                    critical: 'Orta',
-                    date: new Date().toLocaleDateString('tr-TR')
-                });
-                
-                document.getElementById('serverNameInput').value = '';
-                document.getElementById('serverIpInput').value = '';
-                renderServers();
-                alert('Sunucu başarıyla eklendi!');
-            } else {
-                alert('Lütfen tüm alanları doldurunuz!');
-            }
-        });
-    }
-    
-    // Default portları yükle butonu
-    const loadDefaultPortsBtn = document.getElementById('loadDefaultPortsBtn');
-    if (loadDefaultPortsBtn) {
-        loadDefaultPortsBtn.addEventListener('click', function() {
-            allPorts = [...defaultPorts];
-            renderPorts();
-            alert('Varsayılan portlar yüklendi!');
-        });
-    }
-    
-    // İlk sayfayı render et
-    const overview = document.getElementById('overview');
-    if (overview) {
-        overview.classList.add('active');
-        const firstNav = document.querySelector('.nav-item[data-target="overview"]');
-        if (firstNav) firstNav.classList.add('active');
-    }
-    
-    renderOverview();
-    renderServers();
-    renderSheflikler();
-    renderPorts();
-});
 
 // ======== LDAP ENTEGRASYON YÖNETİMİ ========
 let currentEditingMappingId = null;
@@ -4620,8 +4784,8 @@ function attachUserManagement() {
     // Kullanıcıları yükle
     loadUsers();
     
-    // Şeflik dropdown'ını doldur
-    populateSheflikDropdown();
+    // Şeflik dropdown'ını backend'den doldur (id gereklidir)
+    loadShefliklerFromBackend();
     
     // Topoloji listesini yükle
     loadTopologiesForSelection();
@@ -4689,16 +4853,16 @@ async function loadUsers() {
                 adminTable.innerHTML = admins.map(u => {
                     const isLdap = (u.isLdapUser ?? u.IsLdapUser);
                     const username = u.username || u.Username;
-                    const isAdminUser = username === 'admin';
+                    const isAdminUser = (username || '').toLowerCase() === 'admin';
                     return `
                     <tr>
                         <td><strong>${username}</strong></td>
                         <td><span style="padding:0.3rem 0.6rem;border-radius:0.3rem;background:${isLdap ? '#dbeafe' : '#fef3c7'};color:${isLdap ? '#1e40af' : '#92400e'};font-size:0.85rem;">${isLdap ? 'LDAP' : 'Lokal'}</span></td>
                         <td>${new Date(u.createdAt || u.CreatedAt).toLocaleDateString('tr-TR')}</td>
                         <td>
-                            <button onclick="editUser('${username}')" class="btn-edit" ${isAdminUser ? 'disabled' : ''}><i class="fa fa-edit"></i> Düzenle</button>
+                            <button onclick="editAdminUser('${username}')" class="btn-edit"><i class="fa fa-edit"></i> Düzenle</button>
                             ${!isLdap ? `<button onclick="openChangePasswordModal('${username}')" class="btn-primary" style="padding:0.4rem 0.8rem;font-size:0.85rem;margin:0 0.3rem;"><i class="fa fa-key"></i> Şifre</button>` : ''}
-                            <button onclick="deleteUser('${username}')" class="btn-delete" ${isAdminUser ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''}><i class="fa fa-trash"></i> Sil</button>
+                            <button onclick="deleteUser('${username}')" class="btn-delete"><i class="fa fa-trash"></i> Sil</button>
                         </td>
                     </tr>
                     `;
@@ -4895,48 +5059,49 @@ window.editUser = async function(username) {
     try {
         const response = await fetch(`${API_BASE}/user/list`, { credentials: 'include' });
         if (!response.ok) return;
-        
-        const users = await response.json();
-        const user = users.find(u => u.username === username);
-        
+
+        const result = await readJsonSafe(response);
+        if (!result.ok || result.isHtml) return;
+
+        const users = result.data;
+        const target = (username || '').toLowerCase();
+        const user = users.find(u => ((u.username || u.Username || '')).toLowerCase() === target);
+
         if (user) {
-            currentEditingUser = username;
+            currentEditingUser = user.username || user.Username || username;
             document.getElementById('userModalTitle').textContent = 'Kullanıcıyı Düzenle';
-            document.getElementById('userUsername').value = user.username;
+            document.getElementById('userUsername').value = user.username || user.Username || username;
             document.getElementById('userUsername').readOnly = true;
-            document.getElementById('userRole').value = user.role;
-            
-            // Şeflik seç
+            document.getElementById('userRole').value = user.role || user.Role || 'User';
+
+            const seflikId = user.seflikId || user.SeflikId || '';
             const seflikSelect = document.getElementById('userSeflik');
             for (let opt of seflikSelect.options) {
-                if (opt.value === user.seflikId) {
+                if (opt.value === seflikId) {
                     opt.selected = true;
                     break;
                 }
             }
-            
-            // Kullanıcı tipi
-            if (user.isLdapUser) {
-                document.querySelector('input[name="userType"][value="ldap"]').checked = true;
-            } else {
-                document.querySelector('input[name="userType"][value="local"]').checked = true;
-            }
+
+            const isLdap = (user.isLdapUser ?? user.IsLdapUser) === true;
+            document.querySelector(`input[name="userType"][value="${isLdap ? 'ldap' : 'local'}"]`).checked = true;
             toggleUserType();
-            
-            // İzin tipi
-            document.querySelector(`input[name="permType"][value="${user.permissionType}"]`).checked = true;
+
+            const permType = user.permissionType || user.PermissionType || 'Sheflik';
+            const permRadio = document.querySelector(`input[name="permType"][value="${permType}"]`);
+            if (permRadio) permRadio.checked = true;
             togglePermType();
-            
-            // Spesifik sunucular
-            if (user.permissionType === 'Specific' && user.allowedTopologyIds) {
+
+            const allowedIds = user.allowedTopologyIds || user.AllowedTopologyIds || [];
+            if (permType === 'Specific' && allowedIds.length) {
                 setTimeout(() => {
-                    user.allowedTopologyIds.forEach(id => {
+                    allowedIds.forEach(id => {
                         const checkbox = document.querySelector(`#topologyCheckboxes input[value="${id}"]`);
                         if (checkbox) checkbox.checked = true;
                     });
                 }, 500);
             }
-            
+
             document.getElementById('userModal').style.display = 'flex';
         }
     } catch (error) {
@@ -4944,11 +5109,41 @@ window.editUser = async function(username) {
     }
 }
 
+window.editAdminUser = async function(username) {
+    try {
+        const response = await fetch(`${API_BASE}/user/list`, { credentials: 'include' });
+        if (!response.ok) return;
+
+        const result = await readJsonSafe(response);
+        if (!result.ok || result.isHtml) return;
+
+        const users = result.data;
+        const target = (username || '').toLowerCase();
+        const user = users.find(u => ((u.username || u.Username || '')).toLowerCase() === target);
+
+        if (user) {
+            currentEditingUser = user.username || user.Username || username;
+            document.getElementById('adminUserModalTitle').textContent = 'Admin Kullanıcıyı Düzenle';
+            document.getElementById('adminUsername').value = user.username || user.Username || username;
+            document.getElementById('adminUsername').readOnly = true;
+
+            const isLdap = (user.isLdapUser ?? user.IsLdapUser) === true;
+            document.querySelector(`input[name="adminUserType"][value="${isLdap ? 'ldap' : 'local'}"]`).checked = true;
+            toggleAdminUserType();
+            document.getElementById('adminPassword').value = '';
+
+            document.getElementById('adminUserModal').style.display = 'flex';
+        }
+    } catch (error) {
+        console.error('Admin kullanıcı yüklenemedi:', error);
+    }
+}
+
 window.deleteUser = async function(username) {
     if (!confirm(`"${username}" kullanıcısını silmek istediğinize emin misiniz?`)) return;
     
     try {
-        const response = await fetch(`${API_BASE}/user/delete/${username}`, {
+        const response = await fetch(`${API_BASE}/user/delete/${encodeURIComponent(username)}`, {
             method: 'DELETE',
             credentials: 'include'
         });
@@ -4957,8 +5152,9 @@ window.deleteUser = async function(username) {
             showNotification('Kullanıcı başarıyla silindi', 'success');
             loadUsers();
         } else {
-            const data = await response.json();
-            showNotification('Silme başarısız: ' + (data.message || 'Bilinmeyen hata'), 'error');
+            const result = await readJsonSafe(response);
+            const message = result.data?.message || result.error || 'Bilinmeyen hata';
+            showNotification('Silme başarısız: ' + message, 'error');
         }
     } catch (error) {
         showNotification('Silme hatası: ' + error.message, 'error');
@@ -5181,7 +5377,7 @@ function populateSheflikDropdown() {
     if (!select) return;
     
     select.innerHTML = '<option value="">Seçiniz...</option>' +
-        sampleSheflikler.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+    sampleSheflikler.map(s => `<option value="${s.id || normalizeSeflikIdLocal(s.name)}">${s.name}</option>`).join('');
 }
 
 async function loadTopologiesForSelection() {
@@ -5214,31 +5410,38 @@ function updateTopologyCheckboxes() {
 }
 // Şifre değişimi fonksiyonları
 function openChangePasswordModal(username) {
-    document.getElementById('changePasswordUsername').value = username;
-    document.getElementById('changePasswordForm').reset();
-    document.getElementById('changePasswordMessage').innerHTML = '';
-    document.getElementById('changePasswordMessage').style.display = 'none';
+    const safeUsername = username || window.currentUsername || '';
+    document.getElementById('adminChangePasswordForm').reset();
+    document.getElementById('changePasswordUsername').value = safeUsername;
+    document.getElementById('adminChangePasswordMessage').innerHTML = '';
+    document.getElementById('adminChangePasswordMessage').style.display = 'none';
     document.getElementById('changePasswordModal').style.display = 'flex';
 }
 
 function closeChangePasswordModal() {
     document.getElementById('changePasswordModal').style.display = 'none';
-    document.getElementById('changePasswordForm').reset();
-    document.getElementById('changePasswordMessage').innerHTML = '';
+    document.getElementById('adminChangePasswordForm').reset();
+    document.getElementById('adminChangePasswordMessage').innerHTML = '';
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    const changePasswordForm = document.getElementById('changePasswordForm');
+    const changePasswordForm = document.getElementById('adminChangePasswordForm');
     if (changePasswordForm) {
         changePasswordForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const username = document.getElementById('changePasswordUsername').value;
-            const newPassword = document.getElementById('newPassword').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
-            const messageDiv = document.getElementById('changePasswordMessage');
+            const newPassword = document.getElementById('adminNewPassword').value;
+            const confirmPassword = document.getElementById('adminConfirmPassword').value;
+            const messageDiv = document.getElementById('adminChangePasswordMessage');
             
             // Doğrulama
+            if (!username) {
+                messageDiv.innerHTML = '<p style="color:#dc2626;margin:0;"><i class="fa fa-exclamation-circle"></i> Kullanici secilemedi</p>';
+                messageDiv.style.display = 'block';
+                return;
+            }
+
             if (!newPassword || !confirmPassword) {
                 messageDiv.innerHTML = '<p style="color:#dc2626;margin:0;"><i class="fa fa-exclamation-circle"></i> Lütfen tüm alanları doldurunuz</p>';
                 messageDiv.style.display = 'block';
@@ -5275,14 +5478,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     messageDiv.style.background = '#d1fae5';
                     messageDiv.style.borderLeft = '3px solid #10b981';
                     messageDiv.style.color = '#065f46';
-                    document.getElementById('changePasswordForm').reset();
+                    document.getElementById('adminChangePasswordForm').reset();
                     
                     setTimeout(() => {
                         closeChangePasswordModal();
                         loadUsers();
                     }, 1500);
                 } else {
-                    const errorMessage = result.data?.message || result.error || 'Şifre değiştirilemedi';
+                    const errorMessage = result.data?.message || result.error || result.text || 'Şifre değiştirilemedi';
                     messageDiv.innerHTML = `<p style="color:#dc2626;margin:0;"><i class="fa fa-exclamation-circle"></i> ${errorMessage}</p>`;
                     messageDiv.style.background = '#fee2e2';
                     messageDiv.style.borderLeft = '3px solid #dc2626';

@@ -15,13 +15,20 @@ namespace Backend.Controllers
         private readonly ILogger<TopologyController> _logger;
         private readonly TopologyStoreService _topoStore;
         private readonly JsonStoreService _userStore;
+        private readonly VcenterNotesUpdater _vcenterUpdater;
 
-        public TopologyController(IWebHostEnvironment env, ILogger<TopologyController> logger, TopologyStoreService topoStore, JsonStoreService userStore)
+        public TopologyController(
+            IWebHostEnvironment env,
+            ILogger<TopologyController> logger,
+            TopologyStoreService topoStore,
+            JsonStoreService userStore,
+            VcenterNotesUpdater vcenterUpdater)
         {
             _env = env;
             _logger = logger;
             _topoStore = topoStore;
             _userStore = userStore;
+            _vcenterUpdater = vcenterUpdater;
         }
 
         [HttpPost("update")]
@@ -148,6 +155,59 @@ namespace Backend.Controllers
             }
 
             return Ok(topologies);
+        }
+
+        [Authorize]
+        [HttpPost("sync-vcenter-notes")]
+        public IActionResult SyncVcenterNotes()
+        {
+            var role = User.FindFirst(ClaimTypes.Role)?.Value;
+            if (role != "Admin")
+                return Forbid();
+
+            var result = _vcenterUpdater.SyncFromFile();
+            if (!result.Success)
+            {
+                return BadRequest(new
+                {
+                    message = result.Message,
+                    source = result.SourcePath
+                });
+            }
+
+            return Ok(new
+            {
+                message = result.Message,
+                source = result.SourcePath,
+                total = result.TotalVms,
+                matched = result.Matched,
+                updated = result.Updated
+            });
+        }
+
+        [Authorize]
+        [HttpGet("vcenter-note")]
+        public IActionResult GetVcenterNote([FromQuery] string? server, [FromQuery] string? ip, [FromQuery] string? name)
+        {
+            var result = _vcenterUpdater.TryGetNote(server, ip, name);
+            if (!result.Success)
+            {
+                return Ok(new
+                {
+                    success = false,
+                    message = result.Message,
+                    source = result.SourcePath
+                });
+            }
+
+            return Ok(new
+            {
+                success = true,
+                note = result.Note,
+                matchedName = result.MatchedName,
+                matchedIp = result.MatchedIp,
+                source = result.SourcePath
+            });
         }
 
         private static string NormalizeSeflikId(string name)
