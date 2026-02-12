@@ -2518,54 +2518,154 @@ function populateDrawingSelects() {
 }
 
 // ======== EXCEL / PDF EXPORT ========
+function getSafeDateStamp() {
+    return new Date().toLocaleDateString('tr-TR').replace(/[\/.]/g, '-');
+}
+
+function downloadExcelFile(filename, headers, rows) {
+    if (typeof XLSX === 'undefined') {
+        console.warn('XLSX kutuphanesi yuklenemedi, CSV kullaniliyor.');
+        let csv = headers.map(h => `"${h}"`).join(',') + '\n';
+        rows.forEach(row => {
+            const line = row.map(v => `"${v ?? ''}"`).join(',');
+            csv += line + '\n';
+        });
+        const link = document.createElement('a');
+        link.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+        link.download = filename.replace(/\.xlsx$/i, '.csv');
+        link.click();
+        return;
+    }
+
+    const data = [headers, ...rows];
+    const worksheet = XLSX.utils.aoa_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Rapor');
+    XLSX.writeFile(workbook, filename);
+}
+
+function openPrintWindow(title, headers, rows) {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+    let html = `<h2>${title}</h2>`;
+    html += '<table border="1" cellpadding="10"><tr>';
+    headers.forEach(h => { html += `<th>${h}</th>`; });
+    html += '</tr>';
+    rows.forEach(row => {
+        html += '<tr>' + row.map(v => `<td>${v ?? ''}</td>`).join('') + '</tr>';
+    });
+    html += '</table>';
+    printWindow.document.write(html);
+    printWindow.document.close();
+    printWindow.print();
+}
+
+let pdfFontReady = null;
+
+function arrayBufferToBase64(buffer) {
+    let binary = '';
+    const bytes = new Uint8Array(buffer);
+    const chunkSize = 0x8000;
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+        const chunk = bytes.subarray(i, i + chunkSize);
+        binary += String.fromCharCode.apply(null, chunk);
+    }
+    return btoa(binary);
+}
+
+async function ensurePdfFont(doc) {
+    if (pdfFontReady) {
+        await pdfFontReady;
+        doc.setFont('Arial', 'normal');
+        return true;
+    }
+
+    pdfFontReady = fetch('/vendor/fonts/arial.ttf')
+        .then(res => {
+            if (!res.ok) {
+                throw new Error('Font fetch failed');
+            }
+            return res.arrayBuffer();
+        })
+        .then(buffer => {
+            const base64 = arrayBufferToBase64(buffer);
+            doc.addFileToVFS('arial.ttf', base64);
+            doc.addFont('arial.ttf', 'Arial', 'normal');
+            doc.setFont('Arial', 'normal');
+        })
+        .catch(() => {
+            pdfFontReady = null;
+            return false;
+        });
+
+    await pdfFontReady;
+    if (!doc.getFontList || !doc.getFontList().Arial) {
+        return false;
+    }
+    return true;
+}
+
+async function downloadPdfFile(title, filename, headers, rows) {
+    if (!window.jspdf || !window.jspdf.jsPDF) {
+        console.warn('jsPDF yuklenemedi, yazdirma penceresi aciliyor.');
+        openPrintWindow(title, headers, rows);
+        return;
+    }
+
+    const doc = new window.jspdf.jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+    const fontOk = await ensurePdfFont(doc);
+    if (!fontOk) {
+        openPrintWindow(title, headers, rows);
+        return;
+    }
+    doc.setFontSize(14);
+    doc.text(title, 40, 40);
+    if (typeof doc.autoTable === 'function') {
+        doc.autoTable({
+            startY: 60,
+            head: [headers],
+            body: rows,
+            styles: { fontSize: 9, font: 'Arial' },
+            headStyles: { fillColor: [30, 41, 59], font: 'Arial' },
+            theme: 'striped'
+        });
+    } else {
+        openPrintWindow(title, headers, rows);
+        return;
+    }
+    doc.save(filename);
+}
 function attachExportFeatures() {
     document.getElementById('exportExcelBtn')?.addEventListener('click', exportToExcel);
     document.getElementById('exportPdfBtn')?.addEventListener('click', exportToPdf);
 }
 
 function exportToExcel() {
-    let csv = 'Sunucu Adı,IP Adresi,Şeflik,Platform,Kritiklik,Tarih,Ekleyen Kullanıcı\n';
-    
-    allTopologies.forEach(top => {
-        const row = [
-            top.server || '',
-            top.ip || '',
-            top.dept || '',
-            top.platform || '',
-            top.critical || '',
-            top.date || '',
-            top.user || ''
-        ].map(v => `"${v}"`).join(',');
-        csv += row + '\n';
-    });
-    
-    const link = document.createElement('a');
-    link.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
-    link.download = `Sunucular_${new Date().toLocaleDateString('tr-TR')}.csv`;
-    link.click();
+    const headers = ['Sunucu Adı', 'IP Adresi', 'Şeflik', 'Platform', 'Kritiklik', 'Tarih', 'Ekleyen Kullanıcı'];
+    const rows = allTopologies.map(top => [
+        top.server || '',
+        top.ip || '',
+        top.dept || '',
+        top.platform || '',
+        top.critical || '',
+        top.date || '',
+        top.user || ''
+    ]);
+    downloadExcelFile(`Sunucular_${getSafeDateStamp()}.xlsx`, headers, rows);
 }
 
-function exportToPdf() {
-    const printWindow = window.open('', '_blank');
-    let html = '<h2>Sunucular Raporu</h2>';
-    html += '<table border="1" cellpadding="10"><tr><th>Sunucu</th><th>IP</th><th>Şeflik</th><th>Platform</th><th>Kritiklik</th><th>Tarih</th><th>Kullanıcı</th></tr>';
-    
-    allTopologies.forEach(top => {
-        html += `<tr>
-            <td>${top.server || ''}</td>
-            <td>${top.ip || ''}</td>
-            <td>${top.dept || ''}</td>
-            <td>${top.platform || ''}</td>
-            <td>${top.critical || ''}</td>
-            <td>${top.date || ''}</td>
-            <td>${top.user || ''}</td>
-        </tr>`;
-    });
-    
-    html += '</table>';
-    printWindow.document.write(html);
-    printWindow.document.close();
-    printWindow.print();
+async function exportToPdf() {
+    const headers = ['Sunucu', 'IP', 'Şeflik', 'Platform', 'Kritiklik', 'Tarih', 'Kullanıcı'];
+    const rows = allTopologies.map(top => [
+        top.server || '',
+        top.ip || '',
+        top.dept || '',
+        top.platform || '',
+        top.critical || '',
+        top.date || '',
+        top.user || ''
+    ]);
+    await downloadPdfFile('Sunucular Raporu', `Sunucular_${getSafeDateStamp()}.pdf`, headers, rows);
 }
 
 // ======== METADATA SELECTS POPULATE ========
@@ -3771,68 +3871,30 @@ function viewServerTopologies(serverName, serverIp) {
     applyFilters();
 }
 
-function exportServersByCritical(level, format) {
+async function exportServersByCritical(level, format) {
     const servers = allServers.filter(s => s.critical === level);
     if (format === 'excel') {
-        let csv = 'Sunucu Adı,IP Adresi,Kritiklik,Tarih\n';
-        servers.forEach(s => {
-            const row = [s.name || '', s.ip || '', s.critical || '', s.date || '']
-                .map(v => `"${v}"`).join(',');
-            csv += row + '\n';
-        });
-        const link = document.createElement('a');
-        link.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
-        link.download = `Sunucular_${level}_${new Date().toLocaleDateString('tr-TR')}.csv`;
-        link.click();
+        const headers = ['Sunucu Adı', 'IP Adresi', 'Kritiklik', 'Tarih'];
+        const rows = servers.map(s => [s.name || '', s.ip || '', s.critical || '', s.date || '']);
+        downloadExcelFile(`Sunucular_${level}_${getSafeDateStamp()}.xlsx`, headers, rows);
     } else {
-        const printWindow = window.open('', '_blank');
-        let html = `<h2>${level} Kritiklik Sunucular</h2>`;
-        html += '<table border="1" cellpadding="10"><tr><th>Sunucu</th><th>IP</th><th>Kritiklik</th><th>Tarih</th></tr>';
-        servers.forEach(s => {
-            html += `<tr>
-                <td>${s.name || ''}</td>
-                <td>${s.ip || ''}</td>
-                <td>${s.critical || ''}</td>
-                <td>${s.date || ''}</td>
-            </tr>`;
-        });
-        html += '</table>';
-        printWindow.document.write(html);
-        printWindow.document.close();
-        printWindow.print();
+        const headers = ['Sunucu', 'IP', 'Kritiklik', 'Tarih'];
+        const rows = servers.map(s => [s.name || '', s.ip || '', s.critical || '', s.date || '']);
+        await downloadPdfFile(`${level} Kritiklik Sunucular`, `Sunucular_${level}_${getSafeDateStamp()}.pdf`, headers, rows);
     }
 }
 
-function exportServersCurrentFilter(format) {
+async function exportServersCurrentFilter(format) {
     const label = serverCriticalFilter ? serverCriticalFilter : 'Tümü';
     const servers = serverCriticalFilter ? allServers.filter(s => s.critical === serverCriticalFilter) : allServers;
     if (format === 'excel') {
-        let csv = 'Sunucu Adı,IP Adresi,Kritiklik,Tarih\n';
-        servers.forEach(s => {
-            const row = [s.name || '', s.ip || '', s.critical || '', s.date || '']
-                .map(v => `"${v}"`).join(',');
-            csv += row + '\n';
-        });
-        const link = document.createElement('a');
-        link.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
-        link.download = `Sunucular_${label}_${new Date().toLocaleDateString('tr-TR')}.csv`;
-        link.click();
+        const headers = ['Sunucu Adı', 'IP Adresi', 'Kritiklik', 'Tarih'];
+        const rows = servers.map(s => [s.name || '', s.ip || '', s.critical || '', s.date || '']);
+        downloadExcelFile(`Sunucular_${label}_${getSafeDateStamp()}.xlsx`, headers, rows);
     } else {
-        const printWindow = window.open('', '_blank');
-        let html = `<h2>${label} Sunucular</h2>`;
-        html += '<table border="1" cellpadding="10"><tr><th>Sunucu</th><th>IP</th><th>Kritiklik</th><th>Tarih</th></tr>';
-        servers.forEach(s => {
-            html += `<tr>
-                <td>${s.name || ''}</td>
-                <td>${s.ip || ''}</td>
-                <td>${s.critical || ''}</td>
-                <td>${s.date || ''}</td>
-            </tr>`;
-        });
-        html += '</table>';
-        printWindow.document.write(html);
-        printWindow.document.close();
-        printWindow.print();
+        const headers = ['Sunucu', 'IP', 'Kritiklik', 'Tarih'];
+        const rows = servers.map(s => [s.name || '', s.ip || '', s.critical || '', s.date || '']);
+        await downloadPdfFile(`${label} Sunucular`, `Sunucular_${label}_${getSafeDateStamp()}.pdf`, headers, rows);
     }
 }
 

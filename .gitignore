@@ -7,6 +7,7 @@ Backend/wwwroot/uploads/
 Backend/Data/*.json
 Backend/Data/topologies.json
 Data/*.json
+vc_cred.xml
 
 # VS Code workspace files
 *.code-workspace
