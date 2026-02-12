@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using Backend.Models;
+using System.Text.Json.Nodes;
 using Backend.Services;
 
 
@@ -398,7 +399,14 @@ namespace Backend.Controllers
                 }
 
                 var filePath = Path.Combine(uploadsFolder, fileName);
-                var json = System.Text.Json.JsonSerializer.Serialize(request.Connections, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+                var payload = new
+                {
+                    connections = request.Connections,
+                    listNotes = request.ListNotes,
+                    diagramNotes = request.DiagramNotes,
+                    note = request.Note
+                };
+                var json = System.Text.Json.JsonSerializer.Serialize(payload, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
                 System.IO.File.WriteAllText(filePath, json);
 
                 var topology = new Topology
@@ -424,6 +432,67 @@ namespace Backend.Controllers
             {
                 _logger.LogError(ex, "Error saving diagram");
                 return StatusCode(500, new { message = "Kaydetme hatası: " + ex.Message });
+            }
+        }
+
+        [HttpPost("update-diagram-note")]
+        public IActionResult UpdateDiagramNote([FromBody] DiagramNoteUpdateRequest request)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(request.File))
+                {
+                    return BadRequest(new { message = "Dosya adı gerekli" });
+                }
+
+                var uploadsFolder = Path.Combine(_env.WebRootPath, "uploads");
+                var filePath = Path.Combine(uploadsFolder, request.File);
+                if (!System.IO.File.Exists(filePath))
+                {
+                    return NotFound(new { message = "Diyagram dosyası bulunamadı" });
+                }
+
+                var jsonText = System.IO.File.ReadAllText(filePath);
+                JsonNode? node = JsonNode.Parse(jsonText);
+                JsonObject payload;
+
+                if (node is JsonArray arrayNode)
+                {
+                    payload = new JsonObject
+                    {
+                        ["connections"] = arrayNode,
+                        ["note"] = request.Note ?? ""
+                    };
+                }
+                else if (node is JsonObject objectNode)
+                {
+                    payload = objectNode;
+                    payload["note"] = request.Note ?? "";
+                }
+                else
+                {
+                    return StatusCode(500, new { message = "Diyagram içeriği okunamadı" });
+                }
+
+                var updatedJson = payload.ToJsonString(new System.Text.Json.JsonSerializerOptions
+                {
+                    WriteIndented = true
+                });
+                System.IO.File.WriteAllText(filePath, updatedJson);
+
+                var topologies = _topoStore.LoadTopologies();
+                foreach (var topo in topologies.Where(t => string.Equals(t.File, request.File, StringComparison.OrdinalIgnoreCase)))
+                {
+                    topo.Note = request.Note;
+                }
+                _topoStore.SaveTopologies(topologies);
+
+                return Ok(new { message = "Not güncellendi" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating diagram note");
+                return StatusCode(500, new { message = "Not güncellenemedi: " + ex.Message });
             }
         }
     }

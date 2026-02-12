@@ -463,11 +463,6 @@
                                     <option value="">Şeflik Seçin...</option>
                                 </select>
                             </div>
-                            <!-- Not -->
-                            <div class="form-field">
-                                <label for="topologyNote">Not</label>
-                                <textarea id="topologyNote" placeholder="Topoloji hakkında notlar..." style="background:#ffffff;color:#0f172a;width:100%;min-height:70px;resize:vertical;padding:0.5rem;border:1px solid #e2e8f0;border-radius:0.4rem;font-family:inherit;"></textarea>
-                            </div>
                         </div>
                         
                         <!-- Kaynak (Source) -->
@@ -604,12 +599,6 @@
                                     <p style="color:var(--muted);font-size:0.9rem;text-align:center;padding:1rem;">Henüz bağlantı yok</p>
                                 </div>
                                 
-                                <!-- Metin Ekleme Butonu (Liste Altında) -->
-                                <div style="margin-top:1rem;display:flex;gap:0.5rem;flex-wrap:wrap;">
-                                    <button type="button" id="addTextToListBtn" class="btn primary" style="padding:0.5rem 1rem;font-size:0.9rem;">
-                                        <i class="fa fa-plus"></i> Metin Ekle
-                                    </button>
-                                </div>
                             </div>
                             
                             <!-- Görsel Diyagram -->
@@ -617,7 +606,7 @@
                                 <!-- Metin Ekleme Kontrol Paneli -->
                                 <div style="margin-bottom:0.8rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem;">
                                     <button type="button" id="addTextToDiagramBtn" class="btn primary" style="padding:0.5rem 1rem;font-size:0.9rem;">
-                                        <i class="fa fa-plus"></i> Metin Ekle
+                                        <i class="fa fa-sticky-note"></i> Sunucu Aciklamasi
                                     </button>
                                 </div>
                                 
@@ -1216,19 +1205,14 @@
     <div style="background:#ffffff;padding:2rem 2.5rem;border-radius:1rem;max-width:600px;width:90%;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.15);position:relative;">
         <button onclick="closeTextToDiagramModal()" style="position:absolute;top:1rem;right:1rem;font-size:1.2rem;background:none;border:none;cursor:pointer;color:#64748b;"><i class="fa fa-times"></i></button>
         <h2 style="margin-bottom:1.5rem;color:#1e293b;display:flex;align-items:center;gap:0.5rem;">
-            <i class="fa fa-plus-circle" style="color:var(--accent);"></i>
-            Diyagram Notu Ekle
+            <i class="fa fa-sticky-note" style="color:var(--accent);"></i>
+            Sunucu Aciklamasi
         </h2>
         
         <form id="addTextToDiagramForm">
             <div class="form-field" style="margin-bottom:1rem;">
-                <label style="display:block;font-weight:600;margin-bottom:0.4rem;color:#334155;">Başlık</label>
-                <input type="text" id="diagramTextTitle" required placeholder="Örn: Önemli Bilgi" style="width:100%;padding:0.6rem;border:1px solid #cbd5e1;border-radius:0.5rem;">
-            </div>
-            
-            <div class="form-field" style="margin-bottom:1rem;">
-                <label style="display:block;font-weight:600;margin-bottom:0.4rem;color:#334155;">İçerik</label>
-                <textarea id="diagramTextContent" required placeholder="Diyagram için not veya açıklama ekleyin..." rows="5" style="width:100%;padding:0.6rem;border:1px solid #cbd5e1;border-radius:0.5rem;resize:vertical;font-family:inherit;"></textarea>
+                <label style="display:block;font-weight:600;margin-bottom:0.4rem;color:#334155;">Sunucu Aciklamasi</label>
+                <textarea id="diagramTextContent" required placeholder="Sunucu aciklamasi girin..." rows="5" style="width:100%;padding:0.6rem;border:1px solid #cbd5e1;border-radius:0.5rem;resize:vertical;font-family:inherit;"></textarea>
             </div>
             
             <div style="display:flex;gap:1rem;">
@@ -1241,7 +1225,7 @@
     </div>
 </div>
 
-<script src="js/app.js?v=20260131-7"></script>
+<script src="js/app.js?v=20260212-3"></script>
 <script src="js/access-list-views.js?v=20260202"></script>
 </body>
 </html>

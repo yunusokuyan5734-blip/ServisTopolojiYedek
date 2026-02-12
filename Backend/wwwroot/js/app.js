@@ -8,14 +8,14 @@ function downloadTopology(file) {
     link.click();
     document.body.removeChild(link);
 }
-function showDiagramModal(connections, filename) {
+function showDiagramModal(payload, filename) {
     // Modal oluştur
     const modal = document.createElement('div');
     modal.id = 'diagramViewModal';
     modal.style = 'display:flex;position:fixed;z-index:99999;left:0;top:0;width:100vw;height:100vh;background:rgba(0,0,0,0.4);align-items:center;justify-content:center;';
     
     const modalContent = document.createElement('div');
-    modalContent.style = 'background:#fff;padding:2rem;border-radius:1rem;max-width:95vw;max-height:90vh;overflow:auto;box-shadow:0 8px 32px #0002;position:relative;min-width:800px;';
+    modalContent.style = 'background:#fff;padding:1.5rem;border-radius:1rem;width:min(1200px,95vw);max-height:90vh;overflow:auto;box-shadow:0 8px 32px #0002;position:relative;';
     
     modalContent.innerHTML = `
         <button onclick="document.getElementById('diagramViewModal').remove()" style="position:absolute;top:1rem;right:1rem;font-size:1.2rem;background:none;border:none;cursor:pointer;"><i class='fa fa-times'></i></button>
@@ -37,11 +37,15 @@ function showDiagramModal(connections, filename) {
     modal.appendChild(modalContent);
     document.body.appendChild(modal);
     
+    const connections = Array.isArray(payload) ? payload : (payload?.connections || []);
+    const listNotes = Array.isArray(payload?.listNotes) ? payload.listNotes : [];
+    const diagramNotes = Array.isArray(payload?.diagramNotes) ? payload.diagramNotes : [];
+
     // Liste görünümünü render et
-    renderModalListView(connections);
+    renderModalListView(connections, listNotes);
     
     // Diyagram görünümünü render et
-    renderModalDiagramView(connections);
+    renderModalDiagramView(connections, diagramNotes, listNotes);
     
     // Tab değiştirme
     document.getElementById('modalListViewTab').addEventListener('click', () => {
@@ -64,16 +68,9 @@ function showDiagramModal(connections, filename) {
 }
 
 function attachTextNotes() {
-    const listBtn = document.getElementById('addTextToListBtn');
     const diagramBtn = document.getElementById('addTextToDiagramBtn');
     const listForm = document.getElementById('addTextToTopologyForm');
     const diagramForm = document.getElementById('addTextToDiagramForm');
-
-    if (listBtn) {
-        listBtn.addEventListener('click', () => {
-            openTextToTopologyModal();
-        });
-    }
 
     if (diagramBtn) {
         diagramBtn.addEventListener('click', () => {
@@ -106,21 +103,26 @@ function attachTextNotes() {
     if (diagramForm) {
         diagramForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            const title = document.getElementById('diagramTextTitle').value.trim();
             const content = document.getElementById('diagramTextContent').value.trim();
-            if (!title || !content) {
-                showTextNoteMessage('addTextToDiagramMessage', 'Lutfen baslik ve icerik giriniz', 'error');
+            if (!content) {
+                showTextNoteMessage('addTextToDiagramMessage', 'Lutfen aciklama giriniz', 'error');
                 return;
             }
 
-            canvasData.diagramNotes.push({
-                id: Date.now(),
-                title: title,
+            const notePayload = {
+                id: (canvasData.diagramNotes && canvasData.diagramNotes[0]?.id) || Date.now(),
+                title: 'Sunucu Aciklamasi',
                 content: content
-            });
+            };
+
+            if (Array.isArray(canvasData.diagramNotes) && canvasData.diagramNotes.length > 0) {
+                canvasData.diagramNotes[0] = notePayload;
+            } else {
+                canvasData.diagramNotes = [notePayload];
+            }
 
             renderDiagramNotes();
-            showTextNoteMessage('addTextToDiagramMessage', 'Diyagram notu eklendi', 'success');
+            showTextNoteMessage('addTextToDiagramMessage', 'Sunucu aciklamasi kaydedildi', 'success');
             setTimeout(() => {
                 closeTextToDiagramModal();
             }, 800);
@@ -149,6 +151,11 @@ function openTextToDiagramModal() {
     if (!modal) return;
     document.getElementById('addTextToDiagramForm')?.reset();
     clearTextNoteMessage('addTextToDiagramMessage');
+    const existingNote = (canvasData.diagramNotes || [])[0];
+    if (existingNote) {
+        const contentInput = document.getElementById('diagramTextContent');
+        if (contentInput) contentInput.value = existingNote.content || '';
+    }
     modal.style.display = 'flex';
 }
 
@@ -185,6 +192,51 @@ function removeListNote(noteId) {
     renderTopologyConnections();
 }
 
+function renderDiagramNotesFor(container, diagramNotes, listNotes, allowDelete) {
+    if (!container) return;
+
+    const normalizedDiagramNotes = Array.isArray(diagramNotes) ? diagramNotes : [];
+    const normalizedListNotes = Array.isArray(listNotes) ? listNotes : [];
+    if (normalizedDiagramNotes.length === 0 && normalizedListNotes.length === 0) {
+        container.style.display = 'none';
+        container.innerHTML = '';
+        return;
+    }
+
+    container.style.display = 'flex';
+    const listNotesHtml = normalizedListNotes.map(note => `
+        <div style="padding:0.6rem 0.7rem;background:#f8fafc;border-radius:0.3rem;border:1px solid var(--border);">
+            <div style="font-size:0.85rem;color:var(--text);white-space:pre-wrap;">
+                <strong style="color:var(--accent);">📝 Not:</strong> ${escapeHtml(note.content || '')}
+            </div>
+        </div>
+    `).join('');
+
+    const notesHtml = normalizedDiagramNotes.map(note => {
+        const deleteBtn = allowDelete
+            ? `
+                <button type="button" onclick="removeDiagramNote(${note.id})" style="font-size:0.75rem;background:none;border:none;color:var(--error);cursor:pointer;padding:0.3rem 0.5rem;opacity:0.6;transition:opacity 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'" title="Sil">
+                    <i class="fa fa-trash"></i>
+                </button>
+            `
+            : '';
+
+        return `
+            <div style="padding:0.6rem 0.7rem;background:#f8fafc;border-radius:0.3rem;border:1px solid var(--border);">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:0.6rem;">
+                    <div style="flex:1;">
+                        <div style="font-weight:700;color:var(--accent);margin-bottom:0.2rem;">${escapeHtml(note.title || 'Not')}</div>
+                        <div style="font-size:0.85rem;color:var(--text);white-space:pre-wrap;">${escapeHtml(note.content || '')}</div>
+                    </div>
+                    ${deleteBtn}
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    container.innerHTML = [listNotesHtml, notesHtml].filter(Boolean).join('');
+}
+
 function renderDiagramNotes() {
     const host = document.getElementById('topologyNetwork');
     if (!host) return;
@@ -197,27 +249,7 @@ function renderDiagramNotes() {
         host.parentElement?.appendChild(notesContainer);
     }
 
-    const notes = canvasData.diagramNotes || [];
-    if (notes.length === 0) {
-        notesContainer.style.display = 'none';
-        notesContainer.innerHTML = '';
-        return;
-    }
-
-    notesContainer.style.display = 'flex';
-    notesContainer.innerHTML = notes.map(note => `
-        <div style="padding:0.6rem 0.7rem;background:#f8fafc;border-radius:0.3rem;border:1px solid var(--border);">
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:0.6rem;">
-                <div style="flex:1;">
-                    <div style="font-weight:700;color:var(--accent);margin-bottom:0.2rem;">${escapeHtml(note.title)}</div>
-                    <div style="font-size:0.85rem;color:var(--text);white-space:pre-wrap;">${escapeHtml(note.content)}</div>
-                </div>
-                <button type="button" onclick="removeDiagramNote(${note.id})" style="font-size:0.75rem;background:none;border:none;color:var(--error);cursor:pointer;padding:0.3rem 0.5rem;opacity:0.6;transition:opacity 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'" title="Sil">
-                    <i class="fa fa-trash"></i>
-                </button>
-            </div>
-        </div>
-    `).join('');
+    renderDiagramNotesFor(notesContainer, canvasData.diagramNotes || [], canvasData.listNotes || [], true);
 }
 
 function removeDiagramNote(noteId) {
@@ -225,16 +257,31 @@ function removeDiagramNote(noteId) {
     renderDiagramNotes();
 }
 
-function renderModalListView(connections) {
+function renderModalListView(connections, listNotes) {
     const container = document.getElementById('modalListViewContent');
     if (!container) return;
+
+    const normalizedListNotes = Array.isArray(listNotes) ? listNotes : [];
+    const listNotesHtml = normalizedListNotes.length > 0
+        ? `
+            <div style="margin-bottom:0.8rem;display:flex;flex-direction:column;gap:0.4rem;">
+                ${normalizedListNotes.map(note => `
+                    <div style="padding:0.6rem 0.7rem;background:#f8fafc;border-radius:0.3rem;border:1px solid var(--border);">
+                        <div style="font-size:0.85rem;color:var(--text);white-space:pre-wrap;">
+                            <strong style="color:var(--accent);">📝 Not:</strong> ${escapeHtml(note.content || '')}
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `
+        : '';
     
     if (!connections || connections.length === 0) {
-        container.innerHTML = '<p style="color:var(--muted);text-align:center;padding:2rem;">Bağlantı bulunamadı</p>';
+        container.innerHTML = `${listNotesHtml}<p style="color:var(--muted);text-align:center;padding:2rem;">Bağlantı bulunamadı</p>`;
         return;
     }
     
-    container.innerHTML = connections.map((conn, idx) => {
+    container.innerHTML = listNotesHtml + connections.map((conn, idx) => {
         const getSourceIcon = () => conn.source.type === 'server' ? '🖥️' : '🌐';
         const getDestIcon = () => conn.destination.type === 'server' ? '🖥️' : '🌐';
         
@@ -281,97 +328,24 @@ function renderModalListView(connections) {
     }).join('');
 }
 
-function renderModalDiagramView(connections) {
+function renderModalDiagramView(connections, diagramNotes, listNotes) {
     const container = document.getElementById('modalDiagramViewContent');
     if (!container) return;
-    
-    container.innerHTML = '<div id="modalTopologyNetwork" style="width:100%;height:600px;border:1px solid var(--border);border-radius:0.5rem;background:#fafafa;"></div>';
+
+    container.innerHTML = `
+        <div style="display:flex;flex-direction:column;gap:0.75rem;height:70vh;min-height:520px;">
+            <div id="modalTopologyNetwork" style="flex:1 1 auto;border:1px solid var(--border);border-radius:0.6rem;background:#fafafa;"></div>
+            <div id="modalDiagramNotes" style="flex:0 0 auto;max-height:180px;overflow:auto;display:flex;flex-direction:column;gap:0.5rem;border:1px solid var(--border);border-radius:0.6rem;padding:0.6rem;background:#ffffff;"></div>
+        </div>
+    `;
     
     setTimeout(() => {
         const networkContainer = document.getElementById('modalTopologyNetwork');
         if (!networkContainer || typeof vis === 'undefined') return;
-        
-        const nodes = [];
-        const edges = [];
-        const nodeMap = new Map();
-        
-        let nodeId = 1;
-        connections.forEach((conn, idx) => {
-            const sourceKey = `${conn.source.name}_${conn.source.ip}`;
-            const destKey = `${conn.destination.name}_${conn.destination.ip}`;
-            
-            if (!nodeMap.has(sourceKey)) {
-                nodeMap.set(sourceKey, nodeId);
-                nodes.push({
-                    id: nodeId,
-                    label: conn.source.name + '\\n' + conn.source.ip,
-                    shape: conn.source.type === 'server' ? 'box' : 'ellipse',
-                    color: { background: '#667eea', border: '#5a67d8' },
-                    font: { color: '#fff', size: 14 }
-                });
-                nodeId++;
-            }
-            
-            if (!nodeMap.has(destKey)) {
-                nodeMap.set(destKey, nodeId);
-                nodes.push({
-                    id: nodeId,
-                    label: conn.destination.name + '\\n' + conn.destination.ip,
-                    shape: conn.destination.type === 'server' ? 'box' : 'ellipse',
-                    color: { background: '#4CAF50', border: '#45a049' },
-                    font: { color: '#fff', size: 14 }
-                });
-                nodeId++;
-            }
-            
-            if (conn.firewall) {
-                const fwKey = 'firewall';
-                if (!nodeMap.has(fwKey)) {
-                    nodeMap.set(fwKey, nodeId);
-                    nodes.push({
-                        id: nodeId,
-                        label: '🧱 Firewall',
-                        shape: 'diamond',
-                        color: { background: '#ff6b6b', border: '#ff5252' },
-                        font: { color: '#fff', size: 14 }
-                    });
-                    nodeId++;
-                }
-                
-                edges.push({
-                    from: nodeMap.get(sourceKey),
-                    to: nodeMap.get(fwKey),
-                    arrows: 'to',
-                    label: conn.ports.map(p => p.number).join(','),
-                    color: { color: '#3b82f6' }
-                });
-                
-                edges.push({
-                    from: nodeMap.get(fwKey),
-                    to: nodeMap.get(destKey),
-                    arrows: 'to',
-                    label: conn.ports.map(p => p.number).join(','),
-                    color: { color: '#3b82f6' }
-                });
-            } else {
-                edges.push({
-                    from: nodeMap.get(sourceKey),
-                    to: nodeMap.get(destKey),
-                    arrows: 'to',
-                    label: conn.ports.map(p => p.number).join(','),
-                    color: { color: '#3b82f6' }
-                });
-            }
-        });
-        
-        const data = { nodes: new vis.DataSet(nodes), edges: new vis.DataSet(edges) };
-        const options = {
-            nodes: { borderWidth: 2, shadow: true },
-            edges: { width: 2, smooth: { type: 'cubicBezier' } },
-            physics: { enabled: true, barnesHut: { gravitationalConstant: -30000, springLength: 200 } }
-        };
-        
-        new vis.Network(networkContainer, data, options);
+
+        renderNetworkDiagramFor(networkContainer, connections);
+        const notesContainer = document.getElementById('modalDiagramNotes');
+        renderDiagramNotesFor(notesContainer, diagramNotes, listNotes, false);
     }, 100);
 }
 
@@ -1007,8 +981,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 alert('❌ Düzenlenecek topoloji bulunamadı!');
                 return;
             }
-            
-            // Form değerlerini al - tüm alanlar kullanıcı tarafından düzenlenebilir
+
             const topologyName = document.getElementById('editTopologyName').value.trim();
             const serverName = document.getElementById('editServerName').value.trim();
             const serverIp = document.getElementById('editServerIp').value.trim();
@@ -1017,8 +990,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const platform = document.getElementById('editPlatform').value.trim();
             const critical = document.getElementById('editCritical').value.trim();
             const note = document.getElementById('editNote').value.trim();
-            
-            // Minimal validation - sadece zorunlu alanlar boş olmasın
+
             if (!topologyName) {
                 alert('❌ Topoloji Adı boş bırakılamaz!');
                 return;
@@ -1031,10 +1003,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 alert('❌ IP Adresi boş bırakılamaz!');
                 return;
             }
-            
-            // Not: Kullanıcı istediği formatı kullanabilir - underscore, N/A, vb. her şey kabul edilir
-            
-            // Yeni değerleri backend formatında hazırla
+
             const updated = {
                 Id: topo.id || topo.Id,
                 Name: topologyName,
@@ -1049,10 +1018,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 Date: topo.date || topo.Date || new Date().toISOString().slice(0,10),
                 User: topo.user || topo.User || 'admin'
             };
-            
-            console.log('Güncelleme gönderiliyor:', updated);
-            
-            // Backend'e güncelleme isteği gönder
+
             try {
                 const res = await fetch(`/api/topology/update`, {
                     method: 'POST',
@@ -1060,9 +1026,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     credentials: 'include',
                     body: JSON.stringify(updated)
                 });
-                
+
                 const data = await res.json();
-                
+
                 if (res.ok) {
                     alert('✅ Topoloji başarıyla güncellendi!');
                     document.getElementById('editTopologyModal').style.display = 'none';
@@ -1075,7 +1041,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('Sunucu hatası:', err);
                 alert('❌ Sunucuya ulaşılamadı! Lütfen internet bağlantınızı kontrol edin.');
             }
-        }
+        };
     }
 });
 
@@ -1766,15 +1732,7 @@ window.logout = logout;
 
 async function viewTopology(filename) {
     if (filename.endsWith('_diagram.json')) {
-        // JSON diagram dosyası için özel modal göster
-        try {
-            const response = await fetch(`/uploads/${filename}`);
-            const connections = await response.json();
-            showDiagramModal(connections, filename);
-        } catch (error) {
-            console.error('Error loading diagram:', error);
-            alert('Diyagram yüklenemedi!');
-        }
+        window.open(`/diagram-view.html?file=${encodeURIComponent(filename)}`, '_blank');
     } else {
         // Diğer dosyalar için normal açılış
         window.open(`/uploads/${filename}`, '_blank');
@@ -2335,7 +2293,6 @@ function attachDrawio() {
             const platform = document.getElementById('topologyPlatform')?.value?.trim();
             const critical = document.getElementById('topologyCritical')?.value?.trim();
             const sheflik = document.getElementById('topologySheflik')?.value?.trim();
-            const note = document.getElementById('topologyNote')?.value?.trim() || '';
             
             // Zorunlu alanları kontrol et
             if (!topologyName) {
@@ -2366,8 +2323,10 @@ function attachDrawio() {
                             platform: platform,
                             critical: critical,
                             dept: sheflik,
-                            note: note,
-                            connections: canvasData.connections
+                            connections: canvasData.connections,
+                            listNotes: canvasData.listNotes || [],
+                            diagramNotes: canvasData.diagramNotes || [],
+                            note: (canvasData.diagramNotes && canvasData.diagramNotes[0]?.content) || ''
                         })
                     });
                     
@@ -2380,9 +2339,11 @@ function attachDrawio() {
                         document.getElementById('topologyPlatform').value = '';
                         document.getElementById('topologyCritical').value = '';
                         document.getElementById('topologySheflik').value = '';
-                        document.getElementById('topologyNote').value = '';
                         canvasData.connections = [];
+                        canvasData.listNotes = [];
+                        canvasData.diagramNotes = [];
                         renderTopologyConnections();
+                        renderDiagramNotes();
                         await loadAndDisplayTopologies();
                     } else {
                         alert('❌ Kaydetme başarısız: ' + (data.message || 'Bilinmeyen hata'));
@@ -3439,19 +3400,26 @@ function renderNetworkDiagram() {
     
     const container = document.getElementById('topologyNetwork');
     if (!container) return;
-    
-    if (canvasData.connections.length === 0) {
-        container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--muted);font-size:0.9rem;">Henüz bağlantı yok</div>';
-        renderDiagramNotes();
+    renderNetworkDiagramFor(container, canvasData.connections);
+    renderDiagramNotes();
+}
+
+function renderNetworkDiagramFor(container, connections) {
+    if (!window.vis) {
         return;
     }
-    
+
+    if (!connections || connections.length === 0) {
+        container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--muted);font-size:0.9rem;">Henüz bağlantı yok</div>';
+        return;
+    }
+
     // Düğümleri ve kenarları oluştur
     const nodes = new vis.DataSet();
     const edges = new vis.DataSet();
     const nodeIds = new Set();
-    
-    canvasData.connections.forEach((conn, idx) => {
+
+    connections.forEach((conn, idx) => {
         // Source node
         const sourceId = `${conn.source.type}-${conn.source.id || conn.source.ip}`;
         if (!nodeIds.has(sourceId)) {
@@ -3677,12 +3645,14 @@ function renderNetworkDiagram() {
         }
     };
     
-    if (networkInstance) {
-        networkInstance.destroy();
+    if (container.id === 'topologyNetwork') {
+        if (networkInstance) {
+            networkInstance.destroy();
+        }
+        networkInstance = new vis.Network(container, data, options);
+    } else {
+        new vis.Network(container, data, options);
     }
-    
-    networkInstance = new vis.Network(container, data, options);
-    renderDiagramNotes();
 }
 
 // Global fonksiyon olarak dışa aktar

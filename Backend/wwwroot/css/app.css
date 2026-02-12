@@ -302,6 +302,25 @@ body.light-theme .nav-item.logout {
     box-shadow: 0 0 0 3px rgba(61,184,255,0.15);
 }
 
+/* Diyagram not modal: beyaz alan, siyah yazi */
+#addTextToDiagramModal .form-field input,
+#addTextToDiagramModal .form-field textarea {
+    background: #ffffff;
+    color: #0f172a;
+    border: 1px solid #cbd5e1;
+}
+
+#addTextToDiagramModal .form-field input::placeholder,
+#addTextToDiagramModal .form-field textarea::placeholder {
+    color: #94a3b8;
+}
+
+#addTextToDiagramModal .form-field input:focus,
+#addTextToDiagramModal .form-field textarea:focus {
+    outline: 1px solid #60a5fa;
+    box-shadow: 0 0 0 3px rgba(96,165,250,0.25);
+}
+
 /* Topoloji Ekle formu: beyaz arka plan ile net görünüm */
 #topo-upload .form-field input,
 #topo-upload .form-field select,
